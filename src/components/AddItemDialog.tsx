@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Camera, X } from "lucide-react";
 import { CATEGORIES, LOCATIONS, type InventoryItem, type ItemCategory } from "@/hooks/use-inventory";
 
 interface AddItemDialogProps {
@@ -24,7 +25,20 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
   const [category, setCategory] = useState<ItemCategory>(editItem?.category || "tools");
   const [quantity, setQuantity] = useState(String(editItem?.quantity ?? 1));
   const [location, setLocation] = useState(editItem?.location || "Garage");
+  const [locationDetail, setLocationDetail] = useState(editItem?.locationDetail || "");
+  const [locationImage, setLocationImage] = useState(editItem?.locationImage || "");
   const [notes, setNotes] = useState(editItem?.notes || "");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLocationImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +49,8 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
       category,
       quantity: Math.max(0, parseInt(quantity) || 0),
       location,
+      locationDetail: locationDetail.trim(),
+      locationImage,
       notes: notes.trim(),
     };
 
@@ -48,13 +64,15 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
     setCategory("tools");
     setQuantity("1");
     setLocation("Garage");
+    setLocationDetail("");
+    setLocationImage("");
     setNotes("");
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-heading">{editItem ? "Edit Item" : "Add New Item"}</DialogTitle>
           <DialogDescription>
@@ -97,6 +115,51 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="locationDetail">Location Detail</Label>
+            <Input
+              id="locationDetail"
+              value={locationDetail}
+              onChange={(e) => setLocationDetail(e.target.value)}
+              placeholder="e.g. Top shelf, left drawer..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Location Photo</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+            {locationImage ? (
+              <div className="relative rounded-lg overflow-hidden border">
+                <img src={locationImage} alt="Location" className="w-full h-32 object-cover" />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-7 w-7"
+                  onClick={() => setLocationImage("")}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Camera className="h-4 w-4" /> Take or Choose Photo
+              </Button>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -28,8 +28,12 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete }: ItemCardProps) {
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 {item.location}
+                {item.locationDetail && ` · ${item.locationDetail}`}
               </span>
             </div>
+            {item.locationImage && (
+              <img src={item.locationImage} alt="Location" className="w-full h-20 object-cover rounded-md mb-2" />
+            )}
             {item.notes && (
               <p className="text-xs text-muted-foreground line-clamp-2">{item.notes}</p>
             )}
