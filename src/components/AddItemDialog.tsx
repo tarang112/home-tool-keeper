@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,14 +21,35 @@ interface AddItemDialogProps {
 }
 
 export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }: AddItemDialogProps) {
-  const [name, setName] = useState(editItem?.name || "");
-  const [category, setCategory] = useState<ItemCategory>(editItem?.category || "tools");
-  const [quantity, setQuantity] = useState(String(editItem?.quantity ?? 1));
-  const [location, setLocation] = useState(editItem?.location || "Garage");
-  const [locationDetail, setLocationDetail] = useState(editItem?.locationDetail || "");
-  const [locationImage, setLocationImage] = useState(editItem?.locationImage || "");
-  const [notes, setNotes] = useState(editItem?.notes || "");
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState<ItemCategory>("tools");
+  const [quantity, setQuantity] = useState("1");
+  const [location, setLocation] = useState("Garage");
+  const [locationDetail, setLocationDetail] = useState("");
+  const [locationImage, setLocationImage] = useState("");
+  const [notes, setNotes] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    if (editItem) {
+      setName(editItem.name);
+      setCategory(editItem.category);
+      setQuantity(String(editItem.quantity));
+      setLocation(editItem.location);
+      setLocationDetail(editItem.locationDetail ?? "");
+      setLocationImage(editItem.locationImage ?? "");
+      setNotes(editItem.notes ?? "");
+    } else {
+      setName("");
+      setCategory("tools");
+      setQuantity("1");
+      setLocation("Garage");
+      setLocationDetail("");
+      setLocationImage("");
+      setNotes("");
+    }
+  }, [editItem, open]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
