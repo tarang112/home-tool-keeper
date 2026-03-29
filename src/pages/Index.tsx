@@ -1,15 +1,18 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Package } from "lucide-react";
+import { Plus, Search, Package, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useInventory, CATEGORIES, type ItemCategory, type InventoryItem } from "@/hooks/use-inventory";
+import { useAuth } from "@/hooks/use-auth";
 import { StatsBar } from "@/components/StatsBar";
 import { ItemCard } from "@/components/ItemCard";
 import { AddItemDialog } from "@/components/AddItemDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
-  const { items, addItem, updateItem, deleteItem, adjustQuantity } = useInventory();
+  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory();
+  const { signOut } = useAuth();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ItemCategory | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -44,9 +47,14 @@ const Index = () => {
             <Package className="h-6 w-6 text-primary" />
             <h1 className="font-heading font-bold text-xl">HomeStock</h1>
           </div>
-          <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1">
-            <Plus className="h-4 w-4" /> Add
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1">
+              <Plus className="h-4 w-4" /> Add
+            </Button>
+            <Button size="icon" variant="ghost" onClick={signOut} className="h-9 w-9">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -87,7 +95,11 @@ const Index = () => {
         </div>
 
         {/* Items list */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-12 animate-fade-in">
             <Package className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-muted-foreground font-medium">
