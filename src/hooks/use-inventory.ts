@@ -8,6 +8,8 @@ export interface InventoryItem {
   category: ItemCategory;
   quantity: number;
   location: string;
+  locationDetail: string;
+  locationImage: string;
   notes: string;
   createdAt: string;
   updatedAt: string;
