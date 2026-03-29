@@ -1,4 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export type ItemCategory = "tools" | "materials" | "hardware" | "electrical" | "plumbing" | "paint" | "other";
 
@@ -15,138 +18,129 @@ export interface InventoryItem {
   updatedAt: string;
 }
 
-const STORAGE_KEY = "household-inventory";
-const DB_NAME = "inventory-images";
-const STORE_NAME = "images";
-
-// IndexedDB helpers for images
-function openImageDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function saveImage(id: string, data: string) {
-  const db = await openImageDB();
-  const tx = db.transaction(STORE_NAME, "readwrite");
-  tx.objectStore(STORE_NAME).put(data, id);
-}
-
-async function loadImage(id: string): Promise<string> {
-  const db = await openImageDB();
-  return new Promise((resolve) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const req = tx.objectStore(STORE_NAME).get(id);
-    req.onsuccess = () => resolve((req.result as string) || "");
-    req.onerror = () => resolve("");
-  });
-}
-
-async function deleteImage(id: string) {
-  const db = await openImageDB();
-  const tx = db.transaction(STORE_NAME, "readwrite");
-  tx.objectStore(STORE_NAME).delete(id);
-}
-
-function loadItems(): InventoryItem[] {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveItems(items: InventoryItem[]) {
-  // Strip locationImage from localStorage — images live in IndexedDB
-  const stripped = items.map(({ locationImage: _, ...rest }) => ({ ...rest, locationImage: "" }));
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stripped));
-  } catch {
-    // quota still exceeded — shouldn't happen without images
-  }
+// Map DB row to frontend model
+function rowToItem(row: any): InventoryItem {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category as ItemCategory,
+    quantity: row.quantity,
+    location: row.location,
+    locationDetail: row.location_detail || "",
+    locationImage: row.location_image_url || "",
+    notes: row.notes || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export function useInventory() {
-  const [items, setItems] = useState<InventoryItem[]>(loadItems);
+  const { user } = useAuth();
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Hydrate images from IndexedDB on mount
-  useEffect(() => {
-    let cancelled = false;
-    async function hydrate() {
-      const loaded = loadItems();
-      const hydrated = await Promise.all(
-        loaded.map(async (item) => {
-          const img = await loadImage(item.id);
-          return { ...item, locationImage: img };
-        })
-      );
-      if (!cancelled) setItems(hydrated);
+  // Fetch items
+  const fetchItems = useCallback(async () => {
+    if (!user) { setItems([]); setLoading(false); return; }
+    const { data, error } = await supabase
+      .from("inventory_items")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast.error("Failed to load items");
+      console.error(error);
+    } else {
+      setItems((data || []).map(rowToItem));
     }
-    hydrate();
-    return () => { cancelled = true; };
-  }, []);
+    setLoading(false);
+  }, [user]);
 
-  const addItem = useCallback((item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
-    const now = new Date().toISOString();
-    const newItem: InventoryItem = {
-      ...item,
-      id: crypto.randomUUID(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    if (newItem.locationImage) {
-      saveImage(newItem.id, newItem.locationImage);
+  useEffect(() => { fetchItems(); }, [fetchItems]);
+
+  // Upload image to storage, return public URL
+  const uploadImage = useCallback(async (file: File | string): Promise<string> => {
+    if (!user) return "";
+    // If it's already a URL (not base64), return as-is
+    if (typeof file === "string" && file.startsWith("http")) return file;
+    // If base64, convert to blob
+    let blob: Blob;
+    let ext = "jpg";
+    if (typeof file === "string" && file.startsWith("data:")) {
+      const res = await fetch(file);
+      blob = await res.blob();
+      ext = blob.type.split("/")[1] || "jpg";
+    } else if (file instanceof File) {
+      blob = file;
+      ext = file.name.split(".").pop() || "jpg";
+    } else {
+      return "";
     }
-    setItems((prev) => {
-      const updated = [newItem, ...prev];
-      saveItems(updated);
-      return updated;
-    });
-  }, []);
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("inventory-images").upload(path, blob);
+    if (error) { toast.error("Image upload failed"); return ""; }
+    const { data } = supabase.storage.from("inventory-images").getPublicUrl(path);
+    return data.publicUrl;
+  }, [user]);
 
-  const updateItem = useCallback((id: string, updates: Partial<Omit<InventoryItem, "id" | "createdAt">>) => {
+  const addItem = useCallback(async (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
+    if (!user) return;
+    let imageUrl = "";
+    if (item.locationImage) {
+      imageUrl = await uploadImage(item.locationImage);
+    }
+    const { data, error } = await supabase.from("inventory_items").insert({
+      user_id: user.id,
+      name: item.name,
+      category: item.category,
+      quantity: item.quantity,
+      location: item.location,
+      location_detail: item.locationDetail,
+      location_image_url: imageUrl,
+      notes: item.notes,
+    }).select().single();
+    if (error) { toast.error("Failed to add item"); return; }
+    setItems((prev) => [rowToItem(data), ...prev]);
+    toast.success("Item added!");
+  }, [user, uploadImage]);
+
+  const updateItem = useCallback(async (id: string, updates: Partial<Omit<InventoryItem, "id" | "createdAt">>) => {
+    if (!user) return;
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
+    if (updates.location !== undefined) dbUpdates.location = updates.location;
+    if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.locationImage !== undefined) {
-      if (updates.locationImage) {
-        saveImage(id, updates.locationImage);
+      if (updates.locationImage && !updates.locationImage.startsWith("http")) {
+        dbUpdates.location_image_url = await uploadImage(updates.locationImage);
       } else {
-        deleteImage(id);
+        dbUpdates.location_image_url = updates.locationImage || "";
       }
     }
-    setItems((prev) => {
-      const updated = prev.map((item) =>
-        item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item
-      );
-      saveItems(updated);
-      return updated;
-    });
+    const { data, error } = await supabase.from("inventory_items").update(dbUpdates).eq("id", id).select().single();
+    if (error) { toast.error("Failed to update item"); return; }
+    setItems((prev) => prev.map((i) => i.id === id ? rowToItem(data) : i));
+  }, [user, uploadImage]);
+
+  const deleteItem = useCallback(async (id: string) => {
+    const { error } = await supabase.from("inventory_items").delete().eq("id", id);
+    if (error) { toast.error("Failed to delete item"); return; }
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    toast.success("Item deleted");
   }, []);
 
-  const deleteItem = useCallback((id: string) => {
-    deleteImage(id);
-    setItems((prev) => {
-      const updated = prev.filter((item) => item.id !== id);
-      saveItems(updated);
-      return updated;
-    });
-  }, []);
+  const adjustQuantity = useCallback(async (id: string, delta: number) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    const newQty = Math.max(0, item.quantity + delta);
+    const { error } = await supabase.from("inventory_items").update({ quantity: newQty }).eq("id", id);
+    if (error) { toast.error("Failed to update quantity"); return; }
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: newQty } : i));
+  }, [items]);
 
-  const adjustQuantity = useCallback((id: string, delta: number) => {
-    setItems((prev) => {
-      const updated = prev.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(0, item.quantity + delta), updatedAt: new Date().toISOString() }
-          : item
-      );
-      saveItems(updated);
-      return updated;
-    });
-  }, []);
-
-  return { items, addItem, updateItem, deleteItem, adjustQuantity };
+  return { items, loading, addItem, updateItem, deleteItem, adjustQuantity };
 }
 
 export const CATEGORIES: { value: ItemCategory; label: string; icon: string }[] = [
