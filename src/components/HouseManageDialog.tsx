@@ -254,7 +254,7 @@ export function HouseManageDialog({
               className="w-full"
             >
               <Trash2 className="h-4 w-4 mr-1" />
-              {confirmDelete ? "Confirm Delete House" : "Delete House"}
+              {confirmDelete ? `Confirm Delete ${house?.propertyType === "business" ? "Business" : "House"}` : `Delete ${house?.propertyType === "business" ? "Business" : "House"}`}
             </Button>
           </div>
         )}
