@@ -38,7 +38,7 @@ export default function AuthPage() {
       <Card className="w-full max-w-sm animate-slide-up">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
-            <img src="/logo-v2.png" alt="HomeStock" className="h-16 w-16" />
+            <Package className="h-10 w-10 text-primary" />
           </div>
           <CardTitle className="font-heading text-2xl">HomeStock</CardTitle>
           <CardDescription>
