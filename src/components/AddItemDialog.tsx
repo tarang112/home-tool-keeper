@@ -203,8 +203,30 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
               </div>
             </div>
 
+            {/* Product URL section */}
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label>Product URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={productUrl}
+                  onChange={(e) => setProductUrl(e.target.value)}
+                  placeholder="Paste product page link..."
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleUrlLookup}
+                  disabled={!productUrl.trim() || urlLookingUp}
+                  className="gap-1"
+                >
+                  {urlLookingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link className="h-4 w-4" />}
+                  Fetch
+                </Button>
+              </div>
+            </div>
+
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Hammer, Nails..." required />
             </div>
 
