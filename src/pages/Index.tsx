@@ -41,7 +41,7 @@ const Index = () => {
       ? businessHouseIds
       : undefined;
 
-  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(effectiveHouseId, effectiveHouseIds);
+  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(effectiveHouseId, effectiveHouseIds, isAllPersonal);
   const {
     customCategories, customLocations,
     addCategory, updateCategory, deleteCategory,
