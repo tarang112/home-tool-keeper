@@ -199,10 +199,12 @@ const Index = () => {
         onOpenChange={setManageOpen}
         house={selectedHouse}
         members={members}
+        pendingInvites={pendingInvites}
         isOwner={isOwner}
         onInvite={inviteMember}
         onRename={renameHouse}
         onRemoveMember={removeMember}
+        onCancelInvite={cancelInvite}
         onDelete={deleteHouse}
         currentUserId={user?.id}
       />
