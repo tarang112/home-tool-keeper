@@ -42,76 +42,56 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
 
   return (
     <Card className="animate-slide-up">
-      <CardContent className="p-4">
-        {/* Always visible: icon, name, category, expiration, quantity */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">{categoryIcon}</span>
-              <h3 className="font-heading font-semibold text-base truncate">{item.name}</h3>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="text-xs">{categoryLabel}{subLabel ? ` › ${subLabel}` : ""}</Badge>
-              {item.expirationDate && (() => {
-                const exp = new Date(item.expirationDate);
-                const now = new Date();
-                const diffMs = exp.getTime() - now.getTime();
-                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-                const isExpired = diffDays < 0;
-                const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
-                return (
-                  <Badge
-                    variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
-                    className={`text-xs gap-1 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-                  >
-                    <Clock className="h-3 w-3" />
-                    {isExpired ? "Expired" : `Exp: ${exp.toLocaleDateString()}`}
-                  </Badge>
-                );
-              })()}
-              <span className="text-muted-foreground">
-                {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </span>
-            </div>
+      <CardContent className="px-3 py-2">
+        {/* Row 1: icon, name, category, expiration, quantity, actions */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
+            <span className="text-sm">{categoryIcon}</span>
+            <h3 className="font-heading font-semibold text-sm truncate">{item.name}</h3>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">{categoryLabel}{subLabel ? ` › ${subLabel}` : ""}</Badge>
+            {item.expirationDate && (() => {
+              const exp = new Date(item.expirationDate);
+              const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+              const isExpired = diffDays < 0;
+              const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
+              return (
+                <Badge
+                  variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
+                  className={`text-[10px] px-1.5 py-0 gap-0.5 shrink-0 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                >
+                  <Clock className="h-2.5 w-2.5" />
+                  {isExpired ? "Expired" : `${exp.toLocaleDateString()}`}
+                </Badge>
+              );
+            })()}
+            <span className="text-muted-foreground shrink-0">
+              {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </span>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => onAdjust(item.id, -1)}
-              disabled={item.quantity <= 0}
-            >
-              <Minus className="h-3 w-3" />
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
+              <Minus className="h-2.5 w-2.5" />
             </Button>
-            <span className={`font-heading font-bold text-lg text-center min-w-[2ch] ${item.quantity === 0 ? "text-destructive" : ""}`}>
+            <span className={`font-heading font-bold text-sm text-center min-w-[2ch] ${item.quantity === 0 ? "text-destructive" : ""}`}>
               {item.quantity}{item.quantityUnit && item.quantityUnit !== "pcs" ? ` ${item.quantityUnit}` : ""}
             </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => onAdjust(item.id, 1)}
-            >
-              <Plus className="h-3 w-3" />
+            <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => onAdjust(item.id, 1)}>
+              <Plus className="h-2.5 w-2.5" />
+            </Button>
+            <span className="w-px h-4 bg-border mx-0.5" />
+            {onMove && (
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onMove(item)} title="Move">
+                <ArrowRightLeft className="h-2.5 w-2.5" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(item)} title="Edit">
+              <Pencil className="h-2.5 w-2.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(item.id)} title="Delete">
+              <Trash2 className="h-2.5 w-2.5" />
             </Button>
           </div>
-        </div>
-
-        {/* Action buttons - bottom right */}
-        <div className="flex justify-end gap-0.5 mt-2">
-          {onMove && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move to house">
-              <ArrowRightLeft className="h-3 w-3" />
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)} title="Edit">
-            <Pencil className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(item.id)} title="Delete">
-            <Trash2 className="h-3 w-3" />
-          </Button>
         </div>
 
         {/* Expanded details */}
