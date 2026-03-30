@@ -166,9 +166,10 @@ async function webSearchBarcode(barcode: string) {
   }
 }
 
-/** Parse pack quantity from text like "6 ct", "12 Pack", "3 x 10oz" */
+/** Parse pack quantity from text like "6 ct", "12 Pack", "count is 21", "3 x 10oz" */
 function parseQuantity(text: string): number {
-  const m = text.match(/\b(\d+)\s*(?:ct|count|pk|pack|pcs?|pieces?)\b/i)
+  const m = text.match(/\bcount\s*(?:is|:)?\s*(\d+)\b/i)
+    || text.match(/\b(\d+)\s*(?:ct|count|pk|pack|pcs?|pieces?)\b/i)
     || text.match(/\b(\d+)\s*x\s*\d+(?:\.\d+)?\s*(?:oz|fl\s*oz|lb|g|kg|ml|l)\b/i);
   return m ? parseInt(m[1]) : 1;
 }
