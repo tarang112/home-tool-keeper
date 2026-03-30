@@ -79,7 +79,18 @@ const Index = () => {
   };
 
   const handleAddItem = (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
-    const houseIdForItem = isSpecificHouse ? selectedHouseId : null;
+    let houseIdForItem: string | null = null;
+    if (isSpecificHouse) {
+      houseIdForItem = selectedHouseId;
+    } else if (isAllPersonal && personalHouseIds.length === 1) {
+      houseIdForItem = personalHouseIds[0];
+    } else if (isAllBusiness && businessHouseIds.length === 1) {
+      houseIdForItem = businessHouseIds[0];
+    } else if (isAllPersonal && personalHouseIds.length > 1) {
+      houseIdForItem = personalHouseIds[0];
+    } else if (isAllBusiness && businessHouseIds.length > 1) {
+      houseIdForItem = businessHouseIds[0];
+    }
     addItem({ ...item, houseId: houseIdForItem });
   };
 
