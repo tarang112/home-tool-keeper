@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Package, LogOut, Settings2 } from "lucide-react";
+import { Plus, Search, Package, LogOut, Settings2, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { HouseManageDialog } from "@/components/HouseManageDialog";
 import { MoveItemDialog } from "@/components/MoveItemDialog";
 import { ManageOptionsDialog } from "@/components/ManageOptionsDialog";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ProfileSettingsDialog } from "@/components/ProfileSettingsDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessCategories } from "@/config/business-categories";
 
@@ -56,7 +57,7 @@ const Index = () => {
   const [manageOpen, setManageOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [moveItem, setMoveItem] = useState<InventoryItem | null>(null);
-
+  const [profileOpen, setProfileOpen] = useState(false);
   const filtered = useMemo(() => {
     return items.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -113,6 +114,9 @@ const Index = () => {
             <NotificationBell />
             <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
               <Settings2 className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setProfileOpen(true)} title="Profile settings">
+              <UserCog className="h-4 w-4" />
             </Button>
             <Button size="icon" variant="ghost" onClick={signOut} className="h-9 w-9">
               <LogOut className="h-4 w-4" />
@@ -259,6 +263,8 @@ const Index = () => {
         onUpdateLocation={updateLocation}
         onDeleteLocation={deleteLocation}
       />
+
+      <ProfileSettingsDialog open={profileOpen} onOpenChange={setProfileOpen} />
     </div>
   );
 };
