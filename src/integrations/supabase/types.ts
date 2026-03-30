@@ -19,21 +19,27 @@ export type Database = {
           created_at: string
           house_id: string
           id: string
+          relationship: string | null
           role: Database["public"]["Enums"]["house_role"]
+          share_mode: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           house_id: string
           id?: string
+          relationship?: string | null
           role?: Database["public"]["Enums"]["house_role"]
+          share_mode?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           house_id?: string
           id?: string
+          relationship?: string | null
           role?: Database["public"]["Enums"]["house_role"]
+          share_mode?: string | null
           user_id?: string
         }
         Relationships: [
@@ -200,6 +206,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_full_house_access: {
+        Args: { _house_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_house_member: {
         Args: { _house_id: string; _user_id: string }
         Returns: boolean
