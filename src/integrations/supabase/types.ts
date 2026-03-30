@@ -126,6 +126,45 @@ export type Database = {
           },
         ]
       }
+      item_shares: {
+        Row: {
+          created_at: string
+          house_id: string
+          id: string
+          item_id: string
+          shared_by: string
+        }
+        Insert: {
+          created_at?: string
+          house_id: string
+          id?: string
+          item_id: string
+          shared_by: string
+        }
+        Update: {
+          created_at?: string
+          house_id?: string
+          id?: string
+          item_id?: string
+          shared_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_shares_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_shares_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
