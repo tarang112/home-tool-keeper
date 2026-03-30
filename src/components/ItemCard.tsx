@@ -59,7 +59,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               <h3 className="font-heading font-semibold text-base truncate">{item.name}</h3>
             </div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <Badge variant="secondary" className="text-xs">{categoryLabel}</Badge>
+              <Badge variant="secondary" className="text-xs">{categoryLabel}{subLabel ? ` › ${subLabel}` : ""}</Badge>
               {item.sharedFromHouse && (
                 <Badge variant="outline" className="text-xs gap-1">
                   <Share2 className="h-3 w-3" />
