@@ -23,10 +23,13 @@ export interface InventoryItem {
 }
 
 function rowToItem(row: any): InventoryItem {
+  const rawCat = row.category as string;
+  const isCustom = rawCat?.startsWith("custom:");
   return {
     id: row.id,
     name: row.name,
-    category: row.category as ItemCategory,
+    category: isCustom ? "custom" as ItemCategory : rawCat as ItemCategory,
+    customCategory: isCustom ? rawCat.slice(7) : undefined,
     quantity: row.quantity,
     location: row.location,
     locationDetail: row.location_detail || "",
