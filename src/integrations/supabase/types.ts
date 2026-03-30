@@ -59,6 +59,50 @@ export type Database = {
         }
         Relationships: []
       }
+      house_invites: {
+        Row: {
+          created_at: string
+          email: string
+          house_id: string
+          id: string
+          invited_by: string
+          relationship: string | null
+          role: string
+          share_mode: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          house_id: string
+          id?: string
+          invited_by: string
+          relationship?: string | null
+          role?: string
+          share_mode?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          house_id?: string
+          id?: string
+          invited_by?: string
+          relationship?: string | null
+          role?: string
+          share_mode?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "house_invites_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       house_members: {
         Row: {
           created_at: string
@@ -307,6 +351,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_pending_invites: {
+        Args: { _email: string; _user_id: string }
+        Returns: undefined
+      }
       has_full_house_access: {
         Args: { _house_id: string; _user_id: string }
         Returns: boolean
