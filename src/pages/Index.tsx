@@ -265,7 +265,7 @@ const Index = () => {
         onDeleteLocation={deleteLocation}
       />
 
-      <ProfileSettingsDialog open={profileOpen} onOpenChange={setProfileOpen} />
+      <ProfileSettingsDialog open={profileOpen} onOpenChange={setProfileOpen} houses={houses} defaultHouseId={defaultHouseId} onSetDefaultHouse={setDefaultHouse} />
     </div>
   );
 };
