@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2 } from "lucide-react";
-import { CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
+import { CATEGORIES, MAIN_CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
 import { useState } from "react";
 
 function proxyImg(url?: string, size = 200) {
@@ -27,6 +27,10 @@ interface ItemCardProps {
 
 export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardProps) {
   const cat = CATEGORIES.find((c) => c.value === item.category);
+  const mainCat = MAIN_CATEGORIES.find((c) => c.value === item.category);
+  const subLabel = item.subcategory && mainCat
+    ? mainCat.subcategories.find(s => s.value === item.subcategory)?.label
+    : undefined;
   const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label;
   const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon;
   const hasProductImg = !!item.productImage;
@@ -55,7 +59,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               <h3 className="font-heading font-semibold text-base truncate">{item.name}</h3>
             </div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <Badge variant="secondary" className="text-xs">{categoryLabel}</Badge>
+              <Badge variant="secondary" className="text-xs">{categoryLabel}{subLabel ? ` › ${subLabel}` : ""}</Badge>
               {item.sharedFromHouse && (
                 <Badge variant="outline" className="text-xs gap-1">
                   <Share2 className="h-3 w-3" />

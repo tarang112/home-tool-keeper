@@ -6,11 +6,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, X, ScanBarcode, Loader2, Link } from "lucide-react";
-import { CATEGORIES, LOCATIONS, type InventoryItem, type ItemCategory } from "@/hooks/use-inventory";
+import { MAIN_CATEGORIES, LOCATIONS, type InventoryItem, type ItemCategory } from "@/hooks/use-inventory";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,7 +34,8 @@ export function AddItemDialog({
   onEnsureCategory, onEnsureLocation,
 }: AddItemDialogProps) {
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<ItemCategory>("tools");
+  const [category, setCategory] = useState<ItemCategory>("hardware-tools");
+  const [subcategory, setSubcategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [locationMode, setLocationMode] = useState("Garage");
@@ -54,11 +55,15 @@ export function AddItemDialog({
 
   const allLocations = [...LOCATIONS, ...customLocations.map(l => l.name)];
 
+  const selectedMain = MAIN_CATEGORIES.find(c => c.value === category);
+  const subcategories = selectedMain?.subcategories || [];
+
   useEffect(() => {
     if (!open) return;
     if (editItem) {
       setName(editItem.name);
       setCategory(editItem.category);
+      setSubcategory(editItem.subcategory || "");
       setCustomCategory(editItem.customCategory || "");
       setQuantity(String(editItem.quantity));
       const loc = editItem.location;
@@ -73,12 +78,13 @@ export function AddItemDialog({
       setLocationImage(editItem.locationImage ?? "");
       setProductImage(editItem.productImage ?? "");
       setItemImage(editItem.itemImage ?? "");
-      setNotes(editItem.notes ?? "");      
+      setNotes(editItem.notes ?? "");
       setBarcode(editItem.barcode ?? "");
       setProductUrl("");
     } else {
       setName("");
-      setCategory("tools");
+      setCategory("hardware-tools");
+      setSubcategory("");
       setCustomCategory("");
       setQuantity("1");
       setLocationMode("Garage");
@@ -96,8 +102,12 @@ export function AddItemDialog({
 
   const applyProduct = (p: any) => {
     if (p.name && !name) setName(p.name);
-    if (p.category && CATEGORIES.some((c) => c.value === p.category)) {
-      setCategory(p.category as ItemCategory);
+    // Try to match to a main category
+    if (p.category) {
+      const mainMatch = MAIN_CATEGORIES.find(c => c.value === p.category);
+      if (mainMatch) {
+        setCategory(p.category);
+      }
     }
     if (p.notes && !notes) setNotes(p.notes);
     if (p.image_url) {
@@ -164,13 +174,28 @@ export function AddItemDialog({
     reader.readAsDataURL(file);
   };
 
+  const handleCategoryChange = (val: string) => {
+    if (val.startsWith("customsaved:")) {
+      setCategory("custom");
+      setCustomCategory(val.slice(12));
+      setSubcategory("");
+    } else if (val === "custom") {
+      setCategory("custom");
+      setCustomCategory("");
+      setSubcategory("");
+    } else {
+      setCategory(val);
+      setCustomCategory("");
+      setSubcategory("");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     const finalLocation = locationMode === "custom" ? customLocation.trim() : locationMode;
 
-    // Auto-save custom category/location for future use
     if (category === "custom" && customCategory.trim() && onEnsureCategory) {
       await onEnsureCategory(customCategory.trim());
     }
@@ -181,6 +206,7 @@ export function AddItemDialog({
     const data = {
       name: name.trim(),
       category,
+      subcategory: subcategory || "",
       customCategory: category === "custom" ? customCategory.trim() : undefined,
       quantity: Math.max(0, parseInt(quantity) || 0),
       location: finalLocation,
@@ -258,37 +284,53 @@ export function AddItemDialog({
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Hammer, Nails..." required />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Category & Subcategory */}
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select
+                value={category === "custom" ? (customCategory ? `customsaved:${customCategory}` : "custom") : category}
+                onValueChange={handleCategoryChange}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MAIN_CATEGORIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.icon} {c.label}</SelectItem>
+                  ))}
+                  {customCategories.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel className="text-xs text-muted-foreground">Your Custom Categories</SelectLabel>
+                      {customCategories.map((c) => (
+                        <SelectItem key={`custom-${c.name}`} value={`customsaved:${c.name}`}>{c.icon} {c.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  <SelectItem value="custom">✏️ New Custom</SelectItem>
+                </SelectContent>
+              </Select>
+              {category === "custom" && (
+                <Input value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Enter custom category name..." className="mt-2" />
+              )}
+            </div>
+
+            {/* Subcategory - only show if main category has subcategories */}
+            {subcategories.length > 0 && (
               <div className="space-y-2">
-                <Label>Category</Label>
-                <Select value={category === "custom" ? "custom" : (category as string).startsWith("customsaved:") ? category as string : category} onValueChange={(v) => {
-                    if (v.startsWith("customsaved:")) {
-                      setCategory("custom" as ItemCategory);
-                      setCustomCategory(v.slice(12));
-                    } else {
-                      setCategory(v as ItemCategory);
-                      if (v !== "custom") setCustomCategory("");
-                    }
-                  }}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Label>Subcategory</Label>
+                <Select value={subcategory || "none"} onValueChange={(v) => setSubcategory(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Select subcategory..." /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.icon} {c.label}</SelectItem>
+                    <SelectItem value="none">— General —</SelectItem>
+                    {subcategories.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                     ))}
-                    {customCategories.map((c) => (
-                      <SelectItem key={`custom-${c.name}`} value={`customsaved:${c.name}`}>{c.icon} {c.name}</SelectItem>
-                    ))}
-                    <SelectItem value="custom">✏️ New Custom</SelectItem>
                   </SelectContent>
                 </Select>
-                {category === "custom" && (
-                  <Input value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Enter custom category name..." className="mt-2" />
-                )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input id="quantity" type="number" min="0" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="quantity">Quantity</Label>
+              <Input id="quantity" type="number" min="0" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
             </div>
 
             <div className="space-y-2">
