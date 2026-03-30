@@ -420,6 +420,24 @@ export const MAIN_CATEGORIES: MainCategory[] = [
     ],
   },
   {
+    value: "stationery", label: "Stationery", icon: "✏️",
+    subcategories: [
+      { value: "pens-pencils", label: "Pens & Pencils" },
+      { value: "notebooks", label: "Notebooks & Pads" },
+      { value: "paper", label: "Paper & Envelopes" },
+      { value: "art-supplies", label: "Art Supplies" },
+    ],
+  },
+  {
+    value: "office-supply", label: "Office Supply", icon: "🖨️",
+    subcategories: [
+      { value: "desk-accessories", label: "Desk Accessories" },
+      { value: "filing", label: "Filing & Folders" },
+      { value: "printer-supplies", label: "Printer Supplies" },
+      { value: "tech-accessories", label: "Tech Accessories" },
+    ],
+  },
+  {
     value: "other", label: "Other", icon: "📦",
     subcategories: [],
   },
