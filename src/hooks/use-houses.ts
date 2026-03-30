@@ -49,6 +49,8 @@ export function useHouses() {
         name: h.name,
         ownerId: h.owner_id,
         createdAt: h.created_at,
+        propertyType: h.property_type || "personal",
+        businessType: h.business_type || undefined,
       }));
       setHouses(mapped);
     }
