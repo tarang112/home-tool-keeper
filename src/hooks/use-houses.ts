@@ -125,6 +125,7 @@ export function useHouses() {
       shareMode: inv.share_mode,
       status: inv.status,
       createdAt: inv.created_at,
+      inviteToken: inv.invite_token,
     })));
   }, []);
 
