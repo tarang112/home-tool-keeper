@@ -45,15 +45,17 @@ Deno.serve(async (req) => {
     if (offData.status === 1 && offData.product) {
       const p = offData.product;
       const catInfo = guessCategory(p.categories_tags || []);
+      const packQty = parseInt(p.product_quantity) || parseInt(p.quantity?.match(/(\d+)/)?.[1]) || 1;
       return jsonResponse({
         success: true,
         source: 'openfoodfacts',
         product: {
-          name: p.product_name || p.product_name_en || '',
+          name: p.product_name_en || p.product_name || '',
           category: catInfo.category,
           subcategory: catInfo.subcategory,
           notes: [p.brands, p.quantity, p.generic_name].filter(Boolean).join(' — '),
           image_url: p.image_url || p.image_front_url || '',
+          quantity: packQty,
         },
       });
     }

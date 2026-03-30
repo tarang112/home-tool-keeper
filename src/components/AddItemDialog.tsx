@@ -128,6 +128,7 @@ export function AddItemDialog({
         }
       }
     }
+    if (p.quantity && Number(p.quantity) > 0) setQuantity(String(p.quantity));
     if (p.notes) setNotes(p.notes);
     if (p.image_url) {
       setProductImage(p.image_url);
