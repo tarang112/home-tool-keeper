@@ -30,6 +30,7 @@ interface AddItemDialogProps {
   customLocations?: CustomLocation[];
   onEnsureCategory?: (name: string, icon?: string) => Promise<void>;
   onEnsureLocation?: (name: string) => Promise<void>;
+  businessCategories?: MainCategory[];
 }
 
 export function AddItemDialog({
