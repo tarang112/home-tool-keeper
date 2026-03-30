@@ -58,6 +58,7 @@ function rowToItem(row: any): InventoryItem {
     itemImage: row.item_image_url || "",
     notes: row.notes || "",
     barcode: row.barcode || "",
+    expirationDate: row.expiration_date || null,
     houseId: row.house_id || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
