@@ -23,7 +23,7 @@ const Index = () => {
   const {
     houses, selectedHouseId, selectedHouse, setSelectedHouseId,
     members, isOwner, loading: housesLoading,
-    createHouse, deleteHouse, inviteMember, removeMember,
+    createHouse, renameHouse, deleteHouse, inviteMember, removeMember,
   } = useHouses();
   const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(selectedHouseId);
   const {
