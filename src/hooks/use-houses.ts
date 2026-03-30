@@ -168,8 +168,9 @@ export function useHouses() {
   }, []);
 
   useEffect(() => {
-    if (selectedHouseId) fetchMembers(selectedHouseId);
-    else {
+    if (selectedHouseId && !selectedHouseId.startsWith("all-")) {
+      fetchMembers(selectedHouseId);
+    } else {
       setMembers([]);
       setPendingInvites([]);
     }
