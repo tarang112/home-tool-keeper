@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, X, ScanBarcode, Loader2, Link, CalendarIcon } from "lucide-react";
-import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, type InventoryItem, type ItemCategory } from "@/hooks/use-inventory";
+import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, type InventoryItem, type ItemCategory, type MainCategory } from "@/hooks/use-inventory";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
