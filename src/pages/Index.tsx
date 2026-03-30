@@ -224,6 +224,7 @@ const Index = () => {
         onRemoveMember={removeMember}
         onCancelInvite={cancelInvite}
         onDelete={deleteHouse}
+        onUploadImage={uploadHouseImage}
         currentUserId={user?.id}
       />
 
