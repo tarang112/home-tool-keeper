@@ -129,7 +129,7 @@ export function useHouses() {
 
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("member_profiles")
         .select("user_id, display_name")
         .in("user_id", userIds);
 

@@ -52,7 +52,7 @@ export default function AcceptInvite() {
 
       // Fetch inviter name
       const { data: profile } = await supabase
-        .from("profiles")
+        .from("member_profiles")
         .select("display_name")
         .eq("user_id", inviteData.invited_by)
         .single();
