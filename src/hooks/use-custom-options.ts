@@ -12,12 +12,15 @@ export interface CustomCategory {
 export interface CustomLocation {
   id: string;
   name: string;
+  propertyType: string;
 }
 
-export function useCustomOptions() {
+export function useCustomOptions(propertyType: string = "personal") {
   const { user } = useAuth();
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
-  const [customLocations, setCustomLocations] = useState<CustomLocation[]>([]);
+  const [allCustomLocations, setAllCustomLocations] = useState<CustomLocation[]>([]);
+
+  const customLocations = allCustomLocations.filter(l => l.propertyType === propertyType);
 
   const fetchOptions = useCallback(async () => {
     if (!user) return;
@@ -26,7 +29,7 @@ export function useCustomOptions() {
       supabase.from("custom_locations").select("*").order("name"),
     ]);
     if (catRes.data) setCustomCategories(catRes.data.map((c: any) => ({ id: c.id, name: c.name, icon: c.icon || "📦" })));
-    if (locRes.data) setCustomLocations(locRes.data.map((l: any) => ({ id: l.id, name: l.name })));
+    if (locRes.data) setAllCustomLocations(locRes.data.map((l: any) => ({ id: l.id, name: l.name, propertyType: l.property_type || "personal" })));
   }, [user]);
 
   useEffect(() => { fetchOptions(); }, [fetchOptions]);
@@ -57,29 +60,28 @@ export function useCustomOptions() {
 
   const addLocation = useCallback(async (name: string) => {
     if (!user || !name.trim()) return;
-    const { data, error } = await supabase.from("custom_locations").insert({ user_id: user.id, name: name.trim() }).select().single();
+    const { data, error } = await supabase.from("custom_locations").insert({ user_id: user.id, name: name.trim(), property_type: propertyType } as any).select().single();
     if (error) {
       if (error.code === "23505") { toast.info("Location already exists"); return; }
       toast.error("Failed to add location"); return;
     }
-    setCustomLocations(prev => [...prev, { id: data.id, name: data.name }]);
+    setAllCustomLocations(prev => [...prev, { id: data.id, name: data.name, propertyType }]);
     toast.success("Location added");
-  }, [user]);
+  }, [user, propertyType]);
 
   const updateLocation = useCallback(async (id: string, name: string) => {
     const { error } = await supabase.from("custom_locations").update({ name }).eq("id", id);
     if (error) { toast.error("Failed to update location"); return; }
-    setCustomLocations(prev => prev.map(l => l.id === id ? { ...l, name } : l));
+    setAllCustomLocations(prev => prev.map(l => l.id === id ? { ...l, name } : l));
   }, []);
 
   const deleteLocation = useCallback(async (id: string) => {
     const { error } = await supabase.from("custom_locations").delete().eq("id", id);
     if (error) { toast.error("Failed to delete location"); return; }
-    setCustomLocations(prev => prev.filter(l => l.id !== id));
+    setAllCustomLocations(prev => prev.filter(l => l.id !== id));
     toast.success("Location deleted");
   }, []);
 
-  // Auto-save a custom category/location when used (for persistence)
   const ensureCategory = useCallback(async (name: string, icon = "📦") => {
     if (!user || !name.trim()) return;
     if (customCategories.some(c => c.name.toLowerCase() === name.trim().toLowerCase())) return;
