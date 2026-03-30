@@ -279,6 +279,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
     }
     if (updates.subcategory !== undefined) dbUpdates.subcategory = updates.subcategory;
     if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
+    if (updates.quantityUnit !== undefined) dbUpdates.quantity_unit = updates.quantityUnit;
     if (updates.location !== undefined) dbUpdates.location = updates.location;
     if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
