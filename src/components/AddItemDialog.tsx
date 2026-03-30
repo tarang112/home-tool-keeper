@@ -386,6 +386,8 @@ export function AddItemDialog({
               </div>
             )}
 
+            <div className="space-y-2">
+              <Label>Location</Label>
               <Select value={locationMode} onValueChange={setLocationMode}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
