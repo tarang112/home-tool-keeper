@@ -254,6 +254,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
       category: item.category === "custom" ? `custom:${item.customCategory || "Other"}` : item.category,
       subcategory: item.subcategory || "",
       quantity: item.quantity,
+      quantity_unit: item.quantityUnit || "pcs",
       location: item.location,
       location_detail: item.locationDetail,
       location_image_url: imageUrl,
