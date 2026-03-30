@@ -14,11 +14,11 @@ export interface InventoryItem {
   locationDetail: string;
   locationImage: string;
   notes: string;
+  houseId: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-// Map DB row to frontend model
 function rowToItem(row: any): InventoryItem {
   return {
     id: row.id,
@@ -29,23 +29,32 @@ function rowToItem(row: any): InventoryItem {
     locationDetail: row.location_detail || "",
     locationImage: row.location_image_url || "",
     notes: row.notes || "",
+    houseId: row.house_id || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
-export function useInventory() {
+export function useInventory(houseId?: string | null) {
   const { user } = useAuth();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch items
   const fetchItems = useCallback(async () => {
     if (!user) { setItems([]); setLoading(false); return; }
-    const { data, error } = await supabase
+    let query = supabase
       .from("inventory_items")
       .select("*")
       .order("created_at", { ascending: false });
+
+    if (houseId) {
+      query = query.eq("house_id", houseId);
+    } else {
+      // Show personal items (no house) when no house selected
+      query = query.is("house_id", null).eq("user_id", user.id);
+    }
+
+    const { data, error } = await query;
     if (error) {
       toast.error("Failed to load items");
       console.error(error);
@@ -53,16 +62,13 @@ export function useInventory() {
       setItems((data || []).map(rowToItem));
     }
     setLoading(false);
-  }, [user]);
+  }, [user, houseId]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
-  // Upload image to storage, return public URL
   const uploadImage = useCallback(async (file: File | string): Promise<string> => {
     if (!user) return "";
-    // If it's already a URL (not base64), return as-is
     if (typeof file === "string" && file.startsWith("http")) return file;
-    // If base64, convert to blob
     let blob: Blob;
     let ext = "jpg";
     if (typeof file === "string" && file.startsWith("data:")) {
@@ -97,6 +103,7 @@ export function useInventory() {
       location_detail: item.locationDetail,
       location_image_url: imageUrl,
       notes: item.notes,
+      house_id: item.houseId || null,
     }).select().single();
     if (error) { toast.error("Failed to add item"); return; }
     setItems((prev) => [rowToItem(data), ...prev]);
@@ -112,6 +119,7 @@ export function useInventory() {
     if (updates.location !== undefined) dbUpdates.location = updates.location;
     if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.houseId !== undefined) dbUpdates.house_id = updates.houseId || null;
     if (updates.locationImage !== undefined) {
       if (updates.locationImage && !updates.locationImage.startsWith("http")) {
         dbUpdates.location_image_url = await uploadImage(updates.locationImage);

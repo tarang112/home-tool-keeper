@@ -14,10 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      house_members: {
+        Row: {
+          created_at: string
+          house_id: string
+          id: string
+          role: Database["public"]["Enums"]["house_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          house_id: string
+          id?: string
+          role?: Database["public"]["Enums"]["house_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          house_id?: string
+          id?: string
+          role?: Database["public"]["Enums"]["house_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "house_members_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      houses: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           category: string
           created_at: string
+          house_id: string | null
           id: string
           location: string
           location_detail: string | null
@@ -31,6 +88,7 @@ export type Database = {
         Insert: {
           category?: string
           created_at?: string
+          house_id?: string | null
           id?: string
           location?: string
           location_detail?: string | null
@@ -44,6 +102,7 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          house_id?: string | null
           id?: string
           location?: string
           location_detail?: string | null
@@ -54,7 +113,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -88,10 +155,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_house_member: {
+        Args: { _house_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      house_role: "owner" | "editor" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -218,6 +288,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      house_role: ["owner", "editor", "viewer"],
+    },
   },
 } as const
