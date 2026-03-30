@@ -22,6 +22,7 @@ interface HouseManageDialogProps {
   pendingInvites?: PendingInvite[];
   isOwner: boolean;
   onInvite: (houseId: string, email: string, role: "editor" | "viewer", relationship: string, shareMode: "full" | "selected") => void;
+  onCreateInviteLink?: (houseId: string, role: "editor" | "viewer", relationship: string, shareMode: "full" | "selected") => Promise<string | null>;
   onRename: (houseId: string, newName: string) => void;
   onRemoveMember: (memberId: string, houseId: string) => void;
   onCancelInvite?: (inviteId: string, houseId: string) => void;
