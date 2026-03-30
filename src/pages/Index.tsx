@@ -154,7 +154,7 @@ const Index = () => {
               ? getBusinessCategories(selectedHouse.businessType).map((c) => ({ value: c.value, label: c.label, icon: c.icon }))
               : CATEGORIES;
           return (
-            <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-5 scrollbar-hide">
               <Badge
                 variant={activeCategory === "all" ? "default" : "secondary"}
                 className="cursor-pointer shrink-0 select-none"
