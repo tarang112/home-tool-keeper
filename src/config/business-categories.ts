@@ -61,6 +61,17 @@ export const BUSINESS_TYPES: BusinessType[] = [
         ],
       },
       {
+        value: "furniture", label: "Furniture", icon: "🪑",
+        subcategories: [
+          { value: "lobby-furniture", label: "Lobby & Lounge Furniture" },
+          { value: "room-furniture-items", label: "Room Furniture" },
+          { value: "outdoor-furniture", label: "Outdoor & Patio Furniture" },
+          { value: "conference-furniture", label: "Conference & Meeting Room" },
+          { value: "restaurant-furniture", label: "Restaurant & Dining Furniture" },
+          { value: "office-furniture", label: "Office Furniture" },
+        ],
+      },
+      {
         value: "front-desk", label: "Front Desk & Office", icon: "🖥️",
         subcategories: [
           { value: "office-supplies", label: "Office Supplies" },
