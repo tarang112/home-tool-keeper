@@ -102,11 +102,13 @@ export function AddItemDialog({
 
   const applyProduct = (p: any) => {
     if (p.name && !name) setName(p.name);
-    // Try to match to a main category
     if (p.category) {
       const mainMatch = MAIN_CATEGORIES.find(c => c.value === p.category);
       if (mainMatch) {
         setCategory(p.category);
+        if (p.subcategory && mainMatch.subcategories.some(s => s.value === p.subcategory)) {
+          setSubcategory(p.subcategory);
+        }
       }
     }
     if (p.notes && !notes) setNotes(p.notes);
