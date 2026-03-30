@@ -87,7 +87,14 @@ export function HouseSelector({ houses, selectedHouseId, onSelect, onCreate, onM
                   const bt = BUSINESS_TYPES.find((b) => b.value === h.businessType);
                   return (
                     <SelectItem key={h.id} value={h.id}>
-                      {bt?.icon || "🏢"} {h.name}
+                      <span className="flex items-center gap-2">
+                        {h.imageUrl ? (
+                          <img src={h.imageUrl} alt="" className="h-4 w-4 rounded object-cover shrink-0" />
+                        ) : (
+                          <span>{bt?.icon || "🏢"}</span>
+                        )}
+                        {h.name}
+                      </span>
                     </SelectItem>
                   );
                 })}
