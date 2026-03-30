@@ -97,20 +97,21 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               <Plus className="h-3 w-3" />
             </Button>
           </div>
+        </div>
 
-          <div className="flex items-center gap-0.5 shrink-0">
-            {onMove && (
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move to house">
-                <ArrowRightLeft className="h-3 w-3" />
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)} title="Edit">
-              <Pencil className="h-3 w-3" />
+        {/* Action buttons - bottom right */}
+        <div className="flex justify-end gap-0.5 mt-2">
+          {onMove && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move to house">
+              <ArrowRightLeft className="h-3 w-3" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(item.id)} title="Delete">
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
+          )}
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)} title="Edit">
+            <Pencil className="h-3 w-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(item.id)} title="Delete">
+            <Trash2 className="h-3 w-3" />
+          </Button>
         </div>
 
         {/* Expanded details */}
