@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN default_house_id uuid DEFAULT NULL;
