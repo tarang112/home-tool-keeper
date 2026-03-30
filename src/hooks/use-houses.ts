@@ -23,9 +23,15 @@ export interface HouseMember {
   email?: string;
 }
 
-export const RELATIONSHIPS = [
+export const PERSONAL_RELATIONSHIPS = [
   "Household", "Family", "Friend", "Neighbor", "Colleague", "Contractor", "Other"
 ];
+
+export const BUSINESS_RELATIONSHIPS = [
+  "Owner", "Manager", "Employee", "Contractor", "Vendor", "Supplier", "Consultant", "Partner", "Other"
+];
+
+export const RELATIONSHIPS = PERSONAL_RELATIONSHIPS;
 
 export function useHouses() {
   const { user } = useAuth();
