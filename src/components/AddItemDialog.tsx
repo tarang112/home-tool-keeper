@@ -65,6 +65,18 @@ export function AddItemDialog({
   const selectedMain = activeCategoryList.find(c => c.value === category);
   const subcategories = selectedMain?.subcategories || [];
 
+  const namePlaceholder = (() => {
+    if (!businessCategories) return "e.g. Hammer, Nails, Milk...";
+    const firstCat = businessCategories[0]?.value || "";
+    if (firstCat.includes("rooms") || firstCat.includes("linens")) return "e.g. Bath Towels, Bed Sheets, Pillows...";
+    if (firstCat.includes("food") || firstCat.includes("ingredients")) return "e.g. Olive Oil, Flour, Chicken Breast...";
+    if (firstCat.includes("merchandise")) return "e.g. T-Shirt, Phone Case, Candle...";
+    if (firstCat.includes("office-supplies")) return "e.g. Printer Paper, Stapler, Toner...";
+    if (firstCat.includes("hair")) return "e.g. Shampoo, Hair Dye, Styling Gel...";
+    if (firstCat.includes("medical")) return "e.g. Latex Gloves, Gauze, Thermometer...";
+    return "e.g. Item name...";
+  })();
+
   useEffect(() => {
     if (!open) return;
     if (editItem) {
@@ -304,7 +316,7 @@ export function AddItemDialog({
 
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Hammer, Nails..." required />
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={namePlaceholder} required />
             </div>
 
             {/* Category & Subcategory */}
