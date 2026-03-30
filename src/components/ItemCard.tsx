@@ -2,8 +2,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2, Clock, ChevronDown, ChevronUp } from "lucide-react";
-import { CATEGORIES, MAIN_CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
-import { useState } from "react";
+import { CATEGORIES, MAIN_CATEGORIES, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
+import { BUSINESS_TYPES } from "@/config/business-categories";
+import { useState, useMemo } from "react";
+
+const ALL_CATEGORIES: MainCategory[] = [
+  ...MAIN_CATEGORIES,
+  ...BUSINESS_TYPES.flatMap((bt) => bt.categories),
+];
 
 function proxyImg(url?: string, size = 200) {
   if (!url) return "";
