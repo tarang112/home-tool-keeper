@@ -380,29 +380,56 @@ export function AddItemDialog({
             {EXPIRABLE_CATEGORIES.includes(category) && (
               <div className="space-y-2">
                 <Label>Expiration Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !expirationDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {expirationDate ? format(expirationDate, "PPP") : <span>Pick expiration date...</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={expirationDate}
-                      onSelect={setExpirationDate}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="flex gap-2 items-center">
+                  <Select
+                    value={expirationDate ? String(expirationDate.getMonth()) : ""}
+                    onValueChange={(v) => {
+                      const month = parseInt(v);
+                      const current = expirationDate || new Date();
+                      const newDate = new Date(current.getFullYear(), month, Math.min(current.getDate(), new Date(current.getFullYear(), month + 1, 0).getDate()));
+                      setExpirationDate(newDate);
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
+                        <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={31}
+                    placeholder="Day"
+                    className="w-20"
+                    value={expirationDate ? expirationDate.getDate() : ""}
+                    onChange={(e) => {
+                      const day = parseInt(e.target.value) || 1;
+                      const current = expirationDate || new Date();
+                      const maxDay = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
+                      const newDate = new Date(current.getFullYear(), current.getMonth(), Math.min(day, maxDay));
+                      setExpirationDate(newDate);
+                    }}
+                  />
+                  <Input
+                    type="number"
+                    min={2020}
+                    max={2099}
+                    placeholder="Year"
+                    className="w-24"
+                    value={expirationDate ? expirationDate.getFullYear() : ""}
+                    onChange={(e) => {
+                      const year = parseInt(e.target.value) || new Date().getFullYear();
+                      const current = expirationDate || new Date();
+                      const maxDay = new Date(year, current.getMonth() + 1, 0).getDate();
+                      const newDate = new Date(year, current.getMonth(), Math.min(current.getDate(), maxDay));
+                      setExpirationDate(newDate);
+                    }}
+                  />
+                </div>
                 {expirationDate && (
                   <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setExpirationDate(undefined)}>
                     Clear expiration date
