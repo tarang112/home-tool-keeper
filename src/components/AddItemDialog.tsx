@@ -351,8 +351,41 @@ export function AddItemDialog({
               <Input id="quantity" type="number" min="0" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
             </div>
 
-            <div className="space-y-2">
-              <Label>Location</Label>
+            {/* Expiration Date - only for food/medicine categories */}
+            {EXPIRABLE_CATEGORIES.includes(category) && (
+              <div className="space-y-2">
+                <Label>Expiration Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !expirationDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {expirationDate ? format(expirationDate, "PPP") : <span>Pick expiration date...</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={expirationDate}
+                      onSelect={setExpirationDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {expirationDate && (
+                  <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setExpirationDate(undefined)}>
+                    Clear expiration date
+                  </Button>
+                )}
+              </div>
+            )}
+
               <Select value={locationMode} onValueChange={setLocationMode}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
