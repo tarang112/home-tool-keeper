@@ -37,7 +37,7 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function HouseManageDialog({
-  open, onOpenChange, house, members, pendingInvites = [], isOwner, onInvite, onRename, onRemoveMember, onCancelInvite, onDelete, currentUserId,
+  open, onOpenChange, house, members, pendingInvites = [], isOwner, onInvite, onCreateInviteLink, onRename, onRemoveMember, onCancelInvite, onDelete, currentUserId,
 }: HouseManageDialogProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "viewer">("editor");
