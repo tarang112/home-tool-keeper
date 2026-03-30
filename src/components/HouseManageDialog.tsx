@@ -9,7 +9,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2 } from "lucide-react";
+import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X } from "lucide-react";
 import type { House, HouseMember } from "@/hooks/use-houses";
 import { PERSONAL_RELATIONSHIPS, BUSINESS_RELATIONSHIPS } from "@/hooks/use-houses";
 
@@ -20,6 +20,7 @@ interface HouseManageDialogProps {
   members: HouseMember[];
   isOwner: boolean;
   onInvite: (houseId: string, email: string, role: "editor" | "viewer", relationship: string, shareMode: "full" | "selected") => void;
+  onRename: (houseId: string, newName: string) => void;
   onRemoveMember: (memberId: string, houseId: string) => void;
   onDelete: (houseId: string) => void;
   currentUserId?: string;
@@ -32,13 +33,15 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function HouseManageDialog({
-  open, onOpenChange, house, members, isOwner, onInvite, onRemoveMember, onDelete, currentUserId,
+  open, onOpenChange, house, members, isOwner, onInvite, onRename, onRemoveMember, onDelete, currentUserId,
 }: HouseManageDialogProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "viewer">("editor");
   const [relationship, setRelationship] = useState("Household");
   const [shareMode, setShareMode] = useState<"full" | "selected">("full");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
 
   if (!house) return null;
 
@@ -62,8 +65,42 @@ export function HouseManageDialog({
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); setConfirmDelete(false); }}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-heading">🏠 {house.name}</DialogTitle>
-          <DialogDescription>Manage members and sharing for this house.</DialogDescription>
+          <DialogTitle className="font-heading flex items-center gap-2">
+            {house.propertyType === "business" ? "🏢" : "🏠"}
+            {editing ? (
+              <div className="flex items-center gap-1 flex-1">
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="h-7 text-base"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && editName.trim()) {
+                      onRename(house.id, editName.trim());
+                      setEditing(false);
+                    }
+                    if (e.key === "Escape") setEditing(false);
+                  }}
+                  autoFocus
+                />
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { if (editName.trim()) { onRename(house.id, editName.trim()); setEditing(false); } }}>
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setEditing(false)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <span className="flex items-center gap-1">
+                {house.name}
+                {isOwner && (
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditName(house.name); setEditing(true); }}>
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
+              </span>
+            )}
+          </DialogTitle>
+          <DialogDescription>Manage members and sharing for this {house.propertyType === "business" ? "business" : "house"}.</DialogDescription>
         </DialogHeader>
 
         {/* Members list */}
