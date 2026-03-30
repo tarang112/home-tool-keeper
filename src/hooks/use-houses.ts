@@ -46,6 +46,11 @@ export const BUSINESS_RELATIONSHIPS = [
 
 export const RELATIONSHIPS = PERSONAL_RELATIONSHIPS;
 
+const supabaseRpc = supabase.rpc.bind(supabase) as (
+  fn: string,
+  args?: Record<string, unknown>,
+) => Promise<{ data: any; error: any }>;
+
 export function useHouses() {
   const { user } = useAuth();
   const [houses, setHouses] = useState<House[]>([]);
@@ -128,10 +133,9 @@ export function useHouses() {
     let profileMap: Record<string, string> = {};
 
     if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("member_profiles")
-        .select("user_id, display_name")
-        .in("user_id", userIds);
+      const { data: profiles } = await supabaseRpc("get_house_member_profiles", {
+        _house_id: houseId,
+      });
 
       if (profiles) {
         profiles.forEach((p: any) => {
@@ -273,10 +277,10 @@ export function useHouses() {
   ) => {
     const normalizedEmail = email.trim().toLowerCase();
 
-    const { data: profiles, error: profileError } = await supabase
-      .from("profiles")
-      .select("user_id, display_name")
-      .eq("email", normalizedEmail);
+    const { data: profiles, error: profileError } = await supabaseRpc("find_house_invitable_user", {
+      _house_id: houseId,
+      _email: normalizedEmail,
+    });
 
     if (profileError || !profiles || profiles.length === 0) {
       const { error: inviteError } = await supabase

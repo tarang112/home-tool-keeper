@@ -6,6 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CheckCircle2, XCircle, Users } from "lucide-react";
 
+const supabaseRpc = supabase.rpc.bind(supabase) as (
+  fn: string,
+  args?: Record<string, unknown>,
+) => Promise<{ data: any; error: any }>;
+
 export default function AcceptInvite() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
@@ -50,13 +55,13 @@ export default function AcceptInvite() {
         .single();
       if (house) setHouseName(house.name);
 
-      // Fetch inviter name
-      const { data: profile } = await supabase
-        .from("member_profiles")
-        .select("display_name")
-        .eq("user_id", inviteData.invited_by)
-        .single();
-      if (profile) setInviterName(profile.display_name || "Someone");
+      const { data: memberProfiles } = await supabaseRpc("get_house_member_profiles", {
+        _house_id: inviteData.house_id,
+      });
+      const inviterProfile = Array.isArray(memberProfiles)
+        ? memberProfiles.find((profile: any) => profile.user_id === inviteData.invited_by)
+        : null;
+      setInviterName(inviterProfile?.display_name || "Someone");
 
       setStatus("preview");
     };
