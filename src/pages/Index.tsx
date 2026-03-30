@@ -115,6 +115,9 @@ const Index = () => {
             <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
               <Settings2 className="h-4 w-4" />
             </Button>
+            <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setProfileOpen(true)} title="Profile settings">
+              <UserCog className="h-4 w-4" />
+            </Button>
             <Button size="icon" variant="ghost" onClick={signOut} className="h-9 w-9">
               <LogOut className="h-4 w-4" />
             </Button>
