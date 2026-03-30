@@ -228,7 +228,7 @@ export function HouseManageDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="full">🏠 Entire house (all items)</SelectItem>
+                  <SelectItem value="full">{house?.propertyType === "business" ? "🏢 Entire business" : "🏠 Entire house"} (all items)</SelectItem>
                   <SelectItem value="selected">📋 Selected items only</SelectItem>
                 </SelectContent>
               </Select>
@@ -254,7 +254,7 @@ export function HouseManageDialog({
               className="w-full"
             >
               <Trash2 className="h-4 w-4 mr-1" />
-              {confirmDelete ? "Confirm Delete House" : "Delete House"}
+              {confirmDelete ? `Confirm Delete ${house?.propertyType === "business" ? "Business" : "House"}` : `Delete ${house?.propertyType === "business" ? "Business" : "House"}`}
             </Button>
           </div>
         )}
