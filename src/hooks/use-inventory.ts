@@ -65,13 +65,31 @@ function rowToItem(row: any): InventoryItem {
   };
 }
 
-export function useInventory(houseId?: string | null) {
+export function useInventory(houseId?: string | null, houseIds?: string[]) {
   const { user } = useAuth();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchItems = useCallback(async () => {
     if (!user) { setItems([]); setLoading(false); return; }
+
+    if (houseIds && houseIds.length > 0) {
+      // Fetch items for multiple houses
+      const { data, error } = await supabase
+        .from("inventory_items")
+        .select("*")
+        .in("house_id", houseIds)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        toast.error("Failed to load items");
+        console.error(error);
+      } else {
+        setItems((data || []).map(rowToItem));
+      }
+      setLoading(false);
+      return;
+    }
 
     if (houseId) {
       const [ownedRes, sharedRes] = await Promise.all([
