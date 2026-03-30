@@ -14,6 +14,7 @@ Valid main categories and their subcategories:
 - paint: interior-paint, exterior-paint, stain, brushes-rollers
 - outdoor: garden-tools, seeds-plants, fertilizer, outdoor-furniture
 - automotive: fluids, parts, car-care
+- medicine: prescription, otc, vitamins, first-aid, medical-devices
 - other: (no subcategories)
 `;
 
