@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X, Clock, Mail, Copy, Link } from "lucide-react";
+import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X, Clock, Mail, Copy, Link, Camera, ImageIcon } from "lucide-react";
 import type { House, HouseMember, PendingInvite } from "@/hooks/use-houses";
 import { PERSONAL_RELATIONSHIPS, BUSINESS_RELATIONSHIPS } from "@/hooks/use-houses";
 
@@ -27,6 +27,7 @@ interface HouseManageDialogProps {
   onRemoveMember: (memberId: string, houseId: string) => void;
   onCancelInvite?: (inviteId: string, houseId: string) => void;
   onDelete: (houseId: string) => void;
+  onUploadImage?: (houseId: string, file: File) => Promise<string | null>;
   currentUserId?: string;
 }
 
@@ -37,7 +38,7 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function HouseManageDialog({
-  open, onOpenChange, house, members, pendingInvites = [], isOwner, onInvite, onCreateInviteLink, onRename, onRemoveMember, onCancelInvite, onDelete, currentUserId,
+  open, onOpenChange, house, members, pendingInvites = [], isOwner, onInvite, onCreateInviteLink, onRename, onRemoveMember, onCancelInvite, onDelete, onUploadImage, currentUserId,
 }: HouseManageDialogProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "viewer">("editor");
@@ -46,6 +47,8 @@ export function HouseManageDialog({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!house) return null;
 
