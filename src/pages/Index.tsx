@@ -49,7 +49,7 @@ const Index = () => {
     addCategory, updateCategory, deleteCategory,
     addLocation, updateLocation, deleteLocation,
     ensureCategory, ensureLocation,
-  } = useCustomOptions(selectedHouse?.propertyType === "business" ? "business" : "personal");
+  } = useCustomOptions(isAllBusiness || selectedHouse?.propertyType === "business" ? "business" : "personal");
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ItemCategory | "all">("all");
