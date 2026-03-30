@@ -73,38 +73,53 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
             {(hasProductImg || hasItemImg || hasLocationImg) && (
               <div className="flex gap-2 mb-2 flex-wrap">
                 {hasProductImg && (
-                  <div className="shrink-0">
+                  <div className="shrink-0 relative group/thumb cursor-pointer" onClick={() => setZoomedImg(fullImg(item.productImage))}>
                     <p className="text-[10px] text-muted-foreground mb-1">Product</p>
                     <img
                       src={proxyImg(item.productImage)}
                       alt={item.name}
                       referrerPolicy="no-referrer"
-                      className="h-20 max-w-[120px] object-contain rounded-md bg-white border"
+                      className="h-20 max-w-[120px] object-contain rounded-md bg-white border transition-transform duration-200 group-hover/thumb:scale-110"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>
                 )}
                 {hasItemImg && (
-                  <div className="shrink-0">
+                  <div className="shrink-0 relative group/thumb cursor-pointer" onClick={() => setZoomedImg(fullImg(item.itemImage))}>
                     <p className="text-[10px] text-muted-foreground mb-1">Item</p>
                     <img
                       src={proxyImg(item.itemImage)}
                       alt="Item"
-                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
+                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white transition-transform duration-200 group-hover/thumb:scale-110"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>
                 )}
                 {hasLocationImg && (
-                  <div className="shrink-0">
+                  <div className="shrink-0 relative group/thumb cursor-pointer" onClick={() => setZoomedImg(item.locationImage || "")}>
                     <p className="text-[10px] text-muted-foreground mb-1">Location</p>
                     <img
                       src={item.locationImage}
                       alt="Location"
-                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
+                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white transition-transform duration-200 group-hover/thumb:scale-110"
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Full-size image overlay */}
+            {zoomedImg && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in cursor-pointer"
+                onClick={() => setZoomedImg(null)}
+              >
+                <img
+                  src={zoomedImg}
+                  alt="Full size"
+                  referrerPolicy="no-referrer"
+                  className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-lg bg-white animate-scale-in"
+                />
               </div>
             )}
 
