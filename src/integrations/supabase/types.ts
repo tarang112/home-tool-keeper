@@ -389,6 +389,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_invite_role: {
+        Args: { _email: string; _house_id: string }
+        Returns: string
+      }
       has_full_house_access: {
         Args: { _house_id: string; _user_id: string }
         Returns: boolean

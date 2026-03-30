@@ -130,12 +130,12 @@ export function useHouses() {
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email")
+        .select("user_id, display_name")
         .in("user_id", userIds);
 
       if (profiles) {
         profiles.forEach((p: any) => {
-          profileMap[p.user_id] = p.display_name || p.email || "Unknown";
+          profileMap[p.user_id] = p.display_name || "Member";
         });
       }
     }
