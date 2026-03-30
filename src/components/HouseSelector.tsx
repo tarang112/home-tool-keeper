@@ -52,8 +52,8 @@ export function HouseSelector({ houses, selectedHouseId, onSelect, onCreate, onM
       <div className="flex items-center gap-2">
         <Home className="h-4 w-4 text-muted-foreground shrink-0" />
         <Select
-          value={selectedHouseId || "all"}
-          onValueChange={(v) => onSelect(v === "all" ? null : v)}
+          value={selectedHouseId || "all-personal"}
+          onValueChange={(v) => onSelect(v)}
         >
           <SelectTrigger className="h-8 text-sm">
             <SelectValue placeholder="All Items" />
