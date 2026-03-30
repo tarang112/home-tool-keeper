@@ -15,6 +15,7 @@ export interface InventoryItem {
   locationDetail: string;
   locationImage: string;
   productImage: string;
+  itemImage: string;
   notes: string;
   barcode: string;
   houseId: string | null;
@@ -36,6 +37,7 @@ function rowToItem(row: any): InventoryItem {
     locationDetail: row.location_detail || "",
     locationImage: row.location_image_url || "",
     productImage: row.product_image_url || "",
+    itemImage: row.item_image_url || "",
     notes: row.notes || "",
     barcode: row.barcode || "",
     houseId: row.house_id || null,
@@ -172,6 +174,10 @@ export function useInventory(houseId?: string | null) {
     if (item.locationImage) {
       imageUrl = await uploadImage(item.locationImage);
     }
+    let itemImageUrl = "";
+    if (item.itemImage) {
+      itemImageUrl = await uploadImage(item.itemImage);
+    }
     const { data, error } = await supabase.from("inventory_items").insert({
       user_id: user.id,
       name: item.name,
@@ -181,6 +187,7 @@ export function useInventory(houseId?: string | null) {
       location_detail: item.locationDetail,
       location_image_url: imageUrl,
       product_image_url: item.productImage || "",
+      item_image_url: itemImageUrl,
       notes: item.notes,
       barcode: item.barcode || "",
       house_id: item.houseId || null,
@@ -203,6 +210,13 @@ export function useInventory(houseId?: string | null) {
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.barcode !== undefined) dbUpdates.barcode = updates.barcode;
     if (updates.productImage !== undefined) dbUpdates.product_image_url = updates.productImage || "";
+    if (updates.itemImage !== undefined) {
+      if (updates.itemImage && !updates.itemImage.startsWith("http")) {
+        dbUpdates.item_image_url = await uploadImage(updates.itemImage);
+      } else {
+        dbUpdates.item_image_url = updates.itemImage || "";
+      }
+    }
     if (updates.houseId !== undefined) dbUpdates.house_id = updates.houseId || null;
     if (updates.locationImage !== undefined) {
       if (updates.locationImage && !updates.locationImage.startsWith("http")) {
