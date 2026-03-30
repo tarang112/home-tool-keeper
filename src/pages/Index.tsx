@@ -22,8 +22,8 @@ const Index = () => {
   const { user, signOut } = useAuth();
   const {
     houses, selectedHouseId, selectedHouse, setSelectedHouseId,
-    members, isOwner, loading: housesLoading,
-    createHouse, renameHouse, deleteHouse, inviteMember, removeMember,
+    members, pendingInvites, isOwner, loading: housesLoading,
+    createHouse, renameHouse, deleteHouse, inviteMember, cancelInvite, removeMember,
   } = useHouses();
   const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(selectedHouseId);
   const {
@@ -199,10 +199,12 @@ const Index = () => {
         onOpenChange={setManageOpen}
         house={selectedHouse}
         members={members}
+        pendingInvites={pendingInvites}
         isOwner={isOwner}
         onInvite={inviteMember}
         onRename={renameHouse}
         onRemoveMember={removeMember}
+        onCancelInvite={cancelInvite}
         onDelete={deleteHouse}
         currentUserId={user?.id}
       />

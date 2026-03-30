@@ -9,8 +9,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X } from "lucide-react";
-import type { House, HouseMember } from "@/hooks/use-houses";
+import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X, Clock, Mail } from "lucide-react";
+import type { House, HouseMember, PendingInvite } from "@/hooks/use-houses";
 import { PERSONAL_RELATIONSHIPS, BUSINESS_RELATIONSHIPS } from "@/hooks/use-houses";
 
 interface HouseManageDialogProps {
@@ -18,10 +18,12 @@ interface HouseManageDialogProps {
   onOpenChange: (open: boolean) => void;
   house: House | null;
   members: HouseMember[];
+  pendingInvites?: PendingInvite[];
   isOwner: boolean;
   onInvite: (houseId: string, email: string, role: "editor" | "viewer", relationship: string, shareMode: "full" | "selected") => void;
   onRename: (houseId: string, newName: string) => void;
   onRemoveMember: (memberId: string, houseId: string) => void;
+  onCancelInvite?: (inviteId: string, houseId: string) => void;
   onDelete: (houseId: string) => void;
   currentUserId?: string;
 }
@@ -33,7 +35,7 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function HouseManageDialog({
-  open, onOpenChange, house, members, isOwner, onInvite, onRename, onRemoveMember, onDelete, currentUserId,
+  open, onOpenChange, house, members, pendingInvites = [], isOwner, onInvite, onRename, onRemoveMember, onCancelInvite, onDelete, currentUserId,
 }: HouseManageDialogProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "viewer">("editor");
@@ -141,6 +143,47 @@ export function HouseManageDialog({
           </div>
         </div>
 
+        {/* Pending Invites */}
+        {pendingInvites.length > 0 && (
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+              Pending Invites ({pendingInvites.length})
+            </Label>
+            <div className="space-y-2">
+              {pendingInvites.map((inv) => (
+                <div key={inv.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/30 border border-dashed border-muted-foreground/20">
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                    <Mail className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-sm truncate">{inv.email}</span>
+                    <Badge variant="secondary" className="text-xs shrink-0">{inv.role}</Badge>
+                    {inv.relationship && (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        <Users className="h-2.5 w-2.5 mr-1" />
+                        {inv.relationship}
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-xs shrink-0 text-amber-600 border-amber-300">
+                      <Clock className="h-2.5 w-2.5 mr-1" />
+                      Pending
+                    </Badge>
+                  </div>
+                  {isOwner && onCancelInvite && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive shrink-0"
+                      onClick={() => onCancelInvite(inv.id, house!.id)}
+                      title="Cancel invite"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Invite */}
         {isOwner && (
           <div className="space-y-3 pt-2 border-t">

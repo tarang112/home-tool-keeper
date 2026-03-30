@@ -23,6 +23,17 @@ export interface HouseMember {
   email?: string;
 }
 
+export interface PendingInvite {
+  id: string;
+  houseId: string;
+  email: string;
+  role: string;
+  relationship?: string;
+  shareMode?: string;
+  status: string;
+  createdAt: string;
+}
+
 export const PERSONAL_RELATIONSHIPS = [
   "Household", "Family", "Friend", "Neighbor", "Colleague", "Contractor", "Other"
 ];
@@ -38,6 +49,7 @@ export function useHouses() {
   const [houses, setHouses] = useState<House[]>([]);
   const [selectedHouseId, setSelectedHouseId] = useState<string | null>(null);
   const [members, setMembers] = useState<HouseMember[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchHouses = useCallback(async () => {
@@ -74,7 +86,6 @@ export function useHouses() {
       console.error(error);
       return;
     }
-    // Fetch display names from profiles separately
     const userIds = (data || []).map((m: any) => m.user_id);
     let profileMap: Record<string, string> = {};
     if (userIds.length > 0) {
@@ -97,11 +108,28 @@ export function useHouses() {
       shareMode: m.share_mode || "full",
       displayName: profileMap[m.user_id] || undefined,
     })));
+
+    // Fetch pending invites for this house
+    const { data: invites } = await supabase
+      .from("house_invites")
+      .select("*")
+      .eq("house_id", houseId)
+      .eq("status", "pending");
+    setPendingInvites((invites || []).map((inv: any) => ({
+      id: inv.id,
+      houseId: inv.house_id,
+      email: inv.email,
+      role: inv.role,
+      relationship: inv.relationship,
+      shareMode: inv.share_mode,
+      status: inv.status,
+      createdAt: inv.created_at,
+    })));
   }, []);
 
   useEffect(() => {
     if (selectedHouseId) fetchMembers(selectedHouseId);
-    else setMembers([]);
+    else { setMembers([]); setPendingInvites([]); }
   }, [selectedHouseId, fetchMembers]);
 
   const createHouse = useCallback(async (name: string, propertyType: "personal" | "business" = "personal", businessType?: string) => {
@@ -155,14 +183,37 @@ export function useHouses() {
     relationship: string = "Household",
     shareMode: "full" | "selected" = "full"
   ) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Look up user by email in profiles
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
       .select("user_id, display_name")
-      .eq("email", email.trim().toLowerCase());
+      .eq("email", normalizedEmail);
 
     if (profileError || !profiles || profiles.length === 0) {
-      toast.error("No user found with that email. They need to sign up first.");
+      // User not registered — create a pending invite
+      const { error: inviteError } = await supabase
+        .from("house_invites")
+        .insert({
+          house_id: houseId,
+          email: normalizedEmail,
+          role,
+          relationship,
+          share_mode: shareMode,
+          invited_by: user!.id,
+        } as any);
+
+      if (inviteError) {
+        if (inviteError.code === "23505") {
+          toast.error("An invite for this email already exists");
+        } else {
+          toast.error("Failed to create invite");
+        }
+        return;
+      }
+      toast.success(`Invite sent to ${normalizedEmail}. They'll be added automatically when they sign up.`);
+      fetchMembers(houseId);
       return;
     }
 
@@ -191,6 +242,13 @@ export function useHouses() {
     if (error) { toast.error("Failed to add member"); return; }
     toast.success("Member added!");
     fetchMembers(houseId);
+  }, [user, fetchMembers]);
+
+  const cancelInvite = useCallback(async (inviteId: string, houseId: string) => {
+    const { error } = await supabase.from("house_invites").delete().eq("id", inviteId);
+    if (error) { toast.error("Failed to cancel invite"); return; }
+    toast.success("Invite cancelled");
+    fetchMembers(houseId);
   }, [fetchMembers]);
 
   const removeMember = useCallback(async (memberId: string, houseId: string) => {
@@ -209,12 +267,14 @@ export function useHouses() {
     selectedHouse,
     setSelectedHouseId,
     members,
+    pendingInvites,
     loading,
     isOwner,
     createHouse,
     renameHouse,
     deleteHouse,
     inviteMember,
+    cancelInvite,
     removeMember,
   };
 }
