@@ -86,6 +86,7 @@ export function AddItemDialog({
       setSubcategory(editItem.subcategory || "");
       setCustomCategory(editItem.customCategory || "");
       setQuantity(String(editItem.quantity));
+      setQuantityUnit(editItem.quantityUnit || "pcs");
       const loc = editItem.location;
       if (allLocations.includes(loc)) {
         setLocationMode(loc);
