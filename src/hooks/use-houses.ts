@@ -56,34 +56,33 @@ export function useHouses() {
   const fetchMembers = useCallback(async (houseId: string) => {
     const { data, error } = await supabase
       .from("house_members")
-      .select("*, profiles:profiles!house_members_user_id_fkey(display_name)")
+      .select("*")
       .eq("house_id", houseId);
-    
     if (error) {
-      // Fallback: fetch without join
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from("house_members")
-        .select("*")
-        .eq("house_id", houseId);
-      if (fallbackError) {
-        console.error(fallbackError);
-        return;
-      }
-      setMembers((fallbackData || []).map((m: any) => ({
-        id: m.id,
-        houseId: m.house_id,
-        userId: m.user_id,
-        role: m.role,
-      })));
-    } else {
-      setMembers((data || []).map((m: any) => ({
-        id: m.id,
-        houseId: m.house_id,
-        userId: m.user_id,
-        role: m.role,
-        displayName: m.profiles?.display_name || undefined,
-      })));
+      console.error(error);
+      return;
     }
+    // Fetch display names from profiles separately
+    const userIds = (data || []).map((m: any) => m.user_id);
+    let profileMap: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, email")
+        .in("user_id", userIds);
+      if (profiles) {
+        profiles.forEach((p: any) => {
+          profileMap[p.user_id] = p.display_name || p.email || "Unknown";
+        });
+      }
+    }
+    setMembers((data || []).map((m: any) => ({
+      id: m.id,
+      houseId: m.house_id,
+      userId: m.user_id,
+      role: m.role,
+      displayName: profileMap[m.user_id] || undefined,
+    })));
   }, []);
 
   useEffect(() => {
@@ -125,14 +124,10 @@ export function useHouses() {
 
   const inviteMember = useCallback(async (houseId: string, email: string, role: "editor" | "viewer" = "editor") => {
     // Look up user by email in profiles
-    // First find the user's profile by checking auth - we need to find by email
-    // Since we can't query auth.users, we'll look for profiles matching by display_name or
-    // we need an alternative approach: store the invite and resolve when user logs in
-    // For now, let's search profiles where display_name matches email (handle_new_user sets it)
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
       .select("user_id, display_name")
-      .eq("display_name", email);
+      .eq("email", email.trim().toLowerCase());
 
     if (profileError || !profiles || profiles.length === 0) {
       toast.error("No user found with that email. They need to sign up first.");
