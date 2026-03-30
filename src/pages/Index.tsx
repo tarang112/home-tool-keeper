@@ -202,6 +202,7 @@ const Index = () => {
         pendingInvites={pendingInvites}
         isOwner={isOwner}
         onInvite={inviteMember}
+        onCreateInviteLink={createInviteLink}
         onRename={renameHouse}
         onRemoveMember={removeMember}
         onCancelInvite={cancelInvite}
