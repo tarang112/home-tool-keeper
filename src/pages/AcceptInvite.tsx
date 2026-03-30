@@ -46,7 +46,7 @@ export default function AcceptInvite() {
       const { data: house } = await supabase
         .from("houses")
         .select("name, property_type")
-        .eq("id", data.house_id)
+        .eq("id", inviteData.house_id)
         .single();
       if (house) setHouseName(house.name);
 
