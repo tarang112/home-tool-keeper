@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, X, ScanBarcode, Loader2, Link, CalendarIcon } from "lucide-react";
-import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, type InventoryItem, type ItemCategory, type MainCategory } from "@/hooks/use-inventory";
+import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, QUANTITY_UNITS, type InventoryItem, type ItemCategory, type MainCategory } from "@/hooks/use-inventory";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -51,6 +51,7 @@ export function AddItemDialog({
   const [itemImage, setItemImage] = useState("");
   const [notes, setNotes] = useState("");
   const [barcode, setBarcode] = useState("");
+  const [quantityUnit, setQuantityUnit] = useState("pcs");
   const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
   const [productUrl, setProductUrl] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -85,6 +86,7 @@ export function AddItemDialog({
       setSubcategory(editItem.subcategory || "");
       setCustomCategory(editItem.customCategory || "");
       setQuantity(String(editItem.quantity));
+      setQuantityUnit(editItem.quantityUnit || "pcs");
       const loc = editItem.location;
       if (allLocations.includes(loc)) {
         setLocationMode(loc);
@@ -107,6 +109,7 @@ export function AddItemDialog({
       setSubcategory("");
       setCustomCategory("");
       setQuantity("1");
+      setQuantityUnit("pcs");
       setLocationMode("Garage");
       setCustomLocation("");
       setLocationDetail("");
@@ -242,7 +245,8 @@ export function AddItemDialog({
       category,
       subcategory: subcategory || "",
       customCategory: category === "custom" ? customCategory.trim() : undefined,
-      quantity: Math.max(0, parseInt(quantity) || 0),
+      quantity: Math.max(0, parseFloat(quantity) || 0),
+      quantityUnit,
       location: finalLocation,
       locationDetail: locationDetail.trim(),
       locationImage,
@@ -373,7 +377,19 @@ export function AddItemDialog({
 
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantity</Label>
-              <Input id="quantity" type="number" min="0" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+              <div className="flex gap-2">
+                <Input id="quantity" type="number" min="0" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="flex-1" />
+                <Select value={quantityUnit} onValueChange={setQuantityUnit}>
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {QUANTITY_UNITS.map((u) => (
+                      <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Expiration Date - only for food/medicine categories */}

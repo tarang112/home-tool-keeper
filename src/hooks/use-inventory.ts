@@ -24,6 +24,7 @@ export interface InventoryItem {
   subcategory?: string;
   customCategory?: string;
   quantity: number;
+  quantityUnit: string;
   location: string;
   locationDetail: string;
   locationImage: string;
@@ -38,6 +39,18 @@ export interface InventoryItem {
   sharedFromHouse?: string;
 }
 
+export const QUANTITY_UNITS = [
+  { value: "pcs", label: "No. (pcs)" },
+  { value: "kg", label: "kg" },
+  { value: "g", label: "g" },
+  { value: "lb", label: "lb" },
+  { value: "oz", label: "oz" },
+  { value: "L", label: "L" },
+  { value: "ml", label: "ml" },
+  { value: "gal", label: "gal" },
+  { value: "fl oz", label: "fl oz" },
+];
+
 // Categories that should show expiration date picker
 export const EXPIRABLE_CATEGORIES = ['groceries', 'produce', 'medicine'];
 
@@ -51,6 +64,7 @@ function rowToItem(row: any): InventoryItem {
     subcategory: row.subcategory || "",
     customCategory: isCustom ? rawCat.slice(7) : undefined,
     quantity: row.quantity,
+    quantityUnit: row.quantity_unit || "pcs",
     location: row.location,
     locationDetail: row.location_detail || "",
     locationImage: row.location_image_url || "",
@@ -240,6 +254,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
       category: item.category === "custom" ? `custom:${item.customCategory || "Other"}` : item.category,
       subcategory: item.subcategory || "",
       quantity: item.quantity,
+      quantity_unit: item.quantityUnit || "pcs",
       location: item.location,
       location_detail: item.locationDetail,
       location_image_url: imageUrl,
@@ -264,6 +279,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
     }
     if (updates.subcategory !== undefined) dbUpdates.subcategory = updates.subcategory;
     if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
+    if (updates.quantityUnit !== undefined) dbUpdates.quantity_unit = updates.quantityUnit;
     if (updates.location !== undefined) dbUpdates.location = updates.location;
     if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;

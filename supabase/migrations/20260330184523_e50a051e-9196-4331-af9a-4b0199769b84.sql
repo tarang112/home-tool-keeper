@@ -1,0 +1,1 @@
+ALTER TABLE public.inventory_items ADD COLUMN quantity_unit text NOT NULL DEFAULT 'pcs';
