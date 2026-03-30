@@ -3,11 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2 } from "lucide-react";
 import { CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
+import { useState } from "react";
 
-function proxyImg(url?: string) {
+function proxyImg(url?: string, size = 200) {
   if (!url) return "";
-  if (url.includes("supabase.co/")) return url; // our own storage, no proxy needed
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=200&h=200&fit=contain&bg=white`;
+  if (url.includes("supabase.co/")) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=contain&bg=white`;
+}
+
+function fullImg(url?: string) {
+  if (!url) return "";
+  if (url.includes("supabase.co/")) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=800&h=800&fit=contain&bg=white`;
 }
 
 interface ItemCardProps {
