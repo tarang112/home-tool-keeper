@@ -85,6 +85,7 @@ export function AddItemDialog({
       setItemImage(editItem.itemImage ?? "");
       setNotes(editItem.notes ?? "");
       setBarcode(editItem.barcode ?? "");
+      setExpirationDate(editItem.expirationDate ? new Date(editItem.expirationDate) : undefined);
       setProductUrl("");
     } else {
       setName("");
