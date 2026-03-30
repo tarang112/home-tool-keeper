@@ -15,9 +15,15 @@ export interface HouseMember {
   houseId: string;
   userId: string;
   role: "owner" | "editor" | "viewer";
+  relationship?: string;
+  shareMode?: "full" | "selected";
   displayName?: string;
   email?: string;
 }
+
+export const RELATIONSHIPS = [
+  "Household", "Family", "Friend", "Neighbor", "Colleague", "Contractor", "Other"
+];
 
 export function useHouses() {
   const { user } = useAuth();
@@ -77,6 +83,8 @@ export function useHouses() {
       houseId: m.house_id,
       userId: m.user_id,
       role: m.role,
+      relationship: m.relationship || "Household",
+      shareMode: m.share_mode || "full",
       displayName: profileMap[m.user_id] || undefined,
     })));
   }, []);
@@ -118,7 +126,13 @@ export function useHouses() {
     toast.success("House deleted");
   }, [selectedHouseId]);
 
-  const inviteMember = useCallback(async (houseId: string, email: string, role: "editor" | "viewer" = "editor") => {
+  const inviteMember = useCallback(async (
+    houseId: string, 
+    email: string, 
+    role: "editor" | "viewer" = "editor",
+    relationship: string = "Household",
+    shareMode: "full" | "selected" = "full"
+  ) => {
     // Look up user by email in profiles
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
@@ -148,6 +162,8 @@ export function useHouses() {
       house_id: houseId,
       user_id: targetUserId,
       role,
+      relationship,
+      share_mode: shareMode,
     });
 
     if (error) { toast.error("Failed to add member"); return; }
