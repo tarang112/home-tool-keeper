@@ -217,8 +217,9 @@ function extractProductFromHtml(html: string, pageUrl: string) {
   // Clean name (remove site suffix like " - Amazon.com", " | Walmart")
   const cleanName = productName.replace(/\s*[-|].*?(Amazon|Walmart|Target|Lowe|Home Depot|eBay|\.com).*$/i, '').trim();
   const desc = ogDesc || metaDesc || '';
-  const catInfo = guessCategory([cleanName, desc]);
-  const qtyMatch = cleanName.match(/(\d+)\s*(?:pack|count|ct|pk|pcs?|piece)/i);
+  const allText = `${cleanName} ${desc}`;
+  const catInfo = guessCategory([allText]);
+  const qty = parseQuantity(allText);
 
   return {
     name: cleanName,
@@ -226,7 +227,7 @@ function extractProductFromHtml(html: string, pageUrl: string) {
     subcategory: catInfo.subcategory,
     notes: desc.slice(0, 500),
     image_url: ogImage || '',
-    quantity: qtyMatch ? parseInt(qtyMatch[1]) : 1,
+    quantity: qty,
   };
 }
 
