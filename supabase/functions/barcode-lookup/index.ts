@@ -166,6 +166,13 @@ async function webSearchBarcode(barcode: string) {
   }
 }
 
+/** Parse pack quantity from text like "6 ct", "12 Pack", "3 x 10oz" */
+function parseQuantity(text: string): number {
+  const m = text.match(/\b(\d+)\s*(?:ct|count|pk|pack|pcs?|pieces?)\b/i)
+    || text.match(/\b(\d+)\s*x\s*\d+(?:\.\d+)?\s*(?:oz|fl\s*oz|lb|g|kg|ml|l)\b/i);
+  return m ? parseInt(m[1]) : 1;
+}
+
 /** Extract structured product data from HTML using JSON-LD, Open Graph, and meta tags */
 function extractProductFromHtml(html: string, pageUrl: string) {
   // Try JSON-LD first (most accurate)
@@ -173,7 +180,6 @@ function extractProductFromHtml(html: string, pageUrl: string) {
   for (const m of ldMatches) {
     try {
       let parsed = JSON.parse(m[1]);
-      // Handle @graph arrays
       if (parsed['@graph']) parsed = parsed['@graph'];
       const items = Array.isArray(parsed) ? parsed : [parsed];
       const product = items.find((x: any) => {
@@ -183,9 +189,9 @@ function extractProductFromHtml(html: string, pageUrl: string) {
       if (product?.name) {
         const imgUrl = typeof product.image === 'string' ? product.image
           : (Array.isArray(product.image) ? product.image[0] : product.image?.url || '');
-        const catInfo = guessCategory([product.name, product.category || '', product.description || '']);
-        // Try to extract quantity from name (e.g. "6 Pack", "12 Count")
-        const qtyMatch = product.name.match(/(\d+)\s*(?:pack|count|ct|pk|pcs?|piece)/i);
+        const allText = `${product.name} ${product.description || ''} ${product.category || ''}`;
+        const catInfo = guessCategory([allText]);
+        const qty = parseQuantity(allText);
         return {
           name: product.name,
           category: catInfo.category,
