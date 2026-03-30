@@ -33,13 +33,15 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function HouseManageDialog({
-  open, onOpenChange, house, members, isOwner, onInvite, onRemoveMember, onDelete, currentUserId,
+  open, onOpenChange, house, members, isOwner, onInvite, onRename, onRemoveMember, onDelete, currentUserId,
 }: HouseManageDialogProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "viewer">("editor");
   const [relationship, setRelationship] = useState("Household");
   const [shareMode, setShareMode] = useState<"full" | "selected">("full");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
 
   if (!house) return null;
 
