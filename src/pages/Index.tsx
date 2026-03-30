@@ -115,25 +115,33 @@ const Index = () => {
           />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          <Badge
-            variant={activeCategory === "all" ? "default" : "secondary"}
-            className="cursor-pointer shrink-0 select-none"
-            onClick={() => setActiveCategory("all")}
-          >
-            All
-          </Badge>
-          {CATEGORIES.map((c) => (
-            <Badge
-              key={c.value}
-              variant={activeCategory === c.value ? "default" : "secondary"}
-              className="cursor-pointer shrink-0 select-none"
-              onClick={() => setActiveCategory(c.value)}
-            >
-              {c.icon} {c.label}
-            </Badge>
-          ))}
-        </div>
+        {(() => {
+          const activeCategories: { value: string; label: string; icon: string }[] =
+            selectedHouse?.propertyType === "business" && selectedHouse.businessType
+              ? getBusinessCategories(selectedHouse.businessType).map((c) => ({ value: c.value, label: c.label, icon: c.icon }))
+              : CATEGORIES;
+          return (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <Badge
+                variant={activeCategory === "all" ? "default" : "secondary"}
+                className="cursor-pointer shrink-0 select-none"
+                onClick={() => setActiveCategory("all")}
+              >
+                All
+              </Badge>
+              {activeCategories.map((c) => (
+                <Badge
+                  key={c.value}
+                  variant={activeCategory === c.value ? "default" : "secondary"}
+                  className="cursor-pointer shrink-0 select-none"
+                  onClick={() => setActiveCategory(c.value)}
+                >
+                  {c.icon} {c.label}
+                </Badge>
+              ))}
+            </div>
+          );
+        })()}
 
         {loading ? (
           <div className="space-y-3">
