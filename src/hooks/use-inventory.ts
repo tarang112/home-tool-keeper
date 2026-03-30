@@ -18,6 +18,7 @@ export interface InventoryItem {
   houseId: string | null;
   createdAt: string;
   updatedAt: string;
+  sharedFromHouse?: string;
 }
 
 function rowToItem(row: any): InventoryItem {
