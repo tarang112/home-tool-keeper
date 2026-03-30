@@ -9,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, X, ScanBarcode, Loader2 } from "lucide-react";
+import { Camera, X, ScanBarcode, Loader2, Link } from "lucide-react";
 import { CATEGORIES, LOCATIONS, type InventoryItem, type ItemCategory } from "@/hooks/use-inventory";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,8 +34,10 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
   const [locationImage, setLocationImage] = useState("");
   const [notes, setNotes] = useState("");
   const [barcode, setBarcode] = useState("");
+  const [productUrl, setProductUrl] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
+  const [urlLookingUp, setUrlLookingUp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -94,6 +96,32 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
       toast.error("Barcode lookup failed");
     } finally {
       setLookingUp(false);
+    }
+  };
+
+  const handleUrlLookup = async () => {
+    if (!productUrl.trim()) return;
+    setUrlLookingUp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("barcode-lookup", {
+        body: { url: productUrl.trim() },
+      });
+      if (error) throw error;
+      if (data?.success && data.product) {
+        const p = data.product;
+        if (p.name && !name) setName(p.name);
+        if (p.category && CATEGORIES.some((c) => c.value === p.category)) {
+          setCategory(p.category as ItemCategory);
+        }
+        if (p.notes && !notes) setNotes(p.notes);
+        toast.success(`Found: ${p.name || "Product details loaded"}`);
+      } else {
+        toast.info("Could not extract product details from URL.");
+      }
+    } catch {
+      toast.error("URL lookup failed");
+    } finally {
+      setUrlLookingUp(false);
     }
   };
 
@@ -172,6 +200,30 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
                   </Button>
                 )}
                 {lookingUp && <Loader2 className="h-5 w-5 animate-spin self-center text-muted-foreground" />}
+              </div>
+            </div>
+
+            {/* Product URL section */}
+            <div className="space-y-2">
+              <Label>Product URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={productUrl}
+                  onChange={(e) => setProductUrl(e.target.value)}
+                  placeholder="Paste product page link..."
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleUrlLookup}
+                  disabled={!productUrl.trim() || urlLookingUp}
+                  className="gap-1"
+                >
+                  {urlLookingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link className="h-4 w-4" />}
+                  Fetch
+                </Button>
               </div>
             </div>
 
