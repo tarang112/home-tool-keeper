@@ -64,6 +64,7 @@ function rowToItem(row: any): InventoryItem {
     subcategory: row.subcategory || "",
     customCategory: isCustom ? rawCat.slice(7) : undefined,
     quantity: row.quantity,
+    quantityUnit: row.quantity_unit || "pcs",
     location: row.location,
     locationDetail: row.location_detail || "",
     locationImage: row.location_image_url || "",
