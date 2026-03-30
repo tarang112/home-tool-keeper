@@ -245,7 +245,15 @@ export function AddItemDialog({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={category} onValueChange={(v) => setCategory(v as ItemCategory)}>
+                <Select value={category === "custom" ? "custom" : (category as string).startsWith("customsaved:") ? category as string : category} onValueChange={(v) => {
+                    if (v.startsWith("customsaved:")) {
+                      setCategory("custom" as ItemCategory);
+                      setCustomCategory(v.slice(12));
+                    } else {
+                      setCategory(v as ItemCategory);
+                      if (v !== "custom") setCustomCategory("");
+                    }
+                  }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.map((c) => (
