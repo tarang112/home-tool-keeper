@@ -225,6 +225,7 @@ export function AddItemDialog({
       itemImage,
       notes: notes.trim(),
       barcode: barcode.trim(),
+      expirationDate: expirationDate ? format(expirationDate, 'yyyy-MM-dd') : null,
       houseId: editItem?.houseId || null,
     };
 
