@@ -263,6 +263,8 @@ const Index = () => {
         onUpdateLocation={updateLocation}
         onDeleteLocation={deleteLocation}
       />
+
+      <ProfileSettingsDialog open={profileOpen} onOpenChange={setProfileOpen} />
     </div>
   );
 };
