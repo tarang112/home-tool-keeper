@@ -70,6 +70,16 @@ export function useHouses() {
       return;
     }
 
+    // Load default house preference
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("default_house_id")
+      .eq("user_id", user.id)
+      .single();
+
+    const savedDefault = (profile as any)?.default_house_id ?? null;
+    setDefaultHouseId(savedDefault);
+
     const { data, error } = await supabase
       .from("houses")
       .select("*")
@@ -91,7 +101,6 @@ export function useHouses() {
 
       setHouses(mapped);
       setSelectedHouseId((current) => {
-        // Keep special filter values
         if (current === "all-personal" || current === "all-business") return current;
 
         if (mapped.length === 0) {
@@ -105,6 +114,10 @@ export function useHouses() {
 
         if (!hasAutoSelectedHouse.current) {
           hasAutoSelectedHouse.current = true;
+          // Use saved default if it exists in the list
+          if (savedDefault && mapped.some((h) => h.id === savedDefault)) {
+            return savedDefault;
+          }
           return "all-personal";
         }
 
