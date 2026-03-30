@@ -24,6 +24,7 @@ const Index = () => {
   const {
     houses, selectedHouseId, selectedHouse, setSelectedHouseId,
     members, pendingInvites, isOwner, loading: housesLoading,
+    defaultHouseId, setDefaultHouse,
     createHouse, renameHouse, deleteHouse, inviteMember, createInviteLink, cancelInvite, removeMember, uploadHouseImage,
   } = useHouses();
 
