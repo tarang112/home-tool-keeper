@@ -57,7 +57,7 @@ const Index = () => {
   const [manageOpen, setManageOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [moveItem, setMoveItem] = useState<InventoryItem | null>(null);
-
+  const [profileOpen, setProfileOpen] = useState(false);
   const filtered = useMemo(() => {
     return items.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
