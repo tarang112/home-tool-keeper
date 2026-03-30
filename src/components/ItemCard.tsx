@@ -34,6 +34,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete }: ItemCardProps) {
             {item.locationImage && (
               <img src={item.locationImage} alt="Location" className="w-full h-20 object-cover rounded-md mb-2" />
             )}
+            {item.barcode && (
+              <p className="text-xs text-muted-foreground font-mono">Barcode: {item.barcode}</p>
+            )}
             {item.notes && (
               <p className="text-xs text-muted-foreground line-clamp-2">{item.notes}</p>
             )}
