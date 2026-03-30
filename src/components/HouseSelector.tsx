@@ -91,7 +91,7 @@ export function HouseSelector({ houses, selectedHouseId, onSelect, onCreate, onM
         <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={resetAndOpen}>
           <Plus className="h-4 w-4" />
         </Button>
-        {selectedHouseId && (
+        {selectedHouseId && !selectedHouseId.startsWith("all-") && (
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onManage}>
             <Settings className="h-4 w-4" />
           </Button>
