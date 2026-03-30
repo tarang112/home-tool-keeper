@@ -14,6 +14,7 @@ export interface InventoryItem {
   locationDetail: string;
   locationImage: string;
   notes: string;
+  barcode: string;
   houseId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -29,6 +30,7 @@ function rowToItem(row: any): InventoryItem {
     locationDetail: row.location_detail || "",
     locationImage: row.location_image_url || "",
     notes: row.notes || "",
+    barcode: row.barcode || "",
     houseId: row.house_id || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -103,6 +105,7 @@ export function useInventory(houseId?: string | null) {
       location_detail: item.locationDetail,
       location_image_url: imageUrl,
       notes: item.notes,
+      barcode: item.barcode || "",
       house_id: item.houseId || null,
     }).select().single();
     if (error) { toast.error("Failed to add item"); return; }
@@ -119,6 +122,7 @@ export function useInventory(houseId?: string | null) {
     if (updates.location !== undefined) dbUpdates.location = updates.location;
     if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.barcode !== undefined) dbUpdates.barcode = updates.barcode;
     if (updates.houseId !== undefined) dbUpdates.house_id = updates.houseId || null;
     if (updates.locationImage !== undefined) {
       if (updates.locationImage && !updates.locationImage.startsWith("http")) {
