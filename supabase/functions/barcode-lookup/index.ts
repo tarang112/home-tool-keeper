@@ -14,6 +14,7 @@ Valid main categories and their subcategories:
 - paint: interior-paint, exterior-paint, stain, brushes-rollers
 - outdoor: garden-tools, seeds-plants, fertilizer, outdoor-furniture
 - automotive: fluids, parts, car-care
+- medicine: prescription, otc, vitamins, first-aid, medical-devices
 - other: (no subcategories)
 `;
 
@@ -265,6 +266,14 @@ function guessCategory(tags: string[]): { category: string; subcategory: string 
   if (/car\s*part|auto\s*part|filter|brake|wiper/.test(joined)) return { category: 'automotive', subcategory: 'parts' };
   if (/car\s*wash|wax|polish|car\s*care|detailing/.test(joined)) return { category: 'automotive', subcategory: 'car-care' };
   if (/auto|car|vehicle/.test(joined)) return { category: 'automotive', subcategory: '' };
+
+  // Medicine & Health
+  if (/prescription|rx/.test(joined)) return { category: 'medicine', subcategory: 'prescription' };
+  if (/otc|over.the.counter|pain\s*relief|ibuprofen|acetaminophen|aspirin|antacid|allergy/.test(joined)) return { category: 'medicine', subcategory: 'otc' };
+  if (/vitamin|supplement|mineral|probiotic|omega|multivitamin/.test(joined)) return { category: 'medicine', subcategory: 'vitamins' };
+  if (/first\s*aid|bandage|antiseptic|gauze|wound/.test(joined)) return { category: 'medicine', subcategory: 'first-aid' };
+  if (/medical|thermometer|blood\s*pressure|glucose/.test(joined)) return { category: 'medicine', subcategory: 'medical-devices' };
+  if (/medicine|pharma|drug|health|remedy/.test(joined)) return { category: 'medicine', subcategory: '' };
 
   return { category: 'other', subcategory: '' };
 }

@@ -126,6 +126,7 @@ export type Database = {
           barcode: string | null
           category: string
           created_at: string
+          expiration_date: string | null
           house_id: string | null
           id: string
           item_image_url: string | null
@@ -144,6 +145,7 @@ export type Database = {
           barcode?: string | null
           category?: string
           created_at?: string
+          expiration_date?: string | null
           house_id?: string | null
           id?: string
           item_image_url?: string | null
@@ -162,6 +164,7 @@ export type Database = {
           barcode?: string | null
           category?: string
           created_at?: string
+          expiration_date?: string | null
           house_id?: string | null
           id?: string
           item_image_url?: string | null
@@ -218,6 +221,44 @@ export type Database = {
           },
           {
             foreignKeyName: "item_shares_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string | null
+          message: string
+          read: boolean
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          message?: string
+          read?: boolean
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          message?: string
+          read?: boolean
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "inventory_items"

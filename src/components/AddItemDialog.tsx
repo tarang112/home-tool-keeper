@@ -9,8 +9,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, X, ScanBarcode, Loader2, Link } from "lucide-react";
-import { MAIN_CATEGORIES, LOCATIONS, type InventoryItem, type ItemCategory } from "@/hooks/use-inventory";
+import { Camera, X, ScanBarcode, Loader2, Link, CalendarIcon } from "lucide-react";
+import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, type InventoryItem, type ItemCategory } from "@/hooks/use-inventory";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -46,6 +50,7 @@ export function AddItemDialog({
   const [itemImage, setItemImage] = useState("");
   const [notes, setNotes] = useState("");
   const [barcode, setBarcode] = useState("");
+  const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
   const [productUrl, setProductUrl] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
@@ -80,6 +85,7 @@ export function AddItemDialog({
       setItemImage(editItem.itemImage ?? "");
       setNotes(editItem.notes ?? "");
       setBarcode(editItem.barcode ?? "");
+      setExpirationDate(editItem.expirationDate ? new Date(editItem.expirationDate) : undefined);
       setProductUrl("");
     } else {
       setName("");
@@ -95,6 +101,7 @@ export function AddItemDialog({
       setItemImage("");
       setNotes("");
       setBarcode("");
+      setExpirationDate(undefined);
       setProductUrl("");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -218,6 +225,7 @@ export function AddItemDialog({
       itemImage,
       notes: notes.trim(),
       barcode: barcode.trim(),
+      expirationDate: expirationDate ? format(expirationDate, 'yyyy-MM-dd') : null,
       houseId: editItem?.houseId || null,
     };
 
@@ -342,6 +350,41 @@ export function AddItemDialog({
               <Label htmlFor="quantity">Quantity</Label>
               <Input id="quantity" type="number" min="0" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
             </div>
+
+            {/* Expiration Date - only for food/medicine categories */}
+            {EXPIRABLE_CATEGORIES.includes(category) && (
+              <div className="space-y-2">
+                <Label>Expiration Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !expirationDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {expirationDate ? format(expirationDate, "PPP") : <span>Pick expiration date...</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={expirationDate}
+                      onSelect={setExpirationDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {expirationDate && (
+                  <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setExpirationDate(undefined)}>
+                    Clear expiration date
+                  </Button>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Location</Label>

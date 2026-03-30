@@ -31,11 +31,15 @@ export interface InventoryItem {
   itemImage: string;
   notes: string;
   barcode: string;
+  expirationDate: string | null;
   houseId: string | null;
   createdAt: string;
   updatedAt: string;
   sharedFromHouse?: string;
 }
+
+// Categories that should show expiration date picker
+export const EXPIRABLE_CATEGORIES = ['groceries', 'produce', 'medicine'];
 
 function rowToItem(row: any): InventoryItem {
   const rawCat = row.category as string;
@@ -54,6 +58,7 @@ function rowToItem(row: any): InventoryItem {
     itemImage: row.item_image_url || "",
     notes: row.notes || "",
     barcode: row.barcode || "",
+    expirationDate: row.expiration_date || null,
     houseId: row.house_id || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -200,6 +205,7 @@ export function useInventory(houseId?: string | null) {
       item_image_url: itemImageUrl,
       notes: item.notes,
       barcode: item.barcode || "",
+      expiration_date: item.expirationDate || null,
       house_id: item.houseId || null,
     }).select().single();
     if (error) { toast.error("Failed to add item"); return; }
@@ -220,6 +226,7 @@ export function useInventory(houseId?: string | null) {
     if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.barcode !== undefined) dbUpdates.barcode = updates.barcode;
+    if (updates.expirationDate !== undefined) dbUpdates.expiration_date = updates.expirationDate || null;
     if (updates.productImage !== undefined) dbUpdates.product_image_url = updates.productImage || "";
     if (updates.itemImage !== undefined) {
       if (updates.itemImage && !updates.itemImage.startsWith("http")) {
@@ -342,6 +349,16 @@ export const MAIN_CATEGORIES: MainCategory[] = [
       { value: "fluids", label: "Fluids & Lubricants" },
       { value: "parts", label: "Parts & Accessories" },
       { value: "car-care", label: "Car Care" },
+    ],
+  },
+  {
+    value: "medicine", label: "Medicine & Health", icon: "💊",
+    subcategories: [
+      { value: "prescription", label: "Prescription" },
+      { value: "otc", label: "Over-the-Counter" },
+      { value: "vitamins", label: "Vitamins & Supplements" },
+      { value: "first-aid", label: "First Aid" },
+      { value: "medical-devices", label: "Medical Devices" },
     ],
   },
   {
