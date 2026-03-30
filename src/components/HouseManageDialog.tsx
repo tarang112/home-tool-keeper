@@ -20,6 +20,7 @@ interface HouseManageDialogProps {
   members: HouseMember[];
   isOwner: boolean;
   onInvite: (houseId: string, email: string, role: "editor" | "viewer", relationship: string, shareMode: "full" | "selected") => void;
+  onRename: (houseId: string, newName: string) => void;
   onRemoveMember: (memberId: string, houseId: string) => void;
   onDelete: (houseId: string) => void;
   currentUserId?: string;
