@@ -198,7 +198,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
       }
     }
     setLoading(false);
-  }, [user, houseId, houseIds]);
+  }, [user, houseId, houseIds, includeUnassigned]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
