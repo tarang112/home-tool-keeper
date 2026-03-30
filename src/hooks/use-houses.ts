@@ -80,6 +80,7 @@ export function useHouses() {
         createdAt: h.created_at,
         propertyType: h.property_type || "personal",
         businessType: h.business_type || undefined,
+        imageUrl: h.image_url || undefined,
       }));
 
       setHouses(mapped);
