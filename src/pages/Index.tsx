@@ -14,6 +14,7 @@ import { HouseSelector } from "@/components/HouseSelector";
 import { HouseManageDialog } from "@/components/HouseManageDialog";
 import { MoveItemDialog } from "@/components/MoveItemDialog";
 import { ManageOptionsDialog } from "@/components/ManageOptionsDialog";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
