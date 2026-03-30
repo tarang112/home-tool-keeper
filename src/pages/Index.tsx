@@ -201,6 +201,7 @@ const Index = () => {
         members={members}
         isOwner={isOwner}
         onInvite={inviteMember}
+        onRename={renameHouse}
         onRemoveMember={removeMember}
         onDelete={deleteHouse}
         currentUserId={user?.id}
