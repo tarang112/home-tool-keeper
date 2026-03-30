@@ -99,24 +99,30 @@ export type Database = {
       }
       houses: {
         Row: {
+          business_type: string | null
           created_at: string
           id: string
           name: string
           owner_id: string
+          property_type: string
           updated_at: string
         }
         Insert: {
+          business_type?: string | null
           created_at?: string
           id?: string
           name: string
           owner_id: string
+          property_type?: string
           updated_at?: string
         }
         Update: {
+          business_type?: string | null
           created_at?: string
           id?: string
           name?: string
           owner_id?: string
+          property_type?: string
           updated_at?: string
         }
         Relationships: []
