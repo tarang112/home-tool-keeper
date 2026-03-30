@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, X, ScanBarcode, Loader2, Link, CalendarIcon } from "lucide-react";
-import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, type InventoryItem, type ItemCategory } from "@/hooks/use-inventory";
+import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, type InventoryItem, type ItemCategory, type MainCategory } from "@/hooks/use-inventory";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -30,12 +30,13 @@ interface AddItemDialogProps {
   customLocations?: CustomLocation[];
   onEnsureCategory?: (name: string, icon?: string) => Promise<void>;
   onEnsureLocation?: (name: string) => Promise<void>;
+  businessCategories?: MainCategory[];
 }
 
 export function AddItemDialog({
   open, onOpenChange, onAdd, editItem, onUpdate,
   customCategories = [], customLocations = [],
-  onEnsureCategory, onEnsureLocation,
+  onEnsureCategory, onEnsureLocation, businessCategories,
 }: AddItemDialogProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("hardware-tools");
@@ -60,7 +61,8 @@ export function AddItemDialog({
 
   const allLocations = [...LOCATIONS, ...customLocations.map(l => l.name)];
 
-  const selectedMain = MAIN_CATEGORIES.find(c => c.value === category);
+  const activeCategoryList = businessCategories || MAIN_CATEGORIES;
+  const selectedMain = activeCategoryList.find(c => c.value === category);
   const subcategories = selectedMain?.subcategories || [];
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export function AddItemDialog({
     if (p.name) setName(p.name);
     if (p.category) {
       const mapped = LEGACY_CATEGORY_MAP[p.category] || p.category;
-      const mainMatch = MAIN_CATEGORIES.find(c => c.value === mapped);
+      const mainMatch = activeCategoryList.find(c => c.value === mapped);
       if (mainMatch) {
         setCategory(mapped);
         if (p.subcategory && mainMatch.subcategories.some(s => s.value === p.subcategory)) {
@@ -314,7 +316,7 @@ export function AddItemDialog({
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {MAIN_CATEGORIES.map((c) => (
+                  {activeCategoryList.map((c) => (
                     <SelectItem key={c.value} value={c.value}>{c.icon} {c.label}</SelectItem>
                   ))}
                   {customCategories.length > 0 && (

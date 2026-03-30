@@ -3,7 +3,7 @@ import { Plus, Search, Package, LogOut, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useInventory, CATEGORIES, type ItemCategory, type InventoryItem } from "@/hooks/use-inventory";
+import { useInventory, CATEGORIES, MAIN_CATEGORIES, type ItemCategory, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
 import { useHouses } from "@/hooks/use-houses";
 import { useAuth } from "@/hooks/use-auth";
 import { useCustomOptions } from "@/hooks/use-custom-options";
@@ -16,6 +16,7 @@ import { MoveItemDialog } from "@/components/MoveItemDialog";
 import { ManageOptionsDialog } from "@/components/ManageOptionsDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getBusinessCategories } from "@/config/business-categories";
 
 const Index = () => {
   const { user, signOut } = useAuth();
@@ -114,25 +115,33 @@ const Index = () => {
           />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          <Badge
-            variant={activeCategory === "all" ? "default" : "secondary"}
-            className="cursor-pointer shrink-0 select-none"
-            onClick={() => setActiveCategory("all")}
-          >
-            All
-          </Badge>
-          {CATEGORIES.map((c) => (
-            <Badge
-              key={c.value}
-              variant={activeCategory === c.value ? "default" : "secondary"}
-              className="cursor-pointer shrink-0 select-none"
-              onClick={() => setActiveCategory(c.value)}
-            >
-              {c.icon} {c.label}
-            </Badge>
-          ))}
-        </div>
+        {(() => {
+          const activeCategories: { value: string; label: string; icon: string }[] =
+            selectedHouse?.propertyType === "business" && selectedHouse.businessType
+              ? getBusinessCategories(selectedHouse.businessType).map((c) => ({ value: c.value, label: c.label, icon: c.icon }))
+              : CATEGORIES;
+          return (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <Badge
+                variant={activeCategory === "all" ? "default" : "secondary"}
+                className="cursor-pointer shrink-0 select-none"
+                onClick={() => setActiveCategory("all")}
+              >
+                All
+              </Badge>
+              {activeCategories.map((c) => (
+                <Badge
+                  key={c.value}
+                  variant={activeCategory === c.value ? "default" : "secondary"}
+                  className="cursor-pointer shrink-0 select-none"
+                  onClick={() => setActiveCategory(c.value)}
+                >
+                  {c.icon} {c.label}
+                </Badge>
+              ))}
+            </div>
+          );
+        })()}
 
         {loading ? (
           <div className="space-y-3">
@@ -178,6 +187,11 @@ const Index = () => {
         customLocations={customLocations}
         onEnsureCategory={ensureCategory}
         onEnsureLocation={ensureLocation}
+        businessCategories={
+          selectedHouse?.propertyType === "business" && selectedHouse.businessType
+            ? getBusinessCategories(selectedHouse.businessType)
+            : undefined
+        }
       />
 
       <HouseManageDialog
