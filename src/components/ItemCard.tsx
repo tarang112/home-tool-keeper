@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Pencil, Trash2, MapPin } from "lucide-react";
+import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft } from "lucide-react";
 import { CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
 
 interface ItemCardProps {
@@ -9,9 +9,10 @@ interface ItemCardProps {
   onAdjust: (id: string, delta: number) => void;
   onEdit: (item: InventoryItem) => void;
   onDelete: (id: string) => void;
+  onMove?: (item: InventoryItem) => void;
 }
 
-export function ItemCard({ item, onAdjust, onEdit, onDelete }: ItemCardProps) {
+export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardProps) {
   const cat = CATEGORIES.find((c) => c.value === item.category);
 
   return (
@@ -66,6 +67,11 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete }: ItemCardProps) {
               </Button>
             </div>
             <div className="flex gap-1 mt-1">
+              {onMove && (
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move to house">
+                  <ArrowRightLeft className="h-3 w-3" />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)}>
                 <Pencil className="h-3 w-3" />
               </Button>
