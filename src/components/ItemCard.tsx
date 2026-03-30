@@ -14,18 +14,19 @@ interface ItemCardProps {
 
 export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardProps) {
   const cat = CATEGORIES.find((c) => c.value === item.category);
-
+  const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label;
+  const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon;
   return (
     <Card className="animate-slide-up">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">{cat?.icon}</span>
+              <span className="text-lg">{categoryIcon}</span>
               <h3 className="font-heading font-semibold text-base truncate">{item.name}</h3>
             </div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <Badge variant="secondary" className="text-xs">{cat?.label}</Badge>
+              <Badge variant="secondary" className="text-xs">{categoryLabel}</Badge>
               {item.sharedFromHouse && (
                 <Badge variant="outline" className="text-xs gap-1">
                   <Share2 className="h-3 w-3" />
