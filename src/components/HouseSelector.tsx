@@ -68,7 +68,14 @@ export function HouseSelector({ houses, selectedHouseId, onSelect, onCreate, onM
                 <SelectLabel className="text-xs text-muted-foreground">🏠 Personal</SelectLabel>
                 {personalHouses.map((h) => (
                   <SelectItem key={h.id} value={h.id}>
-                    🏠 {h.name}
+                    <span className="flex items-center gap-2">
+                      {h.imageUrl ? (
+                        <img src={h.imageUrl} alt="" className="h-4 w-4 rounded object-cover shrink-0" />
+                      ) : (
+                        <span>🏠</span>
+                      )}
+                      {h.name}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectGroup>
