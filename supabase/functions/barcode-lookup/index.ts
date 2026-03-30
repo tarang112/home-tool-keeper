@@ -3,6 +3,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const CATEGORY_MAP = `
+Valid main categories and their subcategories:
+- hardware-tools: hand-tools, power-tools, fasteners, measuring, safety
+- groceries: dairy, snacks, beverages, canned, frozen, bakery, condiments
+- produce: fruits, vegetables, herbs
+- household: cleaning, kitchen, bathroom, laundry, storage
+- electrical: wiring, lighting, switches, batteries
+- plumbing: pipes, fixtures, valves
+- paint: interior-paint, exterior-paint, stain, brushes-rollers
+- outdoor: garden-tools, seeds-plants, fertilizer, outdoor-furniture
+- automotive: fluids, parts, car-care
+- other: (no subcategories)
+`;
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -29,19 +43,18 @@ Deno.serve(async (req) => {
 
     if (offData.status === 1 && offData.product) {
       const p = offData.product;
-      return new Response(
-        JSON.stringify({
-          success: true,
-          source: 'openfoodfacts',
-          product: {
-            name: p.product_name || p.product_name_en || '',
-            category: guessCategory(p.categories_tags || []),
-            notes: [p.brands, p.quantity].filter(Boolean).join(' — '),
-            image_url: p.image_url || p.image_front_url || '',
-          },
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const catInfo = guessCategory(p.categories_tags || []);
+      return jsonResponse({
+        success: true,
+        source: 'openfoodfacts',
+        product: {
+          name: p.product_name || p.product_name_en || '',
+          category: catInfo.category,
+          subcategory: catInfo.subcategory,
+          notes: [p.brands, p.quantity, p.generic_name].filter(Boolean).join(' — '),
+          image_url: p.image_url || p.image_front_url || '',
+        },
+      });
     }
 
     // Try UPC ItemDB
@@ -50,29 +63,28 @@ Deno.serve(async (req) => {
       const upcData = await upcRes.json();
       if (upcData.items && upcData.items.length > 0) {
         const item = upcData.items[0];
-        return new Response(
-          JSON.stringify({
-            success: true,
-            source: 'upcitemdb',
-            product: {
-              name: item.title || '',
-              category: guessCategory([item.category || '']),
-              notes: [item.brand, item.description].filter(Boolean).join(' — '),
-              image_url: (item.images && item.images.length > 0) ? item.images[0] : '',
-            },
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        const catInfo = guessCategory([item.category || '', item.title || '']);
+        return jsonResponse({
+          success: true,
+          source: 'upcitemdb',
+          product: {
+            name: item.title || '',
+            category: catInfo.category,
+            subcategory: catInfo.subcategory,
+            notes: [item.brand, item.description].filter(Boolean).join(' — '),
+            image_url: (item.images && item.images.length > 0) ? item.images[0] : '',
+          },
+        });
       }
     }
 
-    return await aiLookup(`What product has barcode/UPC: ${barcode}?`);
+    // Fallback: AI lookup with web search context
+    return await aiLookup(
+      `Find product information for barcode/UPC: ${barcode}. Search the web if needed. Return name, brand, description, category, subcategory, and a product image URL.`
+    );
   } catch (error) {
     console.error('Lookup error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: 'Lookup failed' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ success: false, error: 'Lookup failed' }, 500);
   }
 });
 
@@ -93,14 +105,12 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     }
     const html = await pageRes.text();
 
-    // Extract meta info
     const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/is);
     const metaDesc = html.match(/<meta[^>]*name=["']description["'][^>]*content=["'](.*?)["']/is);
     const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["'](.*?)["']/is);
     const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["'](.*?)["']/is);
     const ogImage = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["'](.*?)["']/is);
 
-    // Extract product image from various sources
     const productImage = ogImage?.[1]?.trim()
       || html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["'](.*?)["']/is)?.[1]?.trim()
       || html.match(/"image"\s*:\s*"(https?:\/\/[^"]+)"/i)?.[1]
@@ -116,10 +126,9 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     ].filter(Boolean).join('\n');
 
     const aiResponse = await aiLookup(
-      `Extract product details from this webpage info:\n${pageInfo}\n\nReturn the product name, category, notes (brand, description, specs), and image_url.`
+      `Extract product details from this webpage info:\n${pageInfo}\n\nReturn the product name, category, subcategory, notes (brand, description, specs), and image_url.`
     );
 
-    // Inject the extracted image into the AI response if AI didn't find one
     if (productImage) {
       try {
         const responseBody = await aiResponse.clone().json();
@@ -127,9 +136,7 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
           if (!responseBody.product.image_url) {
             responseBody.product.image_url = productImage;
           }
-          return new Response(JSON.stringify(responseBody), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+          return jsonResponse(responseBody);
         }
       } catch { /* fall through */ }
     }
@@ -137,20 +144,14 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     return aiResponse;
   } catch (error) {
     console.error('URL lookup error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: 'URL lookup failed' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ success: false, error: 'URL lookup failed' }, 500);
   }
 }
 
 async function aiLookup(prompt: string): Promise<Response> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   if (!LOVABLE_API_KEY) {
-    return new Response(
-      JSON.stringify({ success: false, error: 'AI not configured' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ success: false, error: 'AI not configured' }, 500);
   }
 
   const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -164,7 +165,17 @@ async function aiLookup(prompt: string): Promise<Response> {
       messages: [
         {
           role: 'system',
-          content: 'You extract product information. Return ONLY valid JSON with keys: name (string), category (one of: tools, materials, hardware, electrical, plumbing, paint, other), notes (brand and description), image_url (product image URL if known, otherwise empty string). If unknown, return {"name":"","category":"other","notes":"","image_url":""}.',
+          content: `You extract product information. Return ONLY valid JSON with these keys:
+- name (string): product name
+- category (string): one of the main categories below
+- subcategory (string): one of the subcategories for that category, or empty string
+- notes (string): brand, description, specs combined
+- image_url (string): product image URL if known, otherwise empty string
+
+${CATEGORY_MAP}
+
+Always pick the most specific category and subcategory. If unsure, use "other" with empty subcategory.
+If product is unknown, return {"name":"","category":"other","subcategory":"","notes":"","image_url":""}.`,
         },
         { role: 'user', content: prompt },
       ],
@@ -179,28 +190,88 @@ async function aiLookup(prompt: string): Promise<Response> {
       try {
         const product = JSON.parse(content);
         if (product.name) {
-          return new Response(
-            JSON.stringify({ success: true, source: 'ai', product }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return jsonResponse({ success: true, source: 'ai', product });
         }
       } catch { /* ignore parse error */ }
     }
   }
 
-  return new Response(
-    JSON.stringify({ success: false, error: 'Product not found' }),
-    { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
+  return jsonResponse({ success: false, error: 'Product not found' }, 404);
 }
 
-function guessCategory(tags: string[]): string {
+function guessCategory(tags: string[]): { category: string; subcategory: string } {
   const joined = tags.join(' ').toLowerCase();
-  if (/tool|wrench|drill|saw|hammer/.test(joined)) return 'tools';
-  if (/wood|lumber|material|cement|concrete/.test(joined)) return 'materials';
-  if (/screw|nail|bolt|hardware|fastener/.test(joined)) return 'hardware';
-  if (/electric|wire|cable|switch|outlet/.test(joined)) return 'electrical';
-  if (/plumb|pipe|faucet|valve/.test(joined)) return 'plumbing';
-  if (/paint|stain|brush|roller/.test(joined)) return 'paint';
-  return 'other';
+
+  // Hardware & Tools
+  if (/hammer|wrench|plier|screwdriver|hand\s*tool/.test(joined)) return { category: 'hardware-tools', subcategory: 'hand-tools' };
+  if (/drill|saw|sander|grinder|power\s*tool/.test(joined)) return { category: 'hardware-tools', subcategory: 'power-tools' };
+  if (/screw|nail|bolt|fastener|anchor/.test(joined)) return { category: 'hardware-tools', subcategory: 'fasteners' };
+  if (/tape\s*measure|level|ruler|measuring/.test(joined)) return { category: 'hardware-tools', subcategory: 'measuring' };
+  if (/safety|glove|goggles|mask|helmet/.test(joined)) return { category: 'hardware-tools', subcategory: 'safety' };
+  if (/tool|hardware/.test(joined)) return { category: 'hardware-tools', subcategory: '' };
+
+  // Produce
+  if (/fruit|apple|banana|orange|berry|grape|mango|peach|pear|melon/.test(joined)) return { category: 'produce', subcategory: 'fruits' };
+  if (/vegetable|carrot|potato|tomato|onion|lettuce|broccoli|pepper|cucumber/.test(joined)) return { category: 'produce', subcategory: 'vegetables' };
+  if (/herb|spice|basil|oregano|thyme|cilantro|parsley|cinnamon/.test(joined)) return { category: 'produce', subcategory: 'herbs' };
+
+  // Groceries
+  if (/dairy|milk|cheese|yogurt|butter|egg|cream/.test(joined)) return { category: 'groceries', subcategory: 'dairy' };
+  if (/snack|chip|cookie|cracker|candy|chocolate|popcorn/.test(joined)) return { category: 'groceries', subcategory: 'snacks' };
+  if (/beverage|drink|soda|juice|water|coffee|tea|beer|wine|bebida|refresco|gaseosa|cola/.test(joined)) return { category: 'groceries', subcategory: 'beverages' };
+  if (/canned|can|soup|bean|tuna/.test(joined)) return { category: 'groceries', subcategory: 'canned' };
+  if (/frozen|ice\s*cream|pizza|fries/.test(joined)) return { category: 'groceries', subcategory: 'frozen' };
+  if (/bread|bakery|bun|roll|muffin|cake|pastry/.test(joined)) return { category: 'groceries', subcategory: 'bakery' };
+  if (/sauce|ketchup|mustard|mayo|dressing|condiment|vinegar|oil/.test(joined)) return { category: 'groceries', subcategory: 'condiments' };
+  if (/grocery|food|cereal|pasta|rice|flour|sugar/.test(joined)) return { category: 'groceries', subcategory: '' };
+
+  // Household
+  if (/clean|bleach|detergent|disinfect|sponge|mop|broom/.test(joined)) return { category: 'household', subcategory: 'cleaning' };
+  if (/kitchen|cookware|utensil|pot|pan|knife|cutting/.test(joined)) return { category: 'household', subcategory: 'kitchen' };
+  if (/bathroom|toilet|shower|soap|shampoo|towel/.test(joined)) return { category: 'household', subcategory: 'bathroom' };
+  if (/laundry|washer|dryer|fabric|softener|iron/.test(joined)) return { category: 'household', subcategory: 'laundry' };
+  if (/storage|organiz|bin|basket|shelf|container/.test(joined)) return { category: 'household', subcategory: 'storage' };
+  if (/household|home/.test(joined)) return { category: 'household', subcategory: '' };
+
+  // Electrical
+  if (/wire|cable|wiring|cord|extension/.test(joined)) return { category: 'electrical', subcategory: 'wiring' };
+  if (/light|lamp|bulb|led|lighting|fixture/.test(joined)) return { category: 'electrical', subcategory: 'lighting' };
+  if (/switch|outlet|dimmer|receptacle/.test(joined)) return { category: 'electrical', subcategory: 'switches' };
+  if (/battery|batteries|charger/.test(joined)) return { category: 'electrical', subcategory: 'batteries' };
+  if (/electric/.test(joined)) return { category: 'electrical', subcategory: '' };
+
+  // Plumbing
+  if (/pipe|fitting|pvc|copper\s*pipe/.test(joined)) return { category: 'plumbing', subcategory: 'pipes' };
+  if (/faucet|fixture|sink|toilet|shower\s*head/.test(joined)) return { category: 'plumbing', subcategory: 'fixtures' };
+  if (/valve|connector|coupling/.test(joined)) return { category: 'plumbing', subcategory: 'valves' };
+  if (/plumb/.test(joined)) return { category: 'plumbing', subcategory: '' };
+
+  // Paint
+  if (/interior\s*paint/.test(joined)) return { category: 'paint', subcategory: 'interior-paint' };
+  if (/exterior\s*paint/.test(joined)) return { category: 'paint', subcategory: 'exterior-paint' };
+  if (/stain|sealer|varnish/.test(joined)) return { category: 'paint', subcategory: 'stain' };
+  if (/brush|roller|paint\s*brush/.test(joined)) return { category: 'paint', subcategory: 'brushes-rollers' };
+  if (/paint|primer|coating/.test(joined)) return { category: 'paint', subcategory: '' };
+
+  // Outdoor & Garden
+  if (/garden\s*tool|rake|shovel|hoe|pruner/.test(joined)) return { category: 'outdoor', subcategory: 'garden-tools' };
+  if (/seed|plant|flower|tree|shrub/.test(joined)) return { category: 'outdoor', subcategory: 'seeds-plants' };
+  if (/fertilizer|soil|mulch|compost/.test(joined)) return { category: 'outdoor', subcategory: 'fertilizer' };
+  if (/patio|outdoor\s*furniture|grill|bbq/.test(joined)) return { category: 'outdoor', subcategory: 'outdoor-furniture' };
+  if (/garden|outdoor|lawn|yard/.test(joined)) return { category: 'outdoor', subcategory: '' };
+
+  // Automotive
+  if (/motor\s*oil|fluid|coolant|lubricant|transmission/.test(joined)) return { category: 'automotive', subcategory: 'fluids' };
+  if (/car\s*part|auto\s*part|filter|brake|wiper/.test(joined)) return { category: 'automotive', subcategory: 'parts' };
+  if (/car\s*wash|wax|polish|car\s*care|detailing/.test(joined)) return { category: 'automotive', subcategory: 'car-care' };
+  if (/auto|car|vehicle/.test(joined)) return { category: 'automotive', subcategory: '' };
+
+  return { category: 'other', subcategory: '' };
+}
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }
