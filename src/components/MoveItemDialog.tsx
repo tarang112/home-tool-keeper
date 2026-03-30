@@ -19,6 +19,10 @@ interface MoveItemDialogProps {
   onMove: (itemId: string, houseId: string | null) => void;
 }
 
+function locationIcon(house: House) {
+  return house.propertyType === "business" ? "🏢" : "🏠";
+}
+
 export function MoveItemDialog({ open, onOpenChange, item, houses, onMove }: MoveItemDialogProps) {
   const { user } = useAuth();
   const [selectedHouseId, setSelectedHouseId] = useState<string | null>(null);
@@ -49,7 +53,6 @@ export function MoveItemDialog({ open, onOpenChange, item, houses, onMove }: Mov
     const isShared = sharedHouseIds.has(houseId);
 
     if (isShared) {
-      // Unshare
       const { error } = await supabase
         .from("item_shares")
         .delete()
@@ -61,15 +64,14 @@ export function MoveItemDialog({ open, onOpenChange, item, houses, onMove }: Mov
         next.delete(houseId);
         return next;
       });
-      toast.success(`Unshared from house`);
+      toast.success(`Unshared from location`);
     } else {
-      // Share
       const { error } = await supabase
         .from("item_shares")
         .insert({ item_id: item.id, house_id: houseId, shared_by: user.id });
       if (error) { toast.error("Failed to share"); return; }
       setSharedHouseIds((prev) => new Set(prev).add(houseId));
-      toast.success(`Shared to house`);
+      toast.success(`Shared to location`);
     }
   };
 
@@ -79,7 +81,6 @@ export function MoveItemDialog({ open, onOpenChange, item, houses, onMove }: Mov
     onOpenChange(false);
   };
 
-  // Filter out the house the item already belongs to
   const availableHousesForShare = houses.filter((h) => h.id !== item?.houseId);
   const availableHousesForMove = houses;
 
@@ -95,17 +96,17 @@ export function MoveItemDialog({ open, onOpenChange, item, houses, onMove }: Mov
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="share">Share to House</TabsTrigger>
-            <TabsTrigger value="move">Move Item</TabsTrigger>
+            <TabsTrigger value="share">Share</TabsTrigger>
+            <TabsTrigger value="move">Move</TabsTrigger>
           </TabsList>
 
           <TabsContent value="share" className="space-y-3 pt-2">
             <p className="text-xs text-muted-foreground">
-              Share this item so it's visible in other houses too. The item stays in its current location.
+              Share this item so it's visible in other locations too. The item stays in its current location.
             </p>
             {availableHousesForShare.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No other houses to share with. Create more houses first.
+                No other locations to share with. Create more locations first.
               </p>
             ) : (
               availableHousesForShare.map((house) => (
@@ -117,7 +118,7 @@ export function MoveItemDialog({ open, onOpenChange, item, houses, onMove }: Mov
                   onClick={() => toggleShare(house.id)}
                 >
                   <Checkbox checked={sharedHouseIds.has(house.id)} />
-                  <span className="text-sm font-medium">🏠 {house.name}</span>
+                  <span className="text-sm font-medium">{locationIcon(house)} {house.name}</span>
                   {sharedHouseIds.has(house.id) && (
                     <span className="ml-auto text-xs text-primary">Shared</span>
                   )}
@@ -128,7 +129,7 @@ export function MoveItemDialog({ open, onOpenChange, item, houses, onMove }: Mov
 
           <TabsContent value="move" className="space-y-3 pt-2">
             <p className="text-xs text-muted-foreground">
-              Move this item permanently to a different house or back to personal.
+              Move this item permanently to a different location or back to personal.
             </p>
             <label
               className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
@@ -149,7 +150,7 @@ export function MoveItemDialog({ open, onOpenChange, item, houses, onMove }: Mov
                 onClick={() => setSelectedHouseId(house.id)}
               >
                 <Checkbox checked={selectedHouseId === house.id} />
-                <span className="text-sm font-medium">🏠 {house.name}</span>
+                <span className="text-sm font-medium">{locationIcon(house)} {house.name}</span>
               </label>
             ))}
 
