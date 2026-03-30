@@ -9,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, X, ScanBarcode, Loader2 } from "lucide-react";
+import { Camera, X, ScanBarcode, Loader2, Link } from "lucide-react";
 import { CATEGORIES, LOCATIONS, type InventoryItem, type ItemCategory } from "@/hooks/use-inventory";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,8 +34,10 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
   const [locationImage, setLocationImage] = useState("");
   const [notes, setNotes] = useState("");
   const [barcode, setBarcode] = useState("");
+  const [productUrl, setProductUrl] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
+  const [urlLookingUp, setUrlLookingUp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
