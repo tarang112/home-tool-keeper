@@ -109,6 +109,7 @@ export function AddItemDialog({
       setSubcategory("");
       setCustomCategory("");
       setQuantity("1");
+      setQuantityUnit("pcs");
       setLocationMode("Garage");
       setCustomLocation("");
       setLocationDetail("");
