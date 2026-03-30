@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft } from "lucide-react";
+import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2 } from "lucide-react";
 import { CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
 
 interface ItemCardProps {
@@ -26,6 +26,12 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
             </div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge variant="secondary" className="text-xs">{cat?.label}</Badge>
+              {item.sharedFromHouse && (
+                <Badge variant="outline" className="text-xs gap-1">
+                  <Share2 className="h-3 w-3" />
+                  Shared from {item.sharedFromHouse}
+                </Badge>
+              )}
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 {item.location}

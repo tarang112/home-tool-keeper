@@ -56,7 +56,7 @@ export function useInventory(houseId?: string | null) {
           .order("created_at", { ascending: false }),
         supabase
           .from("item_shares")
-          .select("item_id")
+          .select("item_id, house_id")
           .eq("house_id", houseId),
       ]);
 
@@ -72,9 +72,26 @@ export function useInventory(houseId?: string | null) {
           .order("created_at", { ascending: false });
         if (sharedItems) {
           const existingIds = new Set(allItems.map(i => i.id));
+          // Look up source house name for shared items
+          const sourceHouseIds = sharedItems
+            .filter((s: any) => s.house_id && s.house_id !== houseId)
+            .map((s: any) => s.house_id);
+          let houseNameMap: Record<string, string> = {};
+          if (sourceHouseIds.length > 0) {
+            const { data: houseData } = await supabase
+              .from("houses")
+              .select("id, name")
+              .in("id", [...new Set(sourceHouseIds)]);
+            if (houseData) {
+              houseData.forEach((h: any) => { houseNameMap[h.id] = h.name; });
+            }
+          }
           const newShared = sharedItems
             .filter((s: any) => !existingIds.has(s.id))
-            .map(rowToItem);
+            .map((s: any) => ({
+              ...rowToItem(s),
+              sharedFromHouse: houseNameMap[s.house_id] || "Another house",
+            }));
           allItems = [...allItems, ...newShared];
         }
       }
