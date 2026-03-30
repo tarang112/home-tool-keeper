@@ -212,6 +212,7 @@ export function useHouses() {
     loading,
     isOwner,
     createHouse,
+    renameHouse,
     deleteHouse,
     inviteMember,
     removeMember,
