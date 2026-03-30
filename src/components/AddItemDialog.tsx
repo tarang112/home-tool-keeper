@@ -316,7 +316,7 @@ export function AddItemDialog({
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {MAIN_CATEGORIES.map((c) => (
+                  {activeCategoryList.map((c) => (
                     <SelectItem key={c.value} value={c.value}>{c.icon} {c.label}</SelectItem>
                   ))}
                   {customCategories.length > 0 && (
