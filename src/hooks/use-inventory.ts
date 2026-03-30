@@ -3,12 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
-export type ItemCategory = "tools" | "materials" | "hardware" | "electrical" | "plumbing" | "paint" | "other" | "custom";
+export type ItemCategory = string;
+
+export interface SubCategory {
+  value: string;
+  label: string;
+}
+
+export interface MainCategory {
+  value: string;
+  label: string;
+  icon: string;
+  subcategories: SubCategory[];
+}
 
 export interface InventoryItem {
   id: string;
   name: string;
   category: ItemCategory;
+  subcategory?: string;
   customCategory?: string;
   quantity: number;
   location: string;
@@ -30,7 +43,8 @@ function rowToItem(row: any): InventoryItem {
   return {
     id: row.id,
     name: row.name,
-    category: isCustom ? "custom" as ItemCategory : rawCat as ItemCategory,
+    category: isCustom ? "custom" : rawCat,
+    subcategory: row.subcategory || "",
     customCategory: isCustom ? rawCat.slice(7) : undefined,
     quantity: row.quantity,
     location: row.location,
@@ -55,7 +69,6 @@ export function useInventory(houseId?: string | null) {
     if (!user) { setItems([]); setLoading(false); return; }
 
     if (houseId) {
-      // Fetch items that belong to this house OR are shared to this house
       const [ownedRes, sharedRes] = await Promise.all([
         supabase
           .from("inventory_items")
@@ -70,7 +83,6 @@ export function useInventory(houseId?: string | null) {
 
       let allItems = (ownedRes.data || []).map(rowToItem);
 
-      // Fetch shared items by their IDs
       if (sharedRes.data && sharedRes.data.length > 0) {
         const sharedIds = sharedRes.data.map((s: any) => s.item_id);
         const { data: sharedItems } = await supabase
@@ -80,7 +92,6 @@ export function useInventory(houseId?: string | null) {
           .order("created_at", { ascending: false });
         if (sharedItems) {
           const existingIds = new Set(allItems.map(i => i.id));
-          // Look up source house name for shared items
           const sourceHouseIds = sharedItems
             .filter((s: any) => s.house_id && s.house_id !== houseId)
             .map((s: any) => s.house_id);
@@ -106,7 +117,6 @@ export function useInventory(houseId?: string | null) {
 
       setItems(allItems);
     } else {
-      // Show ALL items: personal + owned houses + shared items
       const { data: ownedItems, error: ownedErr } = await supabase
         .from("inventory_items")
         .select("*")
@@ -118,7 +128,6 @@ export function useInventory(houseId?: string | null) {
       } else {
         let allItems = (ownedItems || []).map(rowToItem);
 
-        // Also fetch items shared to any of the user's houses
         const { data: allShares } = await supabase
           .from("item_shares")
           .select("item_id");
@@ -182,6 +191,7 @@ export function useInventory(houseId?: string | null) {
       user_id: user.id,
       name: item.name,
       category: item.category === "custom" ? `custom:${item.customCategory || "Other"}` : item.category,
+      subcategory: item.subcategory || "",
       quantity: item.quantity,
       location: item.location,
       location_detail: item.locationDetail,
@@ -204,6 +214,7 @@ export function useInventory(houseId?: string | null) {
     if (updates.category !== undefined) {
       dbUpdates.category = updates.category === "custom" ? `custom:${updates.customCategory || "Other"}` : updates.category;
     }
+    if (updates.subcategory !== undefined) dbUpdates.subcategory = updates.subcategory;
     if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
     if (updates.location !== undefined) dbUpdates.location = updates.location;
     if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;
@@ -249,15 +260,99 @@ export function useInventory(houseId?: string | null) {
   return { items, loading, addItem, updateItem, deleteItem, adjustQuantity };
 }
 
-export const CATEGORIES: { value: ItemCategory; label: string; icon: string }[] = [
-  { value: "tools", label: "Tools", icon: "🔧" },
-  { value: "materials", label: "Materials", icon: "🪵" },
-  { value: "hardware", label: "Hardware", icon: "🔩" },
-  { value: "electrical", label: "Electrical", icon: "⚡" },
-  { value: "plumbing", label: "Plumbing", icon: "🔧" },
-  { value: "paint", label: "Paint", icon: "🎨" },
-  { value: "other", label: "Other", icon: "📦" },
+export const MAIN_CATEGORIES: MainCategory[] = [
+  {
+    value: "hardware-tools", label: "Hardware & Tools", icon: "🔧",
+    subcategories: [
+      { value: "hand-tools", label: "Hand Tools" },
+      { value: "power-tools", label: "Power Tools" },
+      { value: "fasteners", label: "Fasteners & Nails" },
+      { value: "measuring", label: "Measuring & Layout" },
+      { value: "safety", label: "Safety Equipment" },
+    ],
+  },
+  {
+    value: "groceries", label: "Groceries", icon: "🛒",
+    subcategories: [
+      { value: "dairy", label: "Dairy & Eggs" },
+      { value: "snacks", label: "Snacks" },
+      { value: "beverages", label: "Beverages" },
+      { value: "canned", label: "Canned Goods" },
+      { value: "frozen", label: "Frozen Foods" },
+      { value: "bakery", label: "Bakery & Bread" },
+      { value: "condiments", label: "Condiments & Sauces" },
+    ],
+  },
+  {
+    value: "produce", label: "Produce", icon: "🥬",
+    subcategories: [
+      { value: "fruits", label: "Fruits" },
+      { value: "vegetables", label: "Vegetables" },
+      { value: "herbs", label: "Herbs & Spices" },
+    ],
+  },
+  {
+    value: "household", label: "Household", icon: "🏠",
+    subcategories: [
+      { value: "cleaning", label: "Cleaning Supplies" },
+      { value: "kitchen", label: "Kitchen" },
+      { value: "bathroom", label: "Bathroom" },
+      { value: "laundry", label: "Laundry" },
+      { value: "storage", label: "Storage & Organization" },
+    ],
+  },
+  {
+    value: "electrical", label: "Electrical", icon: "⚡",
+    subcategories: [
+      { value: "wiring", label: "Wiring & Cable" },
+      { value: "lighting", label: "Lighting" },
+      { value: "switches", label: "Switches & Outlets" },
+      { value: "batteries", label: "Batteries" },
+    ],
+  },
+  {
+    value: "plumbing", label: "Plumbing", icon: "🚿",
+    subcategories: [
+      { value: "pipes", label: "Pipes & Fittings" },
+      { value: "fixtures", label: "Fixtures" },
+      { value: "valves", label: "Valves & Connectors" },
+    ],
+  },
+  {
+    value: "paint", label: "Paint & Finishing", icon: "🎨",
+    subcategories: [
+      { value: "interior-paint", label: "Interior Paint" },
+      { value: "exterior-paint", label: "Exterior Paint" },
+      { value: "stain", label: "Stain & Sealers" },
+      { value: "brushes-rollers", label: "Brushes & Rollers" },
+    ],
+  },
+  {
+    value: "outdoor", label: "Outdoor & Garden", icon: "🌿",
+    subcategories: [
+      { value: "garden-tools", label: "Garden Tools" },
+      { value: "seeds-plants", label: "Seeds & Plants" },
+      { value: "fertilizer", label: "Fertilizer & Soil" },
+      { value: "outdoor-furniture", label: "Outdoor Furniture" },
+    ],
+  },
+  {
+    value: "automotive", label: "Automotive", icon: "🚗",
+    subcategories: [
+      { value: "fluids", label: "Fluids & Lubricants" },
+      { value: "parts", label: "Parts & Accessories" },
+      { value: "car-care", label: "Car Care" },
+    ],
+  },
+  {
+    value: "other", label: "Other", icon: "📦",
+    subcategories: [],
+  },
 ];
+
+// Flat list for backward compat in filters
+export const CATEGORIES: { value: string; label: string; icon: string }[] =
+  MAIN_CATEGORIES.map((c) => ({ value: c.value, label: c.label, icon: c.icon }));
 
 export const LOCATIONS = [
   "Garage", "Shed", "Basement", "Kitchen", "Bathroom", "Workshop",
