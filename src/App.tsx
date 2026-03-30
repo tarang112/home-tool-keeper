@@ -20,8 +20,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const location = window.location;
+  const params = new URLSearchParams(location.search);
+  const redirect = params.get("redirect");
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to={redirect || "/"} replace />;
   return <>{children}</>;
 }
 
