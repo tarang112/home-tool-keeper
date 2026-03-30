@@ -32,6 +32,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
   const hasProductImg = !!item.productImage;
   const hasItemImg = !!item.itemImage;
   const hasLocationImg = !!item.locationImage;
+  const [zoomedImg, setZoomedImg] = useState<string | null>(null);
 
   return (
     <Card className="animate-slide-up">
