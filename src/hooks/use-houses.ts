@@ -58,6 +58,7 @@ export function useHouses() {
   const [members, setMembers] = useState<HouseMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [defaultHouseId, setDefaultHouseId] = useState<string | null>(null);
   const hasAutoSelectedHouse = useRef(false);
 
   const fetchHouses = useCallback(async () => {
