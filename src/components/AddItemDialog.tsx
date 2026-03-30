@@ -73,6 +73,7 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
       locationDetail: locationDetail.trim(),
       locationImage,
       notes: notes.trim(),
+      houseId: editItem?.houseId || null,
     };
 
     if (editItem && onUpdate) {
