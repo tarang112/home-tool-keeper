@@ -80,18 +80,39 @@ export function useInventory(houseId?: string | null) {
 
       setItems(allItems);
     } else {
-      // Show personal items (no house) when no house selected
-      const { data, error } = await supabase
+      // Show ALL items: personal + owned houses + shared items
+      const { data: ownedItems, error: ownedErr } = await supabase
         .from("inventory_items")
         .select("*")
-        .is("house_id", null)
-        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (error) {
+
+      if (ownedErr) {
         toast.error("Failed to load items");
-        console.error(error);
+        console.error(ownedErr);
       } else {
-        setItems((data || []).map(rowToItem));
+        let allItems = (ownedItems || []).map(rowToItem);
+
+        // Also fetch items shared to any of the user's houses
+        const { data: allShares } = await supabase
+          .from("item_shares")
+          .select("item_id");
+
+        if (allShares && allShares.length > 0) {
+          const sharedIds = allShares.map((s: any) => s.item_id);
+          const existingIds = new Set(allItems.map(i => i.id));
+          const missingIds = sharedIds.filter(id => !existingIds.has(id));
+          if (missingIds.length > 0) {
+            const { data: sharedItems } = await supabase
+              .from("inventory_items")
+              .select("*")
+              .in("id", missingIds);
+            if (sharedItems) {
+              allItems = [...allItems, ...sharedItems.map(rowToItem)];
+            }
+          }
+        }
+
+        setItems(allItems);
       }
     }
     setLoading(false);
