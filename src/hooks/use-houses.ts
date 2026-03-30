@@ -130,6 +130,14 @@ export function useHouses() {
     toast.success(`"${name}" created!`);
   }, [user]);
 
+  const renameHouse = useCallback(async (houseId: string, newName: string) => {
+    if (!newName.trim()) return;
+    const { error } = await supabase.from("houses").update({ name: newName.trim() }).eq("id", houseId);
+    if (error) { toast.error("Failed to rename"); return; }
+    setHouses((prev) => prev.map((h) => h.id === houseId ? { ...h, name: newName.trim() } : h));
+    toast.success("Renamed successfully");
+  }, []);
+
   const deleteHouse = useCallback(async (houseId: string) => {
     const { error } = await supabase.from("houses").delete().eq("id", houseId);
     if (error) { toast.error("Failed to delete house"); return; }
