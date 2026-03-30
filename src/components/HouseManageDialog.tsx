@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2 } from "lucide-react";
 import type { House, HouseMember } from "@/hooks/use-houses";
-import { RELATIONSHIPS } from "@/hooks/use-houses";
+import { PERSONAL_RELATIONSHIPS, BUSINESS_RELATIONSHIPS } from "@/hooks/use-houses";
 
 interface HouseManageDialogProps {
   open: boolean;
