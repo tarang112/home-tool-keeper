@@ -270,6 +270,82 @@ export const BUSINESS_TYPES: BusinessType[] = [
       },
     ],
   },
+  {
+    value: "salon",
+    label: "Salon / Beauty",
+    icon: "💇",
+    categories: [
+      {
+        value: "hair-products", label: "Hair Products", icon: "💇",
+        subcategories: [
+          { value: "shampoo-conditioner", label: "Shampoo & Conditioner" },
+          { value: "hair-color", label: "Hair Color & Dye" },
+          { value: "styling-products", label: "Styling Products" },
+          { value: "treatments", label: "Treatments & Masks" },
+          { value: "extensions", label: "Extensions & Wigs" },
+        ],
+      },
+      {
+        value: "nail-supplies", label: "Nail Supplies", icon: "💅",
+        subcategories: [
+          { value: "nail-polish", label: "Nail Polish & Gel" },
+          { value: "acrylics", label: "Acrylics & Tips" },
+          { value: "nail-tools", label: "Nail Tools & Files" },
+          { value: "nail-care", label: "Nail Care & Cuticle" },
+        ],
+      },
+      {
+        value: "skin-care", label: "Skin Care", icon: "🧴",
+        subcategories: [
+          { value: "cleansers", label: "Cleansers & Toners" },
+          { value: "moisturizers", label: "Moisturizers & Serums" },
+          { value: "masks-peels", label: "Masks & Peels" },
+          { value: "sunscreen", label: "Sunscreen & SPF" },
+          { value: "waxing", label: "Waxing Supplies" },
+        ],
+      },
+      {
+        value: "makeup", label: "Makeup & Cosmetics", icon: "💄",
+        subcategories: [
+          { value: "foundation", label: "Foundation & Concealer" },
+          { value: "eye-makeup", label: "Eye Makeup" },
+          { value: "lip-products", label: "Lip Products" },
+          { value: "brushes-applicators", label: "Brushes & Applicators" },
+        ],
+      },
+      {
+        value: "salon-equipment", label: "Equipment & Tools", icon: "✂️",
+        subcategories: [
+          { value: "scissors-clippers", label: "Scissors & Clippers" },
+          { value: "dryers-irons", label: "Dryers & Flat Irons" },
+          { value: "chairs-stations", label: "Chairs & Stations" },
+          { value: "mirrors", label: "Mirrors & Lighting" },
+          { value: "sterilizers", label: "Sterilizers & Sanitizers" },
+        ],
+      },
+      {
+        value: "salon-consumables", label: "Consumables", icon: "🧻",
+        subcategories: [
+          { value: "towels-capes", label: "Towels & Capes" },
+          { value: "gloves", label: "Gloves & Aprons" },
+          { value: "foils-papers", label: "Foils & Papers" },
+          { value: "cotton-wipes", label: "Cotton & Wipes" },
+        ],
+      },
+      {
+        value: "salon-retail", label: "Retail Products", icon: "🛍️",
+        subcategories: [
+          { value: "retail-hair", label: "Retail Hair Products" },
+          { value: "retail-skin", label: "Retail Skin Products" },
+          { value: "retail-accessories", label: "Accessories & Gift Sets" },
+        ],
+      },
+      {
+        value: "salon-other", label: "Other", icon: "📦",
+        subcategories: [],
+      },
+    ],
+  },
 ];
 
 export function getBusinessCategories(businessType: string): MainCategory[] {
