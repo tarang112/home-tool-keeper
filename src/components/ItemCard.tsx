@@ -32,13 +32,13 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardProps) {
-  const cat = CATEGORIES.find((c) => c.value === item.category);
-  const mainCat = MAIN_CATEGORIES.find((c) => c.value === item.category);
+  const allCat = ALL_CATEGORIES.find((c) => c.value === item.category);
+  const cat = CATEGORIES.find((c) => c.value === item.category) || (allCat ? { value: allCat.value, label: allCat.label, icon: allCat.icon } : undefined);
   const subLabel = item.subcategory
-    ? (mainCat?.subcategories.find(s => s.value === item.subcategory)?.label || item.subcategory)
+    ? (allCat?.subcategories.find(s => s.value === item.subcategory)?.label || item.subcategory)
     : undefined;
-  const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label;
-  const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon;
+  const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label || item.category;
+  const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon || "📦";
   const hasProductImg = !!item.productImage;
   const hasItemImg = !!item.itemImage;
   const hasLocationImg = !!item.locationImage;
