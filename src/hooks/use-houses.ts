@@ -267,12 +267,14 @@ export function useHouses() {
     selectedHouse,
     setSelectedHouseId,
     members,
+    pendingInvites,
     loading,
     isOwner,
     createHouse,
     renameHouse,
     deleteHouse,
     inviteMember,
+    cancelInvite,
     removeMember,
   };
 }
