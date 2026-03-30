@@ -24,6 +24,7 @@ export interface InventoryItem {
   subcategory?: string;
   customCategory?: string;
   quantity: number;
+  quantityUnit: string;
   location: string;
   locationDetail: string;
   locationImage: string;
@@ -37,6 +38,18 @@ export interface InventoryItem {
   updatedAt: string;
   sharedFromHouse?: string;
 }
+
+export const QUANTITY_UNITS = [
+  { value: "pcs", label: "No. (pcs)" },
+  { value: "kg", label: "kg" },
+  { value: "g", label: "g" },
+  { value: "lb", label: "lb" },
+  { value: "oz", label: "oz" },
+  { value: "L", label: "L" },
+  { value: "ml", label: "ml" },
+  { value: "gal", label: "gal" },
+  { value: "fl oz", label: "fl oz" },
+];
 
 // Categories that should show expiration date picker
 export const EXPIRABLE_CATEGORIES = ['groceries', 'produce', 'medicine'];
