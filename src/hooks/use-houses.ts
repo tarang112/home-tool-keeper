@@ -8,6 +8,8 @@ export interface House {
   name: string;
   ownerId: string;
   createdAt: string;
+  propertyType: "personal" | "business";
+  businessType?: string;
 }
 
 export interface HouseMember {
