@@ -10,6 +10,7 @@ export interface House {
   createdAt: string;
   propertyType: "personal" | "business";
   businessType?: string;
+  imageUrl?: string;
 }
 
 export interface HouseMember {
