@@ -334,11 +334,11 @@ function guessCategory(tags: string[]): { category: string; subcategory: string 
   if (/herb|spice|basil|oregano|thyme|cilantro|parsley|cinnamon/.test(joined)) return { category: 'produce', subcategory: 'herbs' };
 
   if (/dairy|milk|cheese|yogurt|butter|egg|cream/.test(joined)) return { category: 'groceries', subcategory: 'dairy' };
-  if (/pretzel|snack|chip|cookie|cracker|candy|chocolate|popcorn/.test(joined)) return { category: 'groceries', subcategory: 'snacks' };
+  if (/frozen|ice\s*cream|keep\s*frozen|freezer/.test(joined)) return { category: 'groceries', subcategory: 'frozen' };
+  if (/pretzel|snack|chip|cookie|cracker|candy|chocolate|popcorn|jerky|nuts/.test(joined)) return { category: 'groceries', subcategory: 'snacks' };
   if (/beverage|drink|soda|juice|water|coffee|tea|beer|wine|bebida|refresco|gaseosa|cola/.test(joined)) return { category: 'groceries', subcategory: 'beverages' };
   if (/canned|can|soup|bean|tuna/.test(joined)) return { category: 'groceries', subcategory: 'canned' };
-  if (/frozen|ice\s*cream|pizza|fries/.test(joined)) return { category: 'groceries', subcategory: 'frozen' };
-  if (/bread|bakery|bun|roll|muffin|cake|pastry/.test(joined)) return { category: 'groceries', subcategory: 'bakery' };
+  if (/bread|bakery|bun|roll|muffin|cake|pastry|dough/.test(joined)) return { category: 'groceries', subcategory: 'bakery' };
   if (/sauce|ketchup|mustard|mayo|dressing|condiment|vinegar|oil/.test(joined)) return { category: 'groceries', subcategory: 'condiments' };
   if (/grocery|food|cereal|pasta|rice|flour|sugar/.test(joined)) return { category: 'groceries', subcategory: '' };
 
