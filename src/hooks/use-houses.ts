@@ -405,5 +405,6 @@ export function useHouses() {
     createInviteLink,
     cancelInvite,
     removeMember,
+    uploadHouseImage,
   };
 }
