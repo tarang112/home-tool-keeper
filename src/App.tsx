@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
+import AcceptInvite from "./pages/AcceptInvite.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
