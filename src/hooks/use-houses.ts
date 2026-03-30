@@ -98,11 +98,11 @@ export function useHouses() {
     else setMembers([]);
   }, [selectedHouseId, fetchMembers]);
 
-  const createHouse = useCallback(async (name: string) => {
+  const createHouse = useCallback(async (name: string, propertyType: "personal" | "business" = "personal", businessType?: string) => {
     if (!user) return;
     const { data, error } = await supabase
       .from("houses")
-      .insert({ name, owner_id: user.id })
+      .insert({ name, owner_id: user.id, property_type: propertyType, business_type: businessType || null } as any)
       .select()
       .single();
     if (error) { toast.error("Failed to create house"); return; }
@@ -114,7 +114,11 @@ export function useHouses() {
       role: "owner",
     });
 
-    const house: House = { id: data.id, name: data.name, ownerId: data.owner_id, createdAt: data.created_at };
+    const house: House = {
+      id: data.id, name: data.name, ownerId: data.owner_id, createdAt: data.created_at,
+      propertyType: (data as any).property_type || "personal",
+      businessType: (data as any).business_type || undefined,
+    };
     setHouses((prev) => [...prev, house]);
     setSelectedHouseId(data.id);
     toast.success(`"${name}" created!`);
