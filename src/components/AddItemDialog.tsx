@@ -27,7 +27,8 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("tools");
   const [quantity, setQuantity] = useState("1");
-  const [location, setLocation] = useState("Garage");
+  const [locationMode, setLocationMode] = useState("Garage");
+  const [customLocation, setCustomLocation] = useState("");
   const [locationDetail, setLocationDetail] = useState("");
   const [locationImage, setLocationImage] = useState("");
   const [notes, setNotes] = useState("");
@@ -42,7 +43,14 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
       setName(editItem.name);
       setCategory(editItem.category);
       setQuantity(String(editItem.quantity));
-      setLocation(editItem.location);
+      const loc = editItem.location;
+      if (LOCATIONS.includes(loc)) {
+        setLocationMode(loc);
+        setCustomLocation("");
+      } else {
+        setLocationMode("custom");
+        setCustomLocation(loc);
+      }
       setLocationDetail(editItem.locationDetail ?? "");
       setLocationImage(editItem.locationImage ?? "");
       setNotes(editItem.notes ?? "");
@@ -51,7 +59,8 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
       setName("");
       setCategory("tools");
       setQuantity("1");
-      setLocation("Garage");
+      setLocationMode("Garage");
+      setCustomLocation("");
       setLocationDetail("");
       setLocationImage("");
       setNotes("");
@@ -101,7 +110,7 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
       name: name.trim(),
       category,
       quantity: Math.max(0, parseInt(quantity) || 0),
-      location,
+      location: locationMode === "custom" ? customLocation.trim() : locationMode,
       locationDetail: locationDetail.trim(),
       locationImage,
       notes: notes.trim(),
@@ -189,14 +198,22 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
 
             <div className="space-y-2">
               <Label>Location</Label>
-              <Select value={location} onValueChange={setLocation}>
+              <Select value={locationMode} onValueChange={setLocationMode}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {LOCATIONS.map((l) => (
                     <SelectItem key={l} value={l}>{l}</SelectItem>
                   ))}
+                  <SelectItem value="custom">Custom Location</SelectItem>
                 </SelectContent>
               </Select>
+              {locationMode === "custom" && (
+                <Input
+                  value={customLocation}
+                  onChange={(e) => setCustomLocation(e.target.value)}
+                  placeholder="Enter custom location name..."
+                />
+              )}
             </div>
 
             <div className="space-y-2">
