@@ -59,7 +59,8 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
       setName("");
       setCategory("tools");
       setQuantity("1");
-      setLocation("Garage");
+      setLocationMode("Garage");
+      setCustomLocation("");
       setLocationDetail("");
       setLocationImage("");
       setNotes("");
@@ -109,7 +110,7 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
       name: name.trim(),
       category,
       quantity: Math.max(0, parseInt(quantity) || 0),
-      location,
+      location: locationMode === "custom" ? customLocation.trim() : locationMode,
       locationDetail: locationDetail.trim(),
       locationImage,
       notes: notes.trim(),
@@ -197,14 +198,22 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
 
             <div className="space-y-2">
               <Label>Location</Label>
-              <Select value={location} onValueChange={setLocation}>
+              <Select value={locationMode} onValueChange={setLocationMode}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {LOCATIONS.map((l) => (
                     <SelectItem key={l} value={l}>{l}</SelectItem>
                   ))}
+                  <SelectItem value="custom">Custom Location</SelectItem>
                 </SelectContent>
               </Select>
+              {locationMode === "custom" && (
+                <Input
+                  value={customLocation}
+                  onChange={(e) => setCustomLocation(e.target.value)}
+                  placeholder="Enter custom location name..."
+                />
+              )}
             </div>
 
             <div className="space-y-2">
