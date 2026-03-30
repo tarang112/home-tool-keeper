@@ -229,7 +229,7 @@ export function AddItemDialog({
               <div className="space-y-2">
                 <Label>Product Image</Label>
                 <div className="relative rounded-lg overflow-hidden border">
-                  <img src={productImage} alt="Product" className="w-full h-32 object-contain bg-white" />
+                  <img src={productImage} alt="Product" className="w-full h-32 object-contain bg-white" referrerPolicy="no-referrer" />
                   <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setProductImage("")}>
                     <X className="h-3 w-3" />
                   </Button>

@@ -40,7 +40,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               </span>
             </div>
             {item.productImage && (
-              <img src={item.productImage} alt={item.name} className="w-full h-20 object-contain rounded-md mb-2 bg-white" />
+              <img src={item.productImage} alt={item.name} className="w-full h-20 object-contain rounded-md mb-2 bg-white" referrerPolicy="no-referrer" crossOrigin="anonymous" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             )}
             {item.locationImage && (
               <img src={item.locationImage} alt="Location" className="w-full h-20 object-cover rounded-md mb-2" />
