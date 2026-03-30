@@ -2,8 +2,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2, Clock, ChevronDown, ChevronUp } from "lucide-react";
-import { CATEGORIES, MAIN_CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
-import { useState } from "react";
+import { CATEGORIES, MAIN_CATEGORIES, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
+import { BUSINESS_TYPES } from "@/config/business-categories";
+import { useState, useMemo } from "react";
+
+const ALL_CATEGORIES: MainCategory[] = [
+  ...MAIN_CATEGORIES,
+  ...BUSINESS_TYPES.flatMap((bt) => bt.categories),
+];
 
 function proxyImg(url?: string, size = 200) {
   if (!url) return "";
@@ -26,13 +32,13 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardProps) {
-  const cat = CATEGORIES.find((c) => c.value === item.category);
-  const mainCat = MAIN_CATEGORIES.find((c) => c.value === item.category);
+  const allCat = ALL_CATEGORIES.find((c) => c.value === item.category);
+  const cat = CATEGORIES.find((c) => c.value === item.category) || (allCat ? { value: allCat.value, label: allCat.label, icon: allCat.icon } : undefined);
   const subLabel = item.subcategory
-    ? (mainCat?.subcategories.find(s => s.value === item.subcategory)?.label || item.subcategory)
+    ? (allCat?.subcategories.find(s => s.value === item.subcategory)?.label || item.subcategory)
     : undefined;
-  const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label;
-  const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon;
+  const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label || item.category;
+  const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon || "📦";
   const hasProductImg = !!item.productImage;
   const hasItemImg = !!item.itemImage;
   const hasLocationImg = !!item.locationImage;
