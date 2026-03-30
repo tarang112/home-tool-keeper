@@ -23,7 +23,7 @@ const Index = () => {
   const {
     houses, selectedHouseId, selectedHouse, setSelectedHouseId,
     members, pendingInvites, isOwner, loading: housesLoading,
-    createHouse, renameHouse, deleteHouse, inviteMember, createInviteLink, cancelInvite, removeMember,
+    createHouse, renameHouse, deleteHouse, inviteMember, createInviteLink, cancelInvite, removeMember, uploadHouseImage,
   } = useHouses();
 
   // Compute inventory filter based on selection
