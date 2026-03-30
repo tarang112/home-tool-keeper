@@ -28,8 +28,8 @@ interface ItemCardProps {
 export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardProps) {
   const cat = CATEGORIES.find((c) => c.value === item.category);
   const mainCat = MAIN_CATEGORIES.find((c) => c.value === item.category);
-  const subLabel = item.subcategory && mainCat
-    ? mainCat.subcategories.find(s => s.value === item.subcategory)?.label
+  const subLabel = item.subcategory
+    ? (mainCat?.subcategories.find(s => s.value === item.subcategory)?.label || item.subcategory)
     : undefined;
   const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label;
   const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon;
