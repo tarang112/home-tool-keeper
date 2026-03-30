@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_locations ADD COLUMN property_type text NOT NULL DEFAULT 'personal';
