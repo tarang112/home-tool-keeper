@@ -58,6 +58,7 @@ export function useHouses() {
   const [members, setMembers] = useState<HouseMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [defaultHouseId, setDefaultHouseId] = useState<string | null>(null);
   const hasAutoSelectedHouse = useRef(false);
 
   const fetchHouses = useCallback(async () => {
@@ -68,6 +69,16 @@ export function useHouses() {
       setLoading(false);
       return;
     }
+
+    // Load default house preference
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("default_house_id")
+      .eq("user_id", user.id)
+      .single();
+
+    const savedDefault = (profile as any)?.default_house_id ?? null;
+    setDefaultHouseId(savedDefault);
 
     const { data, error } = await supabase
       .from("houses")
@@ -90,7 +101,6 @@ export function useHouses() {
 
       setHouses(mapped);
       setSelectedHouseId((current) => {
-        // Keep special filter values
         if (current === "all-personal" || current === "all-business") return current;
 
         if (mapped.length === 0) {
@@ -104,6 +114,10 @@ export function useHouses() {
 
         if (!hasAutoSelectedHouse.current) {
           hasAutoSelectedHouse.current = true;
+          // Use saved default if it exists in the list
+          if (savedDefault && mapped.some((h) => h.id === savedDefault)) {
+            return savedDefault;
+          }
           return "all-personal";
         }
 
@@ -390,6 +404,20 @@ export function useHouses() {
     fetchMembers(houseId);
   }, [fetchMembers]);
 
+  const setDefaultHouse = useCallback(async (houseId: string | null) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ default_house_id: houseId } as any)
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("Failed to set default");
+      return;
+    }
+    setDefaultHouseId(houseId);
+    toast.success(houseId ? "Default location set" : "Default location cleared");
+  }, [user]);
+
   const selectedHouse = houses.find((h) => h.id === selectedHouseId) || null;
   const isOwner = selectedHouse ? selectedHouse.ownerId === user?.id : false;
 
@@ -402,6 +430,8 @@ export function useHouses() {
     pendingInvites,
     loading,
     isOwner,
+    defaultHouseId,
+    setDefaultHouse,
     createHouse,
     renameHouse,
     deleteHouse,

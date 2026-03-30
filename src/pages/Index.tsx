@@ -24,6 +24,7 @@ const Index = () => {
   const {
     houses, selectedHouseId, selectedHouse, setSelectedHouseId,
     members, pendingInvites, isOwner, loading: housesLoading,
+    defaultHouseId, setDefaultHouse,
     createHouse, renameHouse, deleteHouse, inviteMember, createInviteLink, cancelInvite, removeMember, uploadHouseImage,
   } = useHouses();
 
@@ -264,7 +265,7 @@ const Index = () => {
         onDeleteLocation={deleteLocation}
       />
 
-      <ProfileSettingsDialog open={profileOpen} onOpenChange={setProfileOpen} />
+      <ProfileSettingsDialog open={profileOpen} onOpenChange={setProfileOpen} houses={houses} defaultHouseId={defaultHouseId} onSetDefaultHouse={setDefaultHouse} />
     </div>
   );
 };
