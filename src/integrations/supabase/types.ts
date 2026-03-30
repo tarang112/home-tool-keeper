@@ -368,6 +368,27 @@ export type Database = {
         Args: { _email: string; _user_id: string }
         Returns: undefined
       }
+      get_invite_by_token: {
+        Args: { _token: string }
+        Returns: {
+          created_at: string
+          email: string
+          house_id: string
+          id: string
+          invite_token: string
+          invited_by: string
+          relationship: string | null
+          role: string
+          share_mode: string | null
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "house_invites"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_full_house_access: {
         Args: { _house_id: string; _user_id: string }
         Returns: boolean
