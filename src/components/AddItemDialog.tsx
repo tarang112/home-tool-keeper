@@ -43,7 +43,14 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
       setName(editItem.name);
       setCategory(editItem.category);
       setQuantity(String(editItem.quantity));
-      setLocation(editItem.location);
+      const loc = editItem.location;
+      if (LOCATIONS.includes(loc)) {
+        setLocationMode(loc);
+        setCustomLocation("");
+      } else {
+        setLocationMode("custom");
+        setCustomLocation(loc);
+      }
       setLocationDetail(editItem.locationDetail ?? "");
       setLocationImage(editItem.locationImage ?? "");
       setNotes(editItem.notes ?? "");
