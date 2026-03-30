@@ -68,7 +68,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
         {/* Row 2: badges + actions */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{categoryLabel}{subLabel ? ` › ${subLabel}` : ""}</Badge>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 truncate max-w-[40vw]">
+              <span className="truncate">{categoryLabel}{subLabel ? <span className="hidden sm:inline"> › {subLabel}</span> : ""}</span>
+            </Badge>
             {item.expirationDate && (() => {
               const exp = new Date(item.expirationDate);
               const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
