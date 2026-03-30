@@ -9,10 +9,18 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { barcode } = await req.json();
+    const body = await req.json();
+    const { barcode, url } = body;
+
+    // URL-based lookup
+    if (url && typeof url === 'string') {
+      return await handleUrlLookup(url);
+    }
+
+    // Barcode-based lookup
     if (!barcode || typeof barcode !== 'string') {
       return new Response(
-        JSON.stringify({ success: false, error: 'Barcode is required' }),
+        JSON.stringify({ success: false, error: 'Barcode or URL is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -58,57 +66,108 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fallback: use Lovable AI to search
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (LOVABLE_API_KEY) {
-      const aiRes = await fetch('https://api.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            {
-              role: 'system',
-              content: 'You look up product barcodes. Return ONLY valid JSON with keys: name (string), category (one of: tools, materials, hardware, electrical, plumbing, paint, other), notes (brand and description). If unknown, return {"name":"","category":"other","notes":""}.',
-            },
-            { role: 'user', content: `What product has barcode/UPC: ${barcode}?` },
-          ],
-          response_format: { type: 'json_object' },
-        }),
-      });
-
-      if (aiRes.ok) {
-        const aiData = await aiRes.json();
-        const content = aiData.choices?.[0]?.message?.content;
-        if (content) {
-          try {
-            const product = JSON.parse(content);
-            if (product.name) {
-              return new Response(
-                JSON.stringify({ success: true, source: 'ai', product }),
-                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-              );
-            }
-          } catch { /* ignore parse error */ }
-        }
-      }
-    }
-
-    return new Response(
-      JSON.stringify({ success: false, error: 'Product not found for this barcode' }),
-      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // Fallback: use AI
+    return await aiLookup(`What product has barcode/UPC: ${barcode}?`);
   } catch (error) {
-    console.error('Barcode lookup error:', error);
+    console.error('Lookup error:', error);
     return new Response(
       JSON.stringify({ success: false, error: 'Lookup failed' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
+
+async function handleUrlLookup(url: string): Promise<Response> {
+  try {
+    // Fetch the page HTML
+    const pageRes = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HomeStock/1.0)' },
+    });
+    if (!pageRes.ok) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Could not fetch URL' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const html = await pageRes.text();
+
+    // Extract basic meta/title info to reduce token usage
+    const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/is);
+    const metaDesc = html.match(/<meta[^>]*name=["']description["'][^>]*content=["'](.*?)["']/is);
+    const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["'](.*?)["']/is);
+    const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["'](.*?)["']/is);
+
+    const pageInfo = [
+      `URL: ${url}`,
+      titleMatch ? `Title: ${titleMatch[1].trim()}` : '',
+      ogTitle ? `OG Title: ${ogTitle[1].trim()}` : '',
+      metaDesc ? `Description: ${metaDesc[1].trim().slice(0, 500)}` : '',
+      ogDesc ? `OG Description: ${ogDesc[1].trim().slice(0, 500)}` : '',
+      // Get first 2000 chars of visible text-like content
+      `Page excerpt: ${html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 2000)}`,
+    ].filter(Boolean).join('\n');
+
+    return await aiLookup(
+      `Extract product details from this webpage info:\n${pageInfo}\n\nReturn the product name, category, and notes (brand, description, specs).`
+    );
+  } catch (error) {
+    console.error('URL lookup error:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: 'URL lookup failed' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+async function aiLookup(prompt: string): Promise<Response> {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  if (!LOVABLE_API_KEY) {
+    return new Response(
+      JSON.stringify({ success: false, error: 'AI not configured' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const aiRes = await fetch('https://api.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        {
+          role: 'system',
+          content: 'You extract product information. Return ONLY valid JSON with keys: name (string), category (one of: tools, materials, hardware, electrical, plumbing, paint, other), notes (brand and description). If unknown, return {"name":"","category":"other","notes":""}.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (aiRes.ok) {
+    const aiData = await aiRes.json();
+    const content = aiData.choices?.[0]?.message?.content;
+    if (content) {
+      try {
+        const product = JSON.parse(content);
+        if (product.name) {
+          return new Response(
+            JSON.stringify({ success: true, source: 'ai', product }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } catch { /* ignore parse error */ }
+    }
+  }
+
+  return new Response(
+    JSON.stringify({ success: false, error: 'Product not found' }),
+    { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
 
 function guessCategory(tags: string[]): string {
   const joined = tags.join(' ').toLowerCase();
