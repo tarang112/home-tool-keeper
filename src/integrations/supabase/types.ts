@@ -149,6 +149,7 @@ export type Database = {
           business_type: string | null
           created_at: string
           id: string
+          image_url: string | null
           name: string
           owner_id: string
           property_type: string
@@ -158,6 +159,7 @@ export type Database = {
           business_type?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           name: string
           owner_id: string
           property_type?: string
@@ -167,6 +169,7 @@ export type Database = {
           business_type?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           name?: string
           owner_id?: string
           property_type?: string

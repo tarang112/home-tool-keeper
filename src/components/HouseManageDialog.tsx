@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X, Clock, Mail, Copy, Link } from "lucide-react";
+import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X, Clock, Mail, Copy, Link, Camera, ImageIcon } from "lucide-react";
 import type { House, HouseMember, PendingInvite } from "@/hooks/use-houses";
 import { PERSONAL_RELATIONSHIPS, BUSINESS_RELATIONSHIPS } from "@/hooks/use-houses";
 
@@ -27,6 +27,7 @@ interface HouseManageDialogProps {
   onRemoveMember: (memberId: string, houseId: string) => void;
   onCancelInvite?: (inviteId: string, houseId: string) => void;
   onDelete: (houseId: string) => void;
+  onUploadImage?: (houseId: string, file: File) => Promise<string | null>;
   currentUserId?: string;
 }
 
@@ -37,7 +38,7 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function HouseManageDialog({
-  open, onOpenChange, house, members, pendingInvites = [], isOwner, onInvite, onCreateInviteLink, onRename, onRemoveMember, onCancelInvite, onDelete, currentUserId,
+  open, onOpenChange, house, members, pendingInvites = [], isOwner, onInvite, onCreateInviteLink, onRename, onRemoveMember, onCancelInvite, onDelete, onUploadImage, currentUserId,
 }: HouseManageDialogProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "viewer">("editor");
@@ -46,6 +47,8 @@ export function HouseManageDialog({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!house) return null;
 
@@ -63,6 +66,15 @@ export function HouseManageDialog({
     onDelete(house.id);
     onOpenChange(false);
     setConfirmDelete(false);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !house || !onUploadImage) return;
+    setUploadingImage(true);
+    await onUploadImage(house.id, file);
+    setUploadingImage(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
@@ -106,6 +118,39 @@ export function HouseManageDialog({
           </DialogTitle>
           <DialogDescription>Manage members and sharing for this {house.propertyType === "business" ? "business" : "house"}.</DialogDescription>
         </DialogHeader>
+
+        {/* Logo / Image */}
+        <div className="flex items-center gap-3">
+          <div
+            className="relative h-16 w-16 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={() => isOwner && fileInputRef.current?.click()}
+          >
+            {house.imageUrl ? (
+              <img src={house.imageUrl} alt={house.name} className="h-full w-full object-cover" />
+            ) : (
+              <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+            )}
+            {isOwner && (
+              <div className="absolute inset-0 bg-background/60 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
+                <Camera className="h-4 w-4 text-foreground" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{house.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {house.imageUrl ? "Click image to change" : isOwner ? "Click to add a logo or photo" : "No image set"}
+            </p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+            disabled={uploadingImage}
+          />
+        </div>
 
         {/* Members list */}
         <div className="space-y-2">

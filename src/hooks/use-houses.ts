@@ -10,6 +10,7 @@ export interface House {
   createdAt: string;
   propertyType: "personal" | "business";
   businessType?: string;
+  imageUrl?: string;
 }
 
 export interface HouseMember {
@@ -79,6 +80,7 @@ export function useHouses() {
         createdAt: h.created_at,
         propertyType: h.property_type || "personal",
         businessType: h.business_type || undefined,
+        imageUrl: h.image_url || undefined,
       }));
 
       setHouses(mapped);
@@ -203,6 +205,7 @@ export function useHouses() {
       createdAt: data.created_at,
       propertyType: (data as any).property_type || "personal",
       businessType: (data as any).business_type || undefined,
+      imageUrl: (data as any).image_url || undefined,
     };
 
     hasAutoSelectedHouse.current = true;
@@ -223,6 +226,29 @@ export function useHouses() {
     setHouses((prev) => prev.map((h) => h.id === houseId ? { ...h, name: newName.trim() } : h));
     toast.success("Renamed successfully");
   }, []);
+
+  const uploadHouseImage = useCallback(async (houseId: string, file: File): Promise<string | null> => {
+    if (!user) return null;
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `houses/${houseId}/${crypto.randomUUID()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from("inventory-images").upload(path, file);
+    if (uploadError) {
+      toast.error("Image upload failed");
+      return null;
+    }
+    const { data: urlData } = supabase.storage.from("inventory-images").getPublicUrl(path);
+    const imageUrl = urlData.publicUrl;
+
+    const { error } = await supabase.from("houses").update({ image_url: imageUrl } as any).eq("id", houseId);
+    if (error) {
+      toast.error("Failed to save image");
+      return null;
+    }
+
+    setHouses((prev) => prev.map((h) => h.id === houseId ? { ...h, imageUrl } : h));
+    toast.success("Image updated!");
+    return imageUrl;
+  }, [user]);
 
   const deleteHouse = useCallback(async (houseId: string) => {
     const { error } = await supabase.from("houses").delete().eq("id", houseId);
@@ -379,5 +405,6 @@ export function useHouses() {
     createInviteLink,
     cancelInvite,
     removeMember,
+    uploadHouseImage,
   };
 }
