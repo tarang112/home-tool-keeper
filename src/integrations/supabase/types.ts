@@ -65,6 +65,7 @@ export type Database = {
           email: string
           house_id: string
           id: string
+          invite_token: string
           invited_by: string
           relationship: string | null
           role: string
@@ -76,6 +77,7 @@ export type Database = {
           email: string
           house_id: string
           id?: string
+          invite_token?: string
           invited_by: string
           relationship?: string | null
           role?: string
@@ -87,6 +89,7 @@ export type Database = {
           email?: string
           house_id?: string
           id?: string
+          invite_token?: string
           invited_by?: string
           relationship?: string | null
           role?: string
@@ -351,6 +354,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invite_by_token: {
+        Args: { _token: string; _user_id: string }
+        Returns: string
+      }
       accept_pending_invites: {
         Args: { _email: string; _user_id: string }
         Returns: undefined
