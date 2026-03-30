@@ -86,7 +86,6 @@ export function useHouses() {
       console.error(error);
       return;
     }
-    // Fetch display names from profiles separately
     const userIds = (data || []).map((m: any) => m.user_id);
     let profileMap: Record<string, string> = {};
     if (userIds.length > 0) {
@@ -109,11 +108,28 @@ export function useHouses() {
       shareMode: m.share_mode || "full",
       displayName: profileMap[m.user_id] || undefined,
     })));
+
+    // Fetch pending invites for this house
+    const { data: invites } = await supabase
+      .from("house_invites")
+      .select("*")
+      .eq("house_id", houseId)
+      .eq("status", "pending");
+    setPendingInvites((invites || []).map((inv: any) => ({
+      id: inv.id,
+      houseId: inv.house_id,
+      email: inv.email,
+      role: inv.role,
+      relationship: inv.relationship,
+      shareMode: inv.share_mode,
+      status: inv.status,
+      createdAt: inv.created_at,
+    })));
   }, []);
 
   useEffect(() => {
     if (selectedHouseId) fetchMembers(selectedHouseId);
-    else setMembers([]);
+    else { setMembers([]); setPendingInvites([]); }
   }, [selectedHouseId, fetchMembers]);
 
   const createHouse = useCallback(async (name: string, propertyType: "personal" | "business" = "personal", businessType?: string) => {
