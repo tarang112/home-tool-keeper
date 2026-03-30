@@ -312,19 +312,27 @@ export function AddItemDialog({
               )}
             </div>
 
-            {/* Subcategory - only show if main category has subcategories */}
-            {subcategories.length > 0 && (
+            {/* Subcategory - show for built-in categories with subs, or free-text for custom */}
+            {(subcategories.length > 0 || category === "custom") && (
               <div className="space-y-2">
                 <Label>Subcategory</Label>
-                <Select value={subcategory || "none"} onValueChange={(v) => setSubcategory(v === "none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="Select subcategory..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— General —</SelectItem>
-                    {subcategories.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {category === "custom" ? (
+                  <Input
+                    value={subcategory}
+                    onChange={(e) => setSubcategory(e.target.value)}
+                    placeholder="Enter custom subcategory (optional)..."
+                  />
+                ) : (
+                  <Select value={subcategory || "none"} onValueChange={(v) => setSubcategory(v === "none" ? "" : v)}>
+                    <SelectTrigger><SelectValue placeholder="Select subcategory..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— General —</SelectItem>
+                      {subcategories.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
 
