@@ -11,6 +11,7 @@ import { ItemCard } from "@/components/ItemCard";
 import { AddItemDialog } from "@/components/AddItemDialog";
 import { HouseSelector } from "@/components/HouseSelector";
 import { HouseManageDialog } from "@/components/HouseManageDialog";
+import { MoveItemDialog } from "@/components/MoveItemDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
@@ -27,6 +28,7 @@ const Index = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
+  const [moveItem, setMoveItem] = useState<InventoryItem | null>(null);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -50,6 +52,10 @@ const Index = () => {
 
   const handleAddItem = (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
     addItem({ ...item, houseId: selectedHouseId });
+  };
+
+  const handleMoveItem = (itemId: string, houseId: string | null) => {
+    updateItem(itemId, { houseId });
   };
 
   return (
@@ -140,6 +146,7 @@ const Index = () => {
                 onAdjust={adjustQuantity}
                 onEdit={handleEdit}
                 onDelete={deleteItem}
+                onMove={(item) => setMoveItem(item)}
               />
             ))}
           </div>
