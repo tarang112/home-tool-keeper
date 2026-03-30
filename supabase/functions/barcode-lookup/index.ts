@@ -198,7 +198,7 @@ function extractProductFromHtml(html: string, pageUrl: string) {
           subcategory: catInfo.subcategory,
           notes: [product.brand?.name || product.brand, product.description].filter(Boolean).join(' — ').slice(0, 500),
           image_url: imgUrl,
-          quantity: qtyMatch ? parseInt(qtyMatch[1]) : 1,
+          quantity: qty,
         };
       }
     } catch { continue; }
