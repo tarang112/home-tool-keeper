@@ -45,15 +45,17 @@ Deno.serve(async (req) => {
     if (offData.status === 1 && offData.product) {
       const p = offData.product;
       const catInfo = guessCategory(p.categories_tags || []);
+      const packQty = parseInt(p.product_quantity) || parseInt(p.quantity?.match(/(\d+)/)?.[1]) || 1;
       return jsonResponse({
         success: true,
         source: 'openfoodfacts',
         product: {
-          name: p.product_name || p.product_name_en || '',
+          name: p.product_name_en || p.product_name || '',
           category: catInfo.category,
           subcategory: catInfo.subcategory,
           notes: [p.brands, p.quantity, p.generic_name].filter(Boolean).join(' — '),
           image_url: p.image_url || p.image_front_url || '',
+          quantity: packQty,
         },
       });
     }
@@ -167,16 +169,18 @@ async function aiLookup(prompt: string): Promise<Response> {
         {
           role: 'system',
           content: `You extract product information. Return ONLY valid JSON with these keys:
-- name (string): product name
+- name (string): FULL product name, never truncated
 - category (string): one of the main categories below
 - subcategory (string): one of the subcategories for that category, or empty string
 - notes (string): brand, description, specs combined
 - image_url (string): product image URL if known, otherwise empty string
+- quantity (number): pack size / count (e.g. 6-pack = 6, single item = 1). Default 1 if unknown.
 
 ${CATEGORY_MAP}
 
 Always pick the most specific category and subcategory. If unsure, use "other" with empty subcategory.
-If product is unknown, return {"name":"","category":"other","subcategory":"","notes":"","image_url":""}.`,
+If product is unknown, return {"name":"","category":"other","subcategory":"","notes":"","image_url":"","quantity":1}.
+Always return the COMPLETE untruncated product name including brand, variant, size, and flavor.`,
         },
         { role: 'user', content: prompt },
       ],
