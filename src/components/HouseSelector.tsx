@@ -59,7 +59,10 @@ export function HouseSelector({ houses, selectedHouseId, onSelect, onCreate, onM
             <SelectValue placeholder="All Items" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Items (Personal)</SelectItem>
+            <SelectItem value="all-personal">All Personal</SelectItem>
+            {businessHouses.length > 0 && (
+              <SelectItem value="all-business">All Business</SelectItem>
+            )}
             {personalHouses.length > 0 && (
               <SelectGroup>
                 <SelectLabel className="text-xs text-muted-foreground">🏠 Personal</SelectLabel>
