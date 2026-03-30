@@ -122,7 +122,7 @@ export function AddItemDialog({
     if (p.name) setName(p.name);
     if (p.category) {
       const mapped = LEGACY_CATEGORY_MAP[p.category] || p.category;
-      const mainMatch = MAIN_CATEGORIES.find(c => c.value === mapped);
+      const mainMatch = activeCategoryList.find(c => c.value === mapped);
       if (mainMatch) {
         setCategory(mapped);
         if (p.subcategory && mainMatch.subcategories.some(s => s.value === p.subcategory)) {
