@@ -32,6 +32,7 @@ export interface PendingInvite {
   shareMode?: string;
   status: string;
   createdAt: string;
+  inviteToken: string;
 }
 
 export const PERSONAL_RELATIONSHIPS = [
