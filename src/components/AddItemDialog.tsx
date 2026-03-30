@@ -377,7 +377,19 @@ export function AddItemDialog({
 
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantity</Label>
-              <Input id="quantity" type="number" min="0" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+              <div className="flex gap-2">
+                <Input id="quantity" type="number" min="0" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="flex-1" />
+                <Select value={quantityUnit} onValueChange={setQuantityUnit}>
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {QUANTITY_UNITS.map((u) => (
+                      <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Expiration Date - only for food/medicine categories */}
