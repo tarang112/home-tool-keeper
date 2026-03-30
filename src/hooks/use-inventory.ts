@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
-export type ItemCategory = "tools" | "materials" | "hardware" | "electrical" | "plumbing" | "paint" | "other";
+export type ItemCategory = "tools" | "materials" | "hardware" | "electrical" | "plumbing" | "paint" | "other" | "custom";
 
 export interface InventoryItem {
   id: string;
   name: string;
   category: ItemCategory;
+  customCategory?: string;
   quantity: number;
   location: string;
   locationDetail: string;
