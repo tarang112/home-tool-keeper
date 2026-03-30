@@ -34,7 +34,8 @@ const Index = () => {
     return items.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.location.toLowerCase().includes(search.toLowerCase()) ||
-        item.notes.toLowerCase().includes(search.toLowerCase());
+        item.notes.toLowerCase().includes(search.toLowerCase()) ||
+        (item.customCategory?.toLowerCase().includes(search.toLowerCase()));
       const matchesCategory = activeCategory === "all" || item.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
