@@ -228,7 +228,7 @@ export function HouseManageDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="full">🏠 Entire house (all items)</SelectItem>
+                  <SelectItem value="full">{house?.propertyType === "business" ? "🏢 Entire business" : "🏠 Entire house"} (all items)</SelectItem>
                   <SelectItem value="selected">📋 Selected items only</SelectItem>
                 </SelectContent>
               </Select>
