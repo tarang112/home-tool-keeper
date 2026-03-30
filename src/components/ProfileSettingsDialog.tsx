@@ -3,22 +3,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Trash2, Save, Loader2 } from "lucide-react";
+import type { House } from "@/hooks/use-houses";
 
 interface ProfileSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  houses: House[];
+  defaultHouseId: string | null;
+  onSetDefaultHouse: (houseId: string | null) => Promise<void>;
 }
 
-export function ProfileSettingsDialog({ open, onOpenChange }: ProfileSettingsDialogProps) {
+export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouseId, onSetDefaultHouse }: ProfileSettingsDialogProps) {
   const { user, signOut } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selectedDefault, setSelectedDefault] = useState<string>("none");
 
   useEffect(() => {
     if (open && user) {
@@ -31,23 +37,34 @@ export function ProfileSettingsDialog({ open, onOpenChange }: ProfileSettingsDia
           if (data?.display_name) setDisplayName(data.display_name);
           else setDisplayName(user.email ?? "");
         });
+      setSelectedDefault(defaultHouseId ?? "none");
     }
-  }, [open, user]);
+  }, [open, user, defaultHouseId]);
 
   const handleSave = async () => {
     if (!user || !displayName.trim()) return;
     setLoading(true);
+
+    const newDefault = selectedDefault === "none" ? null : selectedDefault;
+
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: displayName.trim() })
+      .update({ display_name: displayName.trim() } as any)
       .eq("user_id", user.id);
-    setLoading(false);
+
     if (error) {
+      setLoading(false);
       toast.error("Failed to update profile");
-    } else {
-      toast.success("Profile updated");
-      onOpenChange(false);
+      return;
     }
+
+    if (newDefault !== defaultHouseId) {
+      await onSetDefaultHouse(newDefault);
+    }
+
+    setLoading(false);
+    toast.success("Profile updated");
+    onOpenChange(false);
   };
 
   const handleDeleteAccount = async () => {
@@ -88,6 +105,24 @@ export function ProfileSettingsDialog({ open, onOpenChange }: ProfileSettingsDia
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your name"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Default Location on Login</Label>
+            <Select value={selectedDefault} onValueChange={setSelectedDefault}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select default location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">All Personal (no default)</SelectItem>
+                {houses.map((h) => (
+                  <SelectItem key={h.id} value={h.id}>
+                    {h.propertyType === "business" ? "🏢" : "🏠"} {h.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">This location will be selected automatically when you sign in.</p>
           </div>
 
           <Button onClick={handleSave} disabled={loading} className="w-full gap-2">
