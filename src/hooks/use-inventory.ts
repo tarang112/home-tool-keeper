@@ -44,24 +44,55 @@ export function useInventory(houseId?: string | null) {
 
   const fetchItems = useCallback(async () => {
     if (!user) { setItems([]); setLoading(false); return; }
-    let query = supabase
-      .from("inventory_items")
-      .select("*")
-      .order("created_at", { ascending: false });
 
     if (houseId) {
-      query = query.eq("house_id", houseId);
+      // Fetch items that belong to this house OR are shared to this house
+      const [ownedRes, sharedRes] = await Promise.all([
+        supabase
+          .from("inventory_items")
+          .select("*")
+          .eq("house_id", houseId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("item_shares")
+          .select("item_id")
+          .eq("house_id", houseId),
+      ]);
+
+      let allItems = (ownedRes.data || []).map(rowToItem);
+
+      // Fetch shared items by their IDs
+      if (sharedRes.data && sharedRes.data.length > 0) {
+        const sharedIds = sharedRes.data.map((s: any) => s.item_id);
+        const { data: sharedItems } = await supabase
+          .from("inventory_items")
+          .select("*")
+          .in("id", sharedIds)
+          .order("created_at", { ascending: false });
+        if (sharedItems) {
+          const existingIds = new Set(allItems.map(i => i.id));
+          const newShared = sharedItems
+            .filter((s: any) => !existingIds.has(s.id))
+            .map(rowToItem);
+          allItems = [...allItems, ...newShared];
+        }
+      }
+
+      setItems(allItems);
     } else {
       // Show personal items (no house) when no house selected
-      query = query.is("house_id", null).eq("user_id", user.id);
-    }
-
-    const { data, error } = await query;
-    if (error) {
-      toast.error("Failed to load items");
-      console.error(error);
-    } else {
-      setItems((data || []).map(rowToItem));
+      const { data, error } = await supabase
+        .from("inventory_items")
+        .select("*")
+        .is("house_id", null)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) {
+        toast.error("Failed to load items");
+        console.error(error);
+      } else {
+        setItems((data || []).map(rowToItem));
+      }
     }
     setLoading(false);
   }, [user, houseId]);
