@@ -9,7 +9,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2 } from "lucide-react";
+import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X } from "lucide-react";
 import type { House, HouseMember } from "@/hooks/use-houses";
 import { PERSONAL_RELATIONSHIPS, BUSINESS_RELATIONSHIPS } from "@/hooks/use-houses";
 
