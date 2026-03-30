@@ -54,7 +54,7 @@ export default function AcceptInvite() {
       const { data: profile } = await supabase
         .from("profiles")
         .select("display_name, email")
-        .eq("user_id", data.invited_by)
+        .eq("user_id", inviteData.invited_by)
         .single();
       if (profile) setInviterName(profile.display_name || profile.email || "Someone");
 
