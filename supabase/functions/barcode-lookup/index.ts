@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     const webResult = await webSearchBarcode(barcode);
     if (webResult) return jsonResponse({ success: true, source: 'websearch', product: webResult });
 
-    return jsonResponse({ success: false, error: 'Product not found' }, 404);
+    return jsonResponse({ success: true, product: null, message: 'Product not found' }, 200);
   } catch (error) {
     console.error('Lookup error:', error);
     return jsonResponse({ success: false, error: 'Lookup failed' }, 500);
