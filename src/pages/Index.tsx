@@ -4,19 +4,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useInventory, CATEGORIES, type ItemCategory, type InventoryItem } from "@/hooks/use-inventory";
+import { useHouses } from "@/hooks/use-houses";
 import { useAuth } from "@/hooks/use-auth";
 import { StatsBar } from "@/components/StatsBar";
 import { ItemCard } from "@/components/ItemCard";
 import { AddItemDialog } from "@/components/AddItemDialog";
+import { HouseSelector } from "@/components/HouseSelector";
+import { HouseManageDialog } from "@/components/HouseManageDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
-  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const {
+    houses, selectedHouseId, selectedHouse, setSelectedHouseId,
+    members, isOwner, loading: housesLoading,
+    createHouse, deleteHouse, inviteMember, removeMember,
+  } = useHouses();
+  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(selectedHouseId);
+
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ItemCategory | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -38,9 +48,12 @@ const Index = () => {
     if (!open) setEditItem(null);
   };
 
+  const handleAddItem = (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
+    addItem({ ...item, houseId: selectedHouseId });
+  };
+
   return (
     <div className="min-h-screen pb-24">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -59,10 +72,17 @@ const Index = () => {
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-4 space-y-4">
-        {/* Stats */}
+        {/* House selector */}
+        <HouseSelector
+          houses={houses}
+          selectedHouseId={selectedHouseId}
+          onSelect={setSelectedHouseId}
+          onCreate={createHouse}
+          onManage={() => setManageOpen(true)}
+        />
+
         <StatsBar items={items} />
 
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -73,7 +93,6 @@ const Index = () => {
           />
         </div>
 
-        {/* Category filters */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <Badge
             variant={activeCategory === "all" ? "default" : "secondary"}
@@ -94,7 +113,6 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Items list */}
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
@@ -106,7 +124,11 @@ const Index = () => {
               {items.length === 0 ? "No items yet" : "No items match your search"}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              {items.length === 0 ? "Tap \"Add\" to start tracking your inventory." : "Try a different search or category."}
+              {items.length === 0
+                ? selectedHouseId
+                  ? "Tap \"Add\" to start tracking inventory for this house."
+                  : "Tap \"Add\" to start tracking your inventory."
+                : "Try a different search or category."}
             </p>
           </div>
         ) : (
@@ -127,9 +149,21 @@ const Index = () => {
       <AddItemDialog
         open={dialogOpen}
         onOpenChange={handleDialogClose}
-        onAdd={addItem}
+        onAdd={handleAddItem}
         editItem={editItem}
         onUpdate={updateItem}
+      />
+
+      <HouseManageDialog
+        open={manageOpen}
+        onOpenChange={setManageOpen}
+        house={selectedHouse}
+        members={members}
+        isOwner={isOwner}
+        onInvite={inviteMember}
+        onRemoveMember={removeMember}
+        onDelete={deleteHouse}
+        currentUserId={user?.id}
       />
     </div>
   );
