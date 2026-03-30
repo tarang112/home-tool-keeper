@@ -205,6 +205,7 @@ export function useHouses() {
       createdAt: data.created_at,
       propertyType: (data as any).property_type || "personal",
       businessType: (data as any).business_type || undefined,
+      imageUrl: (data as any).image_url || undefined,
     };
 
     hasAutoSelectedHouse.current = true;
