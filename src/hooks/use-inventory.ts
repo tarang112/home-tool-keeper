@@ -449,5 +449,5 @@ export const CATEGORIES: { value: string; label: string; icon: string }[] =
 
 export const LOCATIONS = [
   "Garage", "Shed", "Basement", "Kitchen", "Bathroom", "Workshop",
-  "Utility Room", "Closet", "Attic", "Other"
+  "Utility Room", "Closet", "Attic", "Refrigerator", "Freezer", "Other"
 ];
