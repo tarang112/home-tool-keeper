@@ -8,7 +8,6 @@ interface StatsBarProps {
 
 export function StatsBar({ items }: StatsBarProps) {
   const totalItems = items.length;
-  const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
   const lowStock = items.filter((i) => i.quantity === 0).length;
   const locations = new Set(items.map((i) => i.sharedFromHouse || i.houseId || i.location || "personal")).size;
 
