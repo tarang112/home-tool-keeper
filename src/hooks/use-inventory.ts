@@ -234,8 +234,8 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
     const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("inventory-images").upload(path, blob);
     if (error) { toast.error("Image upload failed"); return ""; }
-    const { data } = supabase.storage.from("inventory-images").getPublicUrl(path);
-    return data.publicUrl;
+    const { data } = await supabase.storage.from("inventory-images").createSignedUrl(path, 60 * 60 * 24 * 365);
+    return data?.signedUrl || "";
   }, [user]);
 
   const addItem = useCallback(async (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
