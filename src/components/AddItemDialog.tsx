@@ -50,6 +50,7 @@ export function AddItemDialog({
   const [itemImage, setItemImage] = useState("");
   const [notes, setNotes] = useState("");
   const [barcode, setBarcode] = useState("");
+  const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
   const [productUrl, setProductUrl] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
