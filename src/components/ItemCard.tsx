@@ -63,37 +63,37 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
 
             {/* Thumbnails row: product + location side by side */}
             {(hasProductImg || hasItemImg || hasLocationImg) && (
-              <div className="flex gap-2 mb-2">
+              <div className="flex gap-2 mb-2 flex-wrap">
                 {hasProductImg && (
-                  <div className="flex-1 min-w-0">
+                  <div className="shrink-0">
                     <p className="text-[10px] text-muted-foreground mb-1">Product</p>
                     <img
                       src={proxyImg(item.productImage)}
                       alt={item.name}
                       referrerPolicy="no-referrer"
-                      className="w-full h-20 object-contain rounded-md bg-white border"
+                      className="h-20 max-w-[120px] object-contain rounded-md bg-white border"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>
                 )}
                 {hasItemImg && (
-                  <div className="flex-1 min-w-0">
+                  <div className="shrink-0">
                     <p className="text-[10px] text-muted-foreground mb-1">Item</p>
                     <img
                       src={proxyImg(item.itemImage)}
                       alt="Item"
-                      className="w-full h-20 object-contain rounded-md border bg-white"
+                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>
                 )}
                 {hasLocationImg && (
-                  <div className="flex-1 min-w-0">
+                  <div className="shrink-0">
                     <p className="text-[10px] text-muted-foreground mb-1">Location</p>
                     <img
                       src={item.locationImage}
                       alt="Location"
-                      className="w-full h-20 object-contain rounded-md border bg-white"
+                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
                     />
                   </div>
                 )}
