@@ -166,6 +166,13 @@ async function webSearchBarcode(barcode: string) {
   }
 }
 
+/** Parse pack quantity from text like "6 ct", "12 Pack", "3 x 10oz" */
+function parseQuantity(text: string): number {
+  const m = text.match(/\b(\d+)\s*(?:ct|count|pk|pack|pcs?|pieces?)\b/i)
+    || text.match(/\b(\d+)\s*x\s*\d+(?:\.\d+)?\s*(?:oz|fl\s*oz|lb|g|kg|ml|l)\b/i);
+  return m ? parseInt(m[1]) : 1;
+}
+
 /** Extract structured product data from HTML using JSON-LD, Open Graph, and meta tags */
 function extractProductFromHtml(html: string, pageUrl: string) {
   // Try JSON-LD first (most accurate)
@@ -173,7 +180,6 @@ function extractProductFromHtml(html: string, pageUrl: string) {
   for (const m of ldMatches) {
     try {
       let parsed = JSON.parse(m[1]);
-      // Handle @graph arrays
       if (parsed['@graph']) parsed = parsed['@graph'];
       const items = Array.isArray(parsed) ? parsed : [parsed];
       const product = items.find((x: any) => {
@@ -183,16 +189,16 @@ function extractProductFromHtml(html: string, pageUrl: string) {
       if (product?.name) {
         const imgUrl = typeof product.image === 'string' ? product.image
           : (Array.isArray(product.image) ? product.image[0] : product.image?.url || '');
-        const catInfo = guessCategory([product.name, product.category || '', product.description || '']);
-        // Try to extract quantity from name (e.g. "6 Pack", "12 Count")
-        const qtyMatch = product.name.match(/(\d+)\s*(?:pack|count|ct|pk|pcs?|piece)/i);
+        const allText = `${product.name} ${product.description || ''} ${product.category || ''}`;
+        const catInfo = guessCategory([allText]);
+        const qty = parseQuantity(allText);
         return {
           name: product.name,
           category: catInfo.category,
           subcategory: catInfo.subcategory,
           notes: [product.brand?.name || product.brand, product.description].filter(Boolean).join(' — ').slice(0, 500),
           image_url: imgUrl,
-          quantity: qtyMatch ? parseInt(qtyMatch[1]) : 1,
+          quantity: qty,
         };
       }
     } catch { continue; }
@@ -211,8 +217,9 @@ function extractProductFromHtml(html: string, pageUrl: string) {
   // Clean name (remove site suffix like " - Amazon.com", " | Walmart")
   const cleanName = productName.replace(/\s*[-|].*?(Amazon|Walmart|Target|Lowe|Home Depot|eBay|\.com).*$/i, '').trim();
   const desc = ogDesc || metaDesc || '';
-  const catInfo = guessCategory([cleanName, desc]);
-  const qtyMatch = cleanName.match(/(\d+)\s*(?:pack|count|ct|pk|pcs?|piece)/i);
+  const allText = `${cleanName} ${desc}`;
+  const catInfo = guessCategory([allText]);
+  const qty = parseQuantity(allText);
 
   return {
     name: cleanName,
@@ -220,7 +227,7 @@ function extractProductFromHtml(html: string, pageUrl: string) {
     subcategory: catInfo.subcategory,
     notes: desc.slice(0, 500),
     image_url: ogImage || '',
-    quantity: qtyMatch ? parseInt(qtyMatch[1]) : 1,
+    quantity: qty,
   };
 }
 
@@ -327,11 +334,11 @@ function guessCategory(tags: string[]): { category: string; subcategory: string 
   if (/herb|spice|basil|oregano|thyme|cilantro|parsley|cinnamon/.test(joined)) return { category: 'produce', subcategory: 'herbs' };
 
   if (/dairy|milk|cheese|yogurt|butter|egg|cream/.test(joined)) return { category: 'groceries', subcategory: 'dairy' };
-  if (/pretzel|snack|chip|cookie|cracker|candy|chocolate|popcorn/.test(joined)) return { category: 'groceries', subcategory: 'snacks' };
+  if (/frozen|ice\s*cream|keep\s*frozen|freezer/.test(joined)) return { category: 'groceries', subcategory: 'frozen' };
+  if (/pretzel|snack|chip|cookie|cracker|candy|chocolate|popcorn|jerky|nuts/.test(joined)) return { category: 'groceries', subcategory: 'snacks' };
   if (/beverage|drink|soda|juice|water|coffee|tea|beer|wine|bebida|refresco|gaseosa|cola/.test(joined)) return { category: 'groceries', subcategory: 'beverages' };
   if (/canned|can|soup|bean|tuna/.test(joined)) return { category: 'groceries', subcategory: 'canned' };
-  if (/frozen|ice\s*cream|pizza|fries/.test(joined)) return { category: 'groceries', subcategory: 'frozen' };
-  if (/bread|bakery|bun|roll|muffin|cake|pastry/.test(joined)) return { category: 'groceries', subcategory: 'bakery' };
+  if (/bread|bakery|bun|roll|muffin|cake|pastry|dough/.test(joined)) return { category: 'groceries', subcategory: 'bakery' };
   if (/sauce|ketchup|mustard|mayo|dressing|condiment|vinegar|oil/.test(joined)) return { category: 'groceries', subcategory: 'condiments' };
   if (/grocery|food|cereal|pasta|rice|flour|sugar/.test(joined)) return { category: 'groceries', subcategory: '' };
 
