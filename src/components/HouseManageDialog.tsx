@@ -119,6 +119,39 @@ export function HouseManageDialog({
           <DialogDescription>Manage members and sharing for this {house.propertyType === "business" ? "business" : "house"}.</DialogDescription>
         </DialogHeader>
 
+        {/* Logo / Image */}
+        <div className="flex items-center gap-3">
+          <div
+            className="relative h-16 w-16 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={() => isOwner && fileInputRef.current?.click()}
+          >
+            {house.imageUrl ? (
+              <img src={house.imageUrl} alt={house.name} className="h-full w-full object-cover" />
+            ) : (
+              <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+            )}
+            {isOwner && (
+              <div className="absolute inset-0 bg-background/60 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
+                <Camera className="h-4 w-4 text-foreground" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{house.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {house.imageUrl ? "Click image to change" : isOwner ? "Click to add a logo or photo" : "No image set"}
+            </p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+            disabled={uploadingImage}
+          />
+        </div>
+
         {/* Members list */}
         <div className="space-y-2">
           <Label>Members ({members.length})</Label>
