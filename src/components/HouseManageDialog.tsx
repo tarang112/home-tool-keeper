@@ -134,7 +134,7 @@ export function HouseManageDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {RELATIONSHIPS.map((r) => (
+                    {(house?.propertyType === "business" ? BUSINESS_RELATIONSHIPS : PERSONAL_RELATIONSHIPS).map((r) => (
                       <SelectItem key={r} value={r}>{r}</SelectItem>
                     ))}
                   </SelectContent>
