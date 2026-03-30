@@ -39,6 +39,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
                 {item.locationDetail && ` · ${item.locationDetail}`}
               </span>
             </div>
+            {item.productImage && (
+              <img src={item.productImage} alt={item.name} className="w-full h-20 object-contain rounded-md mb-2 bg-white" />
+            )}
             {item.locationImage && (
               <img src={item.locationImage} alt="Location" className="w-full h-20 object-cover rounded-md mb-2" />
             )}

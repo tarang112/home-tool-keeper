@@ -12,12 +12,10 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { barcode, url } = body;
 
-    // URL-based lookup
     if (url && typeof url === 'string') {
       return await handleUrlLookup(url);
     }
 
-    // Barcode-based lookup
     if (!barcode || typeof barcode !== 'string') {
       return new Response(
         JSON.stringify({ success: false, error: 'Barcode or URL is required' }),
@@ -39,6 +37,7 @@ Deno.serve(async (req) => {
             name: p.product_name || p.product_name_en || '',
             category: guessCategory(p.categories_tags || []),
             notes: [p.brands, p.quantity].filter(Boolean).join(' — '),
+            image_url: p.image_url || p.image_front_url || '',
           },
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -59,6 +58,7 @@ Deno.serve(async (req) => {
               name: item.title || '',
               category: guessCategory([item.category || '']),
               notes: [item.brand, item.description].filter(Boolean).join(' — '),
+              image_url: (item.images && item.images.length > 0) ? item.images[0] : '',
             },
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -66,7 +66,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fallback: use AI
     return await aiLookup(`What product has barcode/UPC: ${barcode}?`);
   } catch (error) {
     console.error('Lookup error:', error);
@@ -80,7 +79,6 @@ Deno.serve(async (req) => {
 async function handleUrlLookup(rawUrl: string): Promise<Response> {
   try {
     const url = rawUrl.match(/^https?:\/\//i) ? rawUrl : `https://${rawUrl}`;
-    // Fetch the page HTML with browser-like headers
     const pageRes = await fetch(url, {
       redirect: 'follow',
       headers: {
@@ -91,16 +89,22 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     });
     if (!pageRes.ok) {
       console.error('URL fetch failed:', pageRes.status, pageRes.statusText);
-      // Fall back to AI with just the URL
       return await aiLookup(`Extract product details from this product page URL: ${url}`);
     }
     const html = await pageRes.text();
 
-    // Extract basic meta/title info to reduce token usage
+    // Extract meta info
     const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/is);
     const metaDesc = html.match(/<meta[^>]*name=["']description["'][^>]*content=["'](.*?)["']/is);
     const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["'](.*?)["']/is);
     const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["'](.*?)["']/is);
+    const ogImage = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["'](.*?)["']/is);
+
+    // Extract product image from various sources
+    const productImage = ogImage?.[1]?.trim()
+      || html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["'](.*?)["']/is)?.[1]?.trim()
+      || html.match(/"image"\s*:\s*"(https?:\/\/[^"]+)"/i)?.[1]
+      || '';
 
     const pageInfo = [
       `URL: ${url}`,
@@ -108,13 +112,25 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
       ogTitle ? `OG Title: ${ogTitle[1].trim()}` : '',
       metaDesc ? `Description: ${metaDesc[1].trim().slice(0, 500)}` : '',
       ogDesc ? `OG Description: ${ogDesc[1].trim().slice(0, 500)}` : '',
-      // Get first 2000 chars of visible text-like content
       `Page excerpt: ${html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 2000)}`,
     ].filter(Boolean).join('\n');
 
-    return await aiLookup(
+    const aiResponse = await aiLookup(
       `Extract product details from this webpage info:\n${pageInfo}\n\nReturn the product name, category, and notes (brand, description, specs).`
     );
+
+    // Inject the extracted image into the AI response
+    if (productImage && aiResponse.status === 200) {
+      const responseBody = await aiResponse.json();
+      if (responseBody.success && responseBody.product) {
+        responseBody.product.image_url = responseBody.product.image_url || productImage;
+        return new Response(JSON.stringify(responseBody), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    return aiResponse;
   } catch (error) {
     console.error('URL lookup error:', error);
     return new Response(
@@ -144,7 +160,7 @@ async function aiLookup(prompt: string): Promise<Response> {
       messages: [
         {
           role: 'system',
-          content: 'You extract product information. Return ONLY valid JSON with keys: name (string), category (one of: tools, materials, hardware, electrical, plumbing, paint, other), notes (brand and description). If unknown, return {"name":"","category":"other","notes":""}.',
+          content: 'You extract product information. Return ONLY valid JSON with keys: name (string), category (one of: tools, materials, hardware, electrical, plumbing, paint, other), notes (brand and description), image_url (product image URL if known, otherwise empty string). If unknown, return {"name":"","category":"other","notes":"","image_url":""}.',
         },
         { role: 'user', content: prompt },
       ],

@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custom_locations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       house_members: {
         Row: {
           created_at: string
@@ -88,6 +133,7 @@ export type Database = {
           location_image_url: string | null
           name: string
           notes: string | null
+          product_image_url: string | null
           quantity: number
           updated_at: string
           user_id: string
@@ -103,6 +149,7 @@ export type Database = {
           location_image_url?: string | null
           name: string
           notes?: string | null
+          product_image_url?: string | null
           quantity?: number
           updated_at?: string
           user_id: string
@@ -118,6 +165,7 @@ export type Database = {
           location_image_url?: string | null
           name?: string
           notes?: string | null
+          product_image_url?: string | null
           quantity?: number
           updated_at?: string
           user_id?: string

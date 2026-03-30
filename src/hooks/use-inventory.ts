@@ -14,6 +14,7 @@ export interface InventoryItem {
   location: string;
   locationDetail: string;
   locationImage: string;
+  productImage: string;
   notes: string;
   barcode: string;
   houseId: string | null;
@@ -34,6 +35,7 @@ function rowToItem(row: any): InventoryItem {
     location: row.location,
     locationDetail: row.location_detail || "",
     locationImage: row.location_image_url || "",
+    productImage: row.product_image_url || "",
     notes: row.notes || "",
     barcode: row.barcode || "",
     houseId: row.house_id || null,
@@ -178,6 +180,7 @@ export function useInventory(houseId?: string | null) {
       location: item.location,
       location_detail: item.locationDetail,
       location_image_url: imageUrl,
+      product_image_url: item.productImage || "",
       notes: item.notes,
       barcode: item.barcode || "",
       house_id: item.houseId || null,
@@ -199,6 +202,7 @@ export function useInventory(houseId?: string | null) {
     if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.barcode !== undefined) dbUpdates.barcode = updates.barcode;
+    if (updates.productImage !== undefined) dbUpdates.product_image_url = updates.productImage || "";
     if (updates.houseId !== undefined) dbUpdates.house_id = updates.houseId || null;
     if (updates.locationImage !== undefined) {
       if (updates.locationImage && !updates.locationImage.startsWith("http")) {
