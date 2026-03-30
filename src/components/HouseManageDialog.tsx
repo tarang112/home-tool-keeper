@@ -257,9 +257,27 @@ export function HouseManageDialog({
                 </p>
               )}
             </div>
-            <Button size="sm" className="gap-1" onClick={handleInvite} disabled={!email.trim()}>
-              <UserPlus className="h-4 w-4" /> Invite
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" className="gap-1" onClick={handleInvite} disabled={!email.trim()}>
+                <UserPlus className="h-4 w-4" /> Invite by Email
+              </Button>
+              {onCreateInviteLink && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  onClick={async () => {
+                    const link = await onCreateInviteLink(house.id, role, relationship, shareMode);
+                    if (link) {
+                      navigator.clipboard.writeText(link);
+                      toast.success("Invite link copied to clipboard!");
+                    }
+                  }}
+                >
+                  <Link className="h-4 w-4" /> Copy Invite Link
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
