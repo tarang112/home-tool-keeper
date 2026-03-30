@@ -322,6 +322,15 @@ If you cannot determine the product from the text, return {"name":"","category":
 function guessCategory(tags: string[]): { category: string; subcategory: string } {
   const joined = tags.join(' ').toLowerCase();
 
+  // Medicine & Health — check FIRST to avoid false matches on "herb", "cream", "orange" etc.
+  if (/prescription|rx\s*only/.test(joined)) return { category: 'medicine', subcategory: 'prescription' };
+  if (/acetaminophen|ibuprofen|naproxen|aspirin|guaifenesin|dextromethorphan|diphenhydramine|loratadine|cetirizine|antacid|laxative|cough|cold\s*&?\s*flu|allergy\s*relief|pain\s*relief|fever\s*reducer|tablet|caplet|capsule|softgel|lozenge|syrup|ointment|drug\s*facts|active\s*ingredient|otc|over.the.counter/.test(joined)) return { category: 'medicine', subcategory: 'otc' };
+  if (/vitamin|supplement|mineral|probiotic|omega|multivitamin/.test(joined)) return { category: 'medicine', subcategory: 'vitamins' };
+  if (/first\s*aid|bandage|antiseptic|gauze|wound/.test(joined)) return { category: 'medicine', subcategory: 'first-aid' };
+  if (/medical\s*device|thermometer|blood\s*pressure|glucose\s*monitor/.test(joined)) return { category: 'medicine', subcategory: 'medical-devices' };
+  if (/medicine|pharma|pharmacy|drug|remedy/.test(joined)) return { category: 'medicine', subcategory: '' };
+
+  // Hardware & Tools
   if (/hammer|wrench|plier|screwdriver|hand\s*tool/.test(joined)) return { category: 'hardware-tools', subcategory: 'hand-tools' };
   if (/drill|saw|sander|grinder|power\s*tool/.test(joined)) return { category: 'hardware-tools', subcategory: 'power-tools' };
   if (/screw|nail|bolt|fastener|anchor/.test(joined)) return { category: 'hardware-tools', subcategory: 'fasteners' };
@@ -329,10 +338,12 @@ function guessCategory(tags: string[]): { category: string; subcategory: string 
   if (/safety|glove|goggles|mask|helmet/.test(joined)) return { category: 'hardware-tools', subcategory: 'safety' };
   if (/tool|hardware/.test(joined)) return { category: 'hardware-tools', subcategory: '' };
 
-  if (/fruit|apple|banana|orange|berry|grape|mango|peach|pear|melon/.test(joined)) return { category: 'produce', subcategory: 'fruits' };
-  if (/vegetable|carrot|potato|tomato|onion|lettuce|broccoli|pepper|cucumber/.test(joined)) return { category: 'produce', subcategory: 'vegetables' };
-  if (/herb|spice|basil|oregano|thyme|cilantro|parsley|cinnamon/.test(joined)) return { category: 'produce', subcategory: 'herbs' };
+  // Produce
+  if (/\b(fruit|apple|banana|orange|berry|grape|mango|peach|pear|melon)\b/.test(joined)) return { category: 'produce', subcategory: 'fruits' };
+  if (/\b(vegetable|carrot|potato|tomato|onion|lettuce|broccoli|pepper|cucumber|spinach)\b/.test(joined)) return { category: 'produce', subcategory: 'vegetables' };
+  if (/\b(fresh\s*herb|basil|oregano|thyme|cilantro|parsley)\b/.test(joined)) return { category: 'produce', subcategory: 'herbs' };
 
+  // Groceries
   if (/dairy|milk|cheese|yogurt|butter|egg|cream/.test(joined)) return { category: 'groceries', subcategory: 'dairy' };
   if (/frozen|ice\s*cream|keep\s*frozen|freezer/.test(joined)) return { category: 'groceries', subcategory: 'frozen' };
   if (/pretzel|snack|chip|cookie|cracker|candy|chocolate|popcorn|jerky|nuts/.test(joined)) return { category: 'groceries', subcategory: 'snacks' };
@@ -342,6 +353,7 @@ function guessCategory(tags: string[]): { category: string; subcategory: string 
   if (/sauce|ketchup|mustard|mayo|dressing|condiment|vinegar|oil/.test(joined)) return { category: 'groceries', subcategory: 'condiments' };
   if (/grocery|food|cereal|pasta|rice|flour|sugar/.test(joined)) return { category: 'groceries', subcategory: '' };
 
+  // Household
   if (/clean|bleach|detergent|disinfect|sponge|mop|broom/.test(joined)) return { category: 'household', subcategory: 'cleaning' };
   if (/kitchen|cookware|utensil|pot|pan|knife|cutting/.test(joined)) return { category: 'household', subcategory: 'kitchen' };
   if (/bathroom|toilet|shower|soap|shampoo|towel/.test(joined)) return { category: 'household', subcategory: 'bathroom' };
@@ -349,40 +361,38 @@ function guessCategory(tags: string[]): { category: string; subcategory: string 
   if (/storage|organiz|bin|basket|shelf|container/.test(joined)) return { category: 'household', subcategory: 'storage' };
   if (/household|home/.test(joined)) return { category: 'household', subcategory: '' };
 
+  // Electrical
   if (/wire|cable|wiring|cord|extension/.test(joined)) return { category: 'electrical', subcategory: 'wiring' };
   if (/light|lamp|bulb|led|lighting|fixture/.test(joined)) return { category: 'electrical', subcategory: 'lighting' };
   if (/switch|outlet|dimmer|receptacle/.test(joined)) return { category: 'electrical', subcategory: 'switches' };
   if (/battery|batteries|charger/.test(joined)) return { category: 'electrical', subcategory: 'batteries' };
   if (/electric/.test(joined)) return { category: 'electrical', subcategory: '' };
 
+  // Plumbing
   if (/pipe|fitting|pvc|copper\s*pipe/.test(joined)) return { category: 'plumbing', subcategory: 'pipes' };
   if (/faucet|fixture|sink|toilet|shower\s*head/.test(joined)) return { category: 'plumbing', subcategory: 'fixtures' };
   if (/valve|connector|coupling/.test(joined)) return { category: 'plumbing', subcategory: 'valves' };
   if (/plumb/.test(joined)) return { category: 'plumbing', subcategory: '' };
 
+  // Paint
   if (/interior\s*paint/.test(joined)) return { category: 'paint', subcategory: 'interior-paint' };
   if (/exterior\s*paint/.test(joined)) return { category: 'paint', subcategory: 'exterior-paint' };
   if (/stain|sealer|varnish/.test(joined)) return { category: 'paint', subcategory: 'stain' };
   if (/brush|roller|paint\s*brush/.test(joined)) return { category: 'paint', subcategory: 'brushes-rollers' };
   if (/paint|primer|coating/.test(joined)) return { category: 'paint', subcategory: '' };
 
+  // Outdoor & Garden
   if (/garden\s*tool|rake|shovel|hoe|pruner/.test(joined)) return { category: 'outdoor', subcategory: 'garden-tools' };
   if (/seed|plant|flower|tree|shrub/.test(joined)) return { category: 'outdoor', subcategory: 'seeds-plants' };
   if (/fertilizer|soil|mulch|compost/.test(joined)) return { category: 'outdoor', subcategory: 'fertilizer' };
   if (/patio|outdoor\s*furniture|grill|bbq/.test(joined)) return { category: 'outdoor', subcategory: 'outdoor-furniture' };
   if (/garden|outdoor|lawn|yard/.test(joined)) return { category: 'outdoor', subcategory: '' };
 
+  // Automotive
   if (/motor\s*oil|fluid|coolant|lubricant|transmission/.test(joined)) return { category: 'automotive', subcategory: 'fluids' };
   if (/car\s*part|auto\s*part|filter|brake|wiper/.test(joined)) return { category: 'automotive', subcategory: 'parts' };
   if (/car\s*wash|wax|polish|car\s*care|detailing/.test(joined)) return { category: 'automotive', subcategory: 'car-care' };
   if (/auto|car|vehicle/.test(joined)) return { category: 'automotive', subcategory: '' };
-
-  if (/prescription|rx/.test(joined)) return { category: 'medicine', subcategory: 'prescription' };
-  if (/otc|over.the.counter|pain\s*relief|ibuprofen|acetaminophen|aspirin|antacid|allergy/.test(joined)) return { category: 'medicine', subcategory: 'otc' };
-  if (/vitamin|supplement|mineral|probiotic|omega|multivitamin/.test(joined)) return { category: 'medicine', subcategory: 'vitamins' };
-  if (/first\s*aid|bandage|antiseptic|gauze|wound/.test(joined)) return { category: 'medicine', subcategory: 'first-aid' };
-  if (/medical|thermometer|blood\s*pressure|glucose/.test(joined)) return { category: 'medicine', subcategory: 'medical-devices' };
-  if (/medicine|pharma|drug|health|remedy/.test(joined)) return { category: 'medicine', subcategory: '' };
 
   return { category: 'other', subcategory: '' };
 }
