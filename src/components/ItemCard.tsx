@@ -3,11 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2 } from "lucide-react";
 import { CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
+import { useState } from "react";
 
-function proxyImg(url?: string) {
+function proxyImg(url?: string, size = 200) {
   if (!url) return "";
-  if (url.includes("supabase.co/")) return url; // our own storage, no proxy needed
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=200&h=200&fit=contain&bg=white`;
+  if (url.includes("supabase.co/")) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=contain&bg=white`;
+}
+
+function fullImg(url?: string) {
+  if (!url) return "";
+  if (url.includes("supabase.co/")) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=800&h=800&fit=contain&bg=white`;
 }
 
 interface ItemCardProps {
@@ -25,6 +32,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
   const hasProductImg = !!item.productImage;
   const hasItemImg = !!item.itemImage;
   const hasLocationImg = !!item.locationImage;
+  const [zoomedImg, setZoomedImg] = useState<string | null>(null);
 
   return (
     <Card className="animate-slide-up">
@@ -65,38 +73,53 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
             {(hasProductImg || hasItemImg || hasLocationImg) && (
               <div className="flex gap-2 mb-2 flex-wrap">
                 {hasProductImg && (
-                  <div className="shrink-0">
+                  <div className="shrink-0 relative group/thumb cursor-pointer" onClick={() => setZoomedImg(fullImg(item.productImage))}>
                     <p className="text-[10px] text-muted-foreground mb-1">Product</p>
                     <img
                       src={proxyImg(item.productImage)}
                       alt={item.name}
                       referrerPolicy="no-referrer"
-                      className="h-20 max-w-[120px] object-contain rounded-md bg-white border"
+                      className="h-20 max-w-[120px] object-contain rounded-md bg-white border transition-transform duration-200 group-hover/thumb:scale-110"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>
                 )}
                 {hasItemImg && (
-                  <div className="shrink-0">
+                  <div className="shrink-0 relative group/thumb cursor-pointer" onClick={() => setZoomedImg(fullImg(item.itemImage))}>
                     <p className="text-[10px] text-muted-foreground mb-1">Item</p>
                     <img
                       src={proxyImg(item.itemImage)}
                       alt="Item"
-                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
+                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white transition-transform duration-200 group-hover/thumb:scale-110"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>
                 )}
                 {hasLocationImg && (
-                  <div className="shrink-0">
+                  <div className="shrink-0 relative group/thumb cursor-pointer" onClick={() => setZoomedImg(item.locationImage || "")}>
                     <p className="text-[10px] text-muted-foreground mb-1">Location</p>
                     <img
                       src={item.locationImage}
                       alt="Location"
-                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
+                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white transition-transform duration-200 group-hover/thumb:scale-110"
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Full-size image overlay */}
+            {zoomedImg && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in cursor-pointer"
+                onClick={() => setZoomedImg(null)}
+              >
+                <img
+                  src={zoomedImg}
+                  alt="Full size"
+                  referrerPolicy="no-referrer"
+                  className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-lg bg-white animate-scale-in"
+                />
               </div>
             )}
 
