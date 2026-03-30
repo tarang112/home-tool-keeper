@@ -177,7 +177,8 @@ async function aiLookup(prompt: string): Promise<Response> {
 ${CATEGORY_MAP}
 
 Always pick the most specific category and subcategory. If unsure, use "other" with empty subcategory.
-If product is unknown, return {"name":"","category":"other","subcategory":"","notes":"","image_url":""}.`,
+If product is unknown, return {"name":"","category":"other","subcategory":"","notes":"","image_url":"","quantity":1}.
+Always return the COMPLETE untruncated product name including brand, variant, size, and flavor.`,
         },
         { role: 'user', content: prompt },
       ],
