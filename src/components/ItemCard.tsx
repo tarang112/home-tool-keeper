@@ -97,6 +97,20 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               <Plus className="h-3 w-3" />
             </Button>
           </div>
+
+          <div className="flex items-center gap-0.5 shrink-0">
+            {onMove && (
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move to house">
+                <ArrowRightLeft className="h-3 w-3" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)} title="Edit">
+              <Pencil className="h-3 w-3" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(item.id)} title="Delete">
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
 
         {/* Expanded details */}
@@ -163,20 +177,6 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               </div>
             )}
 
-            {/* Action buttons */}
-            <div className="flex gap-1 pt-1">
-              {onMove && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move to house">
-                  <ArrowRightLeft className="h-3 w-3" />
-                </Button>
-              )}
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)}>
-                <Pencil className="h-3 w-3" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(item.id)}>
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
           </div>
         )}
 
