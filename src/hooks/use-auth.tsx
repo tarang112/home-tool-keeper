@@ -32,26 +32,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       setLoading(false);
 
-      if (["SIGNED_IN", "USER_UPDATED", "INITIAL_SESSION"].includes(event) && nextSession?.user) {
-        await acceptPendingInvitesForUser(nextSession.user);
+      if (nextSession?.user) {
+        void acceptPendingInvitesForUser(nextSession.user);
       }
     });
 
-    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: currentSession } }) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
 
-      if (currentSession?.user) {
-        await acceptPendingInvitesForUser(currentSession.user);
-      }
-
-      setLoading(false);
-    });
+        if (currentSession?.user) {
+          void acceptPendingInvitesForUser(currentSession.user);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to restore auth session", error);
+        setSession(null);
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
