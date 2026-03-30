@@ -77,17 +77,22 @@ Deno.serve(async (req) => {
   }
 });
 
-async function handleUrlLookup(url: string): Promise<Response> {
+async function handleUrlLookup(rawUrl: string): Promise<Response> {
   try {
-    // Fetch the page HTML
+    const url = rawUrl.match(/^https?:\/\//i) ? rawUrl : `https://${rawUrl}`;
+    // Fetch the page HTML with browser-like headers
     const pageRes = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HomeStock/1.0)' },
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
     });
     if (!pageRes.ok) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Could not fetch URL' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.error('URL fetch failed:', pageRes.status, pageRes.statusText);
+      // Fall back to AI with just the URL
+      return await aiLookup(`Extract product details from this product page URL: ${url}`);
     }
     const html = await pageRes.text();
 
