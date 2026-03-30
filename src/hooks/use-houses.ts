@@ -45,7 +45,7 @@ export function useHouses() {
       setHouses(mapped);
     }
     setLoading(false);
-  }, [user, selectedHouseId]);
+  }, [user]);
 
   useEffect(() => { fetchHouses(); }, [fetchHouses]);
 
