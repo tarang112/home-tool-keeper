@@ -163,8 +163,8 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               >
                 <Minus className="h-3 w-3" />
               </Button>
-              <span className={`font-heading font-bold text-lg w-8 text-center ${item.quantity === 0 ? "text-destructive" : ""}`}>
-                {item.quantity}
+              <span className={`font-heading font-bold text-lg text-center ${item.quantity === 0 ? "text-destructive" : ""}`}>
+                {item.quantity}{item.quantityUnit && item.quantityUnit !== "pcs" ? ` ${item.quantityUnit}` : ""}
               </span>
               <Button
                 variant="outline"
