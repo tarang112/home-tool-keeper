@@ -68,6 +68,15 @@ export function HouseManageDialog({
     setConfirmDelete(false);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !house || !onUploadImage) return;
+    setUploadingImage(true);
+    await onUploadImage(house.id, file);
+    setUploadingImage(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); setConfirmDelete(false); }}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
