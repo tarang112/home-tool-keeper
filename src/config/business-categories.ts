@@ -346,6 +346,92 @@ export const BUSINESS_TYPES: BusinessType[] = [
       },
     ],
   },
+  {
+    value: "medical",
+    label: "Medical Facility / Doctor's Office",
+    icon: "🏥",
+    categories: [
+      {
+        value: "medical-supplies", label: "Medical Supplies", icon: "🩺",
+        subcategories: [
+          { value: "gloves-ppe", label: "Gloves & PPE" },
+          { value: "syringes-needles", label: "Syringes & Needles" },
+          { value: "bandages-dressings", label: "Bandages & Dressings" },
+          { value: "gauze-tape", label: "Gauze & Medical Tape" },
+          { value: "swabs-cotton", label: "Swabs & Cotton" },
+        ],
+      },
+      {
+        value: "pharmaceuticals", label: "Pharmaceuticals", icon: "💊",
+        subcategories: [
+          { value: "prescription-meds", label: "Prescription Medications" },
+          { value: "otc-meds", label: "OTC Medications" },
+          { value: "vaccines", label: "Vaccines & Immunizations" },
+          { value: "controlled-substances", label: "Controlled Substances" },
+          { value: "supplements", label: "Supplements & Vitamins" },
+        ],
+      },
+      {
+        value: "diagnostic-equipment", label: "Diagnostic Equipment", icon: "🔬",
+        subcategories: [
+          { value: "stethoscopes", label: "Stethoscopes & BP Monitors" },
+          { value: "thermometers", label: "Thermometers & Oximeters" },
+          { value: "lab-equipment", label: "Lab Equipment" },
+          { value: "imaging", label: "Imaging & X-Ray Supplies" },
+          { value: "test-kits", label: "Test Kits & Reagents" },
+        ],
+      },
+      {
+        value: "exam-room", label: "Exam Room", icon: "🛏️",
+        subcategories: [
+          { value: "exam-tables", label: "Exam Tables & Covers" },
+          { value: "gowns-drapes", label: "Gowns & Drapes" },
+          { value: "instruments", label: "Instruments & Tools" },
+          { value: "sharps-disposal", label: "Sharps & Waste Disposal" },
+        ],
+      },
+      {
+        value: "office-admin", label: "Office & Admin", icon: "🖥️",
+        subcategories: [
+          { value: "patient-forms", label: "Patient Forms & Records" },
+          { value: "office-supplies-med", label: "Office Supplies" },
+          { value: "printing-labels", label: "Printing & Labels" },
+          { value: "id-badges", label: "ID Badges & Cards" },
+        ],
+      },
+      {
+        value: "sanitation", label: "Sanitation & Sterilization", icon: "🧹",
+        subcategories: [
+          { value: "disinfectants", label: "Disinfectants & Cleaners" },
+          { value: "sterilization-equip", label: "Sterilization Equipment" },
+          { value: "hand-sanitizer", label: "Hand Sanitizer & Soap" },
+          { value: "biohazard", label: "Biohazard Disposal" },
+        ],
+      },
+      {
+        value: "patient-care", label: "Patient Care", icon: "❤️",
+        subcategories: [
+          { value: "mobility-aids", label: "Mobility Aids" },
+          { value: "braces-supports", label: "Braces & Supports" },
+          { value: "wound-care", label: "Wound Care" },
+          { value: "respiratory", label: "Respiratory Supplies" },
+        ],
+      },
+      {
+        value: "medical-furniture", label: "Furniture & Fixtures", icon: "🪑",
+        subcategories: [
+          { value: "waiting-room", label: "Waiting Room Furniture" },
+          { value: "medical-cabinets", label: "Medical Cabinets & Carts" },
+          { value: "reception-desk", label: "Reception Desk" },
+          { value: "storage-shelving", label: "Storage & Shelving" },
+        ],
+      },
+      {
+        value: "medical-other", label: "Other", icon: "📦",
+        subcategories: [],
+      },
+    ],
+  },
 ];
 
 export function getBusinessCategories(businessType: string): MainCategory[] {
