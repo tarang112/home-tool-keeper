@@ -177,20 +177,6 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               </div>
             )}
 
-            {/* Action buttons */}
-            <div className="flex gap-1 pt-1">
-              {onMove && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move to house">
-                  <ArrowRightLeft className="h-3 w-3" />
-                </Button>
-              )}
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)}>
-                <Pencil className="h-3 w-3" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(item.id)}>
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
           </div>
         )}
 
