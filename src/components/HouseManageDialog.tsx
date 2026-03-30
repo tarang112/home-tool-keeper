@@ -9,8 +9,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X } from "lucide-react";
-import type { House, HouseMember } from "@/hooks/use-houses";
+import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X, Clock, Mail } from "lucide-react";
+import type { House, HouseMember, PendingInvite } from "@/hooks/use-houses";
 import { PERSONAL_RELATIONSHIPS, BUSINESS_RELATIONSHIPS } from "@/hooks/use-houses";
 
 interface HouseManageDialogProps {
@@ -18,10 +18,12 @@ interface HouseManageDialogProps {
   onOpenChange: (open: boolean) => void;
   house: House | null;
   members: HouseMember[];
+  pendingInvites?: PendingInvite[];
   isOwner: boolean;
   onInvite: (houseId: string, email: string, role: "editor" | "viewer", relationship: string, shareMode: "full" | "selected") => void;
   onRename: (houseId: string, newName: string) => void;
   onRemoveMember: (memberId: string, houseId: string) => void;
+  onCancelInvite?: (inviteId: string, houseId: string) => void;
   onDelete: (houseId: string) => void;
   currentUserId?: string;
 }
