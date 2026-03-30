@@ -16,7 +16,7 @@ import type { House } from "@/hooks/use-houses";
 interface HouseSelectorProps {
   houses: House[];
   selectedHouseId: string | null;
-  onSelect: (id: string | null) => void;
+  onSelect: (id: string) => void;
   onCreate: (name: string, propertyType: "personal" | "business", businessType?: string) => void;
   onManage: () => void;
 }
