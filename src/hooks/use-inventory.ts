@@ -226,6 +226,7 @@ export function useInventory(houseId?: string | null) {
     if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.barcode !== undefined) dbUpdates.barcode = updates.barcode;
+    if (updates.expirationDate !== undefined) dbUpdates.expiration_date = updates.expirationDate || null;
     if (updates.productImage !== undefined) dbUpdates.product_image_url = updates.productImage || "";
     if (updates.itemImage !== undefined) {
       if (updates.itemImage && !updates.itemImage.startsWith("http")) {
