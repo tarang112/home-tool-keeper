@@ -174,7 +174,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[]) {
       }
     }
     setLoading(false);
-  }, [user, houseId]);
+  }, [user, houseId, houseIds]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
