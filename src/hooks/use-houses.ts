@@ -49,6 +49,7 @@ export function useHouses() {
   const [houses, setHouses] = useState<House[]>([]);
   const [selectedHouseId, setSelectedHouseId] = useState<string | null>(null);
   const [members, setMembers] = useState<HouseMember[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchHouses = useCallback(async () => {
