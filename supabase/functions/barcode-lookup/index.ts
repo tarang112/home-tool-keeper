@@ -116,18 +116,22 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     ].filter(Boolean).join('\n');
 
     const aiResponse = await aiLookup(
-      `Extract product details from this webpage info:\n${pageInfo}\n\nReturn the product name, category, and notes (brand, description, specs).`
+      `Extract product details from this webpage info:\n${pageInfo}\n\nReturn the product name, category, notes (brand, description, specs), and image_url.`
     );
 
-    // Inject the extracted image into the AI response
-    if (productImage && aiResponse.status === 200) {
-      const responseBody = await aiResponse.json();
-      if (responseBody.success && responseBody.product) {
-        responseBody.product.image_url = responseBody.product.image_url || productImage;
-        return new Response(JSON.stringify(responseBody), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    // Inject the extracted image into the AI response if AI didn't find one
+    if (productImage) {
+      try {
+        const responseBody = await aiResponse.clone().json();
+        if (responseBody.success && responseBody.product) {
+          if (!responseBody.product.image_url) {
+            responseBody.product.image_url = productImage;
+          }
+          return new Response(JSON.stringify(responseBody), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      } catch { /* fall through */ }
     }
 
     return aiResponse;
