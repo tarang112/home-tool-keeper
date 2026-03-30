@@ -128,6 +128,7 @@ export type Database = {
           created_at: string
           house_id: string | null
           id: string
+          item_image_url: string | null
           location: string
           location_detail: string | null
           location_image_url: string | null
@@ -144,6 +145,7 @@ export type Database = {
           created_at?: string
           house_id?: string | null
           id?: string
+          item_image_url?: string | null
           location?: string
           location_detail?: string | null
           location_image_url?: string | null
@@ -160,6 +162,7 @@ export type Database = {
           created_at?: string
           house_id?: string | null
           id?: string
+          item_image_url?: string | null
           location?: string
           location_detail?: string | null
           location_image_url?: string | null
