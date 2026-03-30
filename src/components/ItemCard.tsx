@@ -82,7 +82,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
                     <img
                       src={proxyImg(item.itemImage)}
                       alt="Item"
-                      className="w-full h-20 object-cover rounded-md border"
+                      className="w-full h-20 object-contain rounded-md border bg-white"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>
@@ -93,7 +93,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
                     <img
                       src={item.locationImage}
                       alt="Location"
-                      className="w-full h-20 object-cover rounded-md border"
+                      className="w-full h-20 object-contain rounded-md border bg-white"
                     />
                   </div>
                 )}
