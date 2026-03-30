@@ -43,13 +43,9 @@ export function useHouses() {
         createdAt: h.created_at,
       }));
       setHouses(mapped);
-      // Auto-select first house if none selected
-      if (!selectedHouseId && mapped.length > 0) {
-        setSelectedHouseId(mapped[0].id);
-      }
     }
     setLoading(false);
-  }, [user, selectedHouseId]);
+  }, [user]);
 
   useEffect(() => { fetchHouses(); }, [fetchHouses]);
 
