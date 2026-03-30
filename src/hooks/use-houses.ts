@@ -416,6 +416,10 @@ export function useHouses() {
       return;
     }
     setDefaultHouseId(houseId);
+    // Also switch to the selected default now
+    if (houseId) {
+      setSelectedHouseId(houseId);
+    }
     toast.success(houseId ? "Default location set" : "Default location cleared");
   }, [user]);
 
