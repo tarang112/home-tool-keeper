@@ -66,6 +66,23 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
                   Shared from {item.sharedFromHouse}
                 </Badge>
               )}
+              {item.expirationDate && (() => {
+                const exp = new Date(item.expirationDate);
+                const now = new Date();
+                const diffMs = exp.getTime() - now.getTime();
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                const isExpired = diffDays < 0;
+                const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
+                return (
+                  <Badge
+                    variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
+                    className={`text-xs gap-1 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                  >
+                    <Clock className="h-3 w-3" />
+                    {isExpired ? "Expired" : `Exp: ${exp.toLocaleDateString()}`}
+                  </Badge>
+                );
+              })()}
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 {item.location}
