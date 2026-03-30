@@ -167,11 +167,12 @@ async function aiLookup(prompt: string): Promise<Response> {
         {
           role: 'system',
           content: `You extract product information. Return ONLY valid JSON with these keys:
-- name (string): product name
+- name (string): FULL product name, never truncated
 - category (string): one of the main categories below
 - subcategory (string): one of the subcategories for that category, or empty string
 - notes (string): brand, description, specs combined
 - image_url (string): product image URL if known, otherwise empty string
+- quantity (number): pack size / count (e.g. 6-pack = 6, single item = 1). Default 1 if unknown.
 
 ${CATEGORY_MAP}
 
