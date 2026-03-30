@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -52,13 +52,22 @@ export function useHouses() {
   const [members, setMembers] = useState<HouseMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasAutoSelectedHouse = useRef(false);
 
   const fetchHouses = useCallback(async () => {
-    if (!user) { setHouses([]); setLoading(false); return; }
+    if (!user) {
+      setHouses([]);
+      setSelectedHouseId(null);
+      hasAutoSelectedHouse.current = false;
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("houses")
       .select("*")
       .order("created_at", { ascending: true });
+
     if (error) {
       console.error(error);
       toast.error("Failed to load houses");
@@ -71,35 +80,66 @@ export function useHouses() {
         propertyType: h.property_type || "personal",
         businessType: h.business_type || undefined,
       }));
+
       setHouses(mapped);
+      setSelectedHouseId((current) => {
+        if (mapped.length === 0) {
+          hasAutoSelectedHouse.current = false;
+          return null;
+        }
+
+        if (current && mapped.some((house) => house.id === current)) {
+          return current;
+        }
+
+        if (current && !mapped.some((house) => house.id === current)) {
+          hasAutoSelectedHouse.current = true;
+          return mapped[0].id;
+        }
+
+        if (!hasAutoSelectedHouse.current) {
+          hasAutoSelectedHouse.current = true;
+          return mapped[0].id;
+        }
+
+        return current;
+      });
     }
+
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { fetchHouses(); }, [fetchHouses]);
+  useEffect(() => {
+    fetchHouses();
+  }, [fetchHouses]);
 
   const fetchMembers = useCallback(async (houseId: string) => {
     const { data, error } = await supabase
       .from("house_members")
       .select("*")
       .eq("house_id", houseId);
+
     if (error) {
       console.error(error);
       return;
     }
+
     const userIds = (data || []).map((m: any) => m.user_id);
     let profileMap: Record<string, string> = {};
+
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, display_name, email")
         .in("user_id", userIds);
+
       if (profiles) {
         profiles.forEach((p: any) => {
           profileMap[p.user_id] = p.display_name || p.email || "Unknown";
         });
       }
     }
+
     setMembers((data || []).map((m: any) => ({
       id: m.id,
       houseId: m.house_id,
@@ -110,12 +150,12 @@ export function useHouses() {
       displayName: profileMap[m.user_id] || undefined,
     })));
 
-    // Fetch pending invites for this house
     const { data: invites } = await supabase
       .from("house_invites")
       .select("*")
       .eq("house_id", houseId)
       .eq("status", "pending");
+
     setPendingInvites((invites || []).map((inv: any) => ({
       id: inv.id,
       houseId: inv.house_id,
@@ -131,19 +171,26 @@ export function useHouses() {
 
   useEffect(() => {
     if (selectedHouseId) fetchMembers(selectedHouseId);
-    else { setMembers([]); setPendingInvites([]); }
+    else {
+      setMembers([]);
+      setPendingInvites([]);
+    }
   }, [selectedHouseId, fetchMembers]);
 
   const createHouse = useCallback(async (name: string, propertyType: "personal" | "business" = "personal", businessType?: string) => {
     if (!user) return;
+
     const { data, error } = await supabase
       .from("houses")
       .insert({ name, owner_id: user.id, property_type: propertyType, business_type: businessType || null } as any)
       .select()
       .single();
-    if (error) { toast.error("Failed to create house"); return; }
 
-    // Add self as owner member
+    if (error) {
+      toast.error("Failed to create house");
+      return;
+    }
+
     await supabase.from("house_members").insert({
       house_id: data.id,
       user_id: user.id,
@@ -151,10 +198,15 @@ export function useHouses() {
     });
 
     const house: House = {
-      id: data.id, name: data.name, ownerId: data.owner_id, createdAt: data.created_at,
+      id: data.id,
+      name: data.name,
+      ownerId: data.owner_id,
+      createdAt: data.created_at,
       propertyType: (data as any).property_type || "personal",
       businessType: (data as any).business_type || undefined,
     };
+
+    hasAutoSelectedHouse.current = true;
     setHouses((prev) => [...prev, house]);
     setSelectedHouseId(data.id);
     toast.success(`"${name}" created!`);
@@ -162,15 +214,24 @@ export function useHouses() {
 
   const renameHouse = useCallback(async (houseId: string, newName: string) => {
     if (!newName.trim()) return;
+
     const { error } = await supabase.from("houses").update({ name: newName.trim() }).eq("id", houseId);
-    if (error) { toast.error("Failed to rename"); return; }
+    if (error) {
+      toast.error("Failed to rename");
+      return;
+    }
+
     setHouses((prev) => prev.map((h) => h.id === houseId ? { ...h, name: newName.trim() } : h));
     toast.success("Renamed successfully");
   }, []);
 
   const deleteHouse = useCallback(async (houseId: string) => {
     const { error } = await supabase.from("houses").delete().eq("id", houseId);
-    if (error) { toast.error("Failed to delete house"); return; }
+    if (error) {
+      toast.error("Failed to delete house");
+      return;
+    }
+
     setHouses((prev) => prev.filter((h) => h.id !== houseId));
     if (selectedHouseId === houseId) {
       setSelectedHouseId(null);
@@ -179,22 +240,20 @@ export function useHouses() {
   }, [selectedHouseId]);
 
   const inviteMember = useCallback(async (
-    houseId: string, 
-    email: string, 
+    houseId: string,
+    email: string,
     role: "editor" | "viewer" = "editor",
     relationship: string = "Household",
     shareMode: "full" | "selected" = "full"
   ) => {
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Look up user by email in profiles
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
       .select("user_id, display_name")
       .eq("email", normalizedEmail);
 
     if (profileError || !profiles || profiles.length === 0) {
-      // User not registered — create a pending invite
       const { error: inviteError } = await supabase
         .from("house_invites")
         .insert({
@@ -214,6 +273,7 @@ export function useHouses() {
         }
         return;
       }
+
       toast.success(`Invite sent to ${normalizedEmail}. They'll be added automatically when they sign up.`);
       fetchMembers(houseId);
       return;
@@ -221,7 +281,6 @@ export function useHouses() {
 
     const targetUserId = profiles[0].user_id;
 
-    // Check if already a member
     const { data: existing } = await supabase
       .from("house_members")
       .select("id")
@@ -241,14 +300,22 @@ export function useHouses() {
       share_mode: shareMode,
     });
 
-    if (error) { toast.error("Failed to add member"); return; }
+    if (error) {
+      toast.error("Failed to add member");
+      return;
+    }
+
     toast.success("Member added!");
     fetchMembers(houseId);
   }, [user, fetchMembers]);
 
   const cancelInvite = useCallback(async (inviteId: string, houseId: string) => {
     const { error } = await supabase.from("house_invites").delete().eq("id", inviteId);
-    if (error) { toast.error("Failed to cancel invite"); return; }
+    if (error) {
+      toast.error("Failed to cancel invite");
+      return;
+    }
+
     toast.success("Invite cancelled");
     fetchMembers(houseId);
   }, [fetchMembers]);
@@ -260,6 +327,7 @@ export function useHouses() {
     shareMode: "full" | "selected" = "full"
   ): Promise<string | null> => {
     if (!user) return null;
+
     const { data, error } = await supabase
       .from("house_invites")
       .insert({
@@ -277,13 +345,18 @@ export function useHouses() {
       toast.error("Failed to create invite link");
       return null;
     }
+
     fetchMembers(houseId);
     return `${window.location.origin}/accept-invite?token=${data.invite_token}`;
   }, [user, fetchMembers]);
 
   const removeMember = useCallback(async (memberId: string, houseId: string) => {
     const { error } = await supabase.from("house_members").delete().eq("id", memberId);
-    if (error) { toast.error("Failed to remove member"); return; }
+    if (error) {
+      toast.error("Failed to remove member");
+      return;
+    }
+
     toast.success("Member removed");
     fetchMembers(houseId);
   }, [fetchMembers]);
