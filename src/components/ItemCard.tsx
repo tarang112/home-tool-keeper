@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2 } from "lucide-react";
 import { CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
 
+function proxyImg(url?: string) {
+  if (!url) return "";
+  if (url.includes("supabase.co/")) return url; // our own storage, no proxy needed
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=200&h=200&fit=contain&bg=white`;
+}
+
 interface ItemCardProps {
   item: InventoryItem;
   onAdjust: (id: string, delta: number) => void;
@@ -17,6 +23,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
   const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label;
   const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon;
   const hasProductImg = !!item.productImage;
+  const hasItemImg = !!item.itemImage;
   const hasLocationImg = !!item.locationImage;
 
   return (
@@ -26,7 +33,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
           {/* Product thumbnail */}
           {hasProductImg && (
             <img
-              src={item.productImage}
+              src={proxyImg(item.productImage)}
               alt={item.name}
               referrerPolicy="no-referrer"
               className="h-16 w-16 rounded-lg object-contain bg-white border shrink-0"
@@ -55,16 +62,27 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
             </div>
 
             {/* Thumbnails row: product + location side by side */}
-            {(hasProductImg || hasLocationImg) && (
+            {(hasProductImg || hasItemImg || hasLocationImg) && (
               <div className="flex gap-2 mb-2">
                 {hasProductImg && (
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] text-muted-foreground mb-1">Product</p>
                     <img
-                      src={item.productImage}
+                      src={proxyImg(item.productImage)}
                       alt={item.name}
                       referrerPolicy="no-referrer"
                       className="w-full h-20 object-contain rounded-md bg-white border"
+                      onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+                {hasItemImg && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground mb-1">Item</p>
+                    <img
+                      src={proxyImg(item.itemImage)}
+                      alt="Item"
+                      className="w-full h-20 object-cover rounded-md border"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>
