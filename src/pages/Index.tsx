@@ -187,6 +187,11 @@ const Index = () => {
         customLocations={customLocations}
         onEnsureCategory={ensureCategory}
         onEnsureLocation={ensureLocation}
+        businessCategories={
+          selectedHouse?.propertyType === "business" && selectedHouse.businessType
+            ? getBusinessCategories(selectedHouse.businessType)
+            : undefined
+        }
       />
 
       <HouseManageDialog
