@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Package, Wrench, AlertTriangle, MapPin } from "lucide-react";
+import { Package, AlertTriangle, MapPin } from "lucide-react";
 import type { InventoryItem } from "@/hooks/use-inventory";
 
 interface StatsBarProps {
