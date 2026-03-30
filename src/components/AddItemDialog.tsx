@@ -27,7 +27,8 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("tools");
   const [quantity, setQuantity] = useState("1");
-  const [location, setLocation] = useState("Garage");
+  const [locationMode, setLocationMode] = useState("Garage");
+  const [customLocation, setCustomLocation] = useState("");
   const [locationDetail, setLocationDetail] = useState("");
   const [locationImage, setLocationImage] = useState("");
   const [notes, setNotes] = useState("");
