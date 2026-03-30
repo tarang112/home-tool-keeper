@@ -1,17 +1,19 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Package, LogOut } from "lucide-react";
+import { Plus, Search, Package, LogOut, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useInventory, CATEGORIES, type ItemCategory, type InventoryItem } from "@/hooks/use-inventory";
 import { useHouses } from "@/hooks/use-houses";
 import { useAuth } from "@/hooks/use-auth";
+import { useCustomOptions } from "@/hooks/use-custom-options";
 import { StatsBar } from "@/components/StatsBar";
 import { ItemCard } from "@/components/ItemCard";
 import { AddItemDialog } from "@/components/AddItemDialog";
 import { HouseSelector } from "@/components/HouseSelector";
 import { HouseManageDialog } from "@/components/HouseManageDialog";
 import { MoveItemDialog } from "@/components/MoveItemDialog";
+import { ManageOptionsDialog } from "@/components/ManageOptionsDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
@@ -22,12 +24,19 @@ const Index = () => {
     createHouse, deleteHouse, inviteMember, removeMember,
   } = useHouses();
   const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(selectedHouseId);
+  const {
+    customCategories, customLocations,
+    addCategory, updateCategory, deleteCategory,
+    addLocation, updateLocation, deleteLocation,
+    ensureCategory, ensureLocation,
+  } = useCustomOptions();
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ItemCategory | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [moveItem, setMoveItem] = useState<InventoryItem | null>(null);
 
   const filtered = useMemo(() => {
@@ -70,6 +79,9 @@ const Index = () => {
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1">
               <Plus className="h-4 w-4" /> Add
+            </Button>
+            <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
+              <Settings2 className="h-4 w-4" />
             </Button>
             <Button size="icon" variant="ghost" onClick={signOut} className="h-9 w-9">
               <LogOut className="h-4 w-4" />
@@ -160,6 +172,10 @@ const Index = () => {
         onAdd={handleAddItem}
         editItem={editItem}
         onUpdate={updateItem}
+        customCategories={customCategories}
+        customLocations={customLocations}
+        onEnsureCategory={ensureCategory}
+        onEnsureLocation={ensureLocation}
       />
 
       <HouseManageDialog
@@ -180,6 +196,19 @@ const Index = () => {
         item={moveItem}
         houses={houses}
         onMove={handleMoveItem}
+      />
+
+      <ManageOptionsDialog
+        open={optionsOpen}
+        onOpenChange={setOptionsOpen}
+        customCategories={customCategories}
+        customLocations={customLocations}
+        onAddCategory={addCategory}
+        onUpdateCategory={updateCategory}
+        onDeleteCategory={deleteCategory}
+        onAddLocation={addLocation}
+        onUpdateLocation={updateLocation}
+        onDeleteLocation={deleteLocation}
       />
     </div>
   );
