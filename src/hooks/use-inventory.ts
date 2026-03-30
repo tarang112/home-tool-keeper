@@ -205,6 +205,7 @@ export function useInventory(houseId?: string | null) {
       item_image_url: itemImageUrl,
       notes: item.notes,
       barcode: item.barcode || "",
+      expiration_date: item.expirationDate || null,
       house_id: item.houseId || null,
     }).select().single();
     if (error) { toast.error("Failed to add item"); return; }
