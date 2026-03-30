@@ -100,7 +100,10 @@ export function AddItemDialog({
       setCategory(p.category as ItemCategory);
     }
     if (p.notes && !notes) setNotes(p.notes);
-    if (p.image_url) setProductImage(p.image_url);
+    if (p.image_url) {
+      setProductImage(p.image_url);
+      if (!itemImage) setItemImage(p.image_url);
+    }
   };
 
   const handleBarcodeLookup = async (code: string) => {
