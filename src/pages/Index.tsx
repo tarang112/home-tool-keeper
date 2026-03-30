@@ -3,7 +3,7 @@ import { Plus, Search, Package, LogOut, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useInventory, CATEGORIES, type ItemCategory, type InventoryItem } from "@/hooks/use-inventory";
+import { useInventory, CATEGORIES, MAIN_CATEGORIES, type ItemCategory, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
 import { useHouses } from "@/hooks/use-houses";
 import { useAuth } from "@/hooks/use-auth";
 import { useCustomOptions } from "@/hooks/use-custom-options";
@@ -16,6 +16,7 @@ import { MoveItemDialog } from "@/components/MoveItemDialog";
 import { ManageOptionsDialog } from "@/components/ManageOptionsDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getBusinessCategories } from "@/config/business-categories";
 
 const Index = () => {
   const { user, signOut } = useAuth();
