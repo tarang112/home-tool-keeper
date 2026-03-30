@@ -36,7 +36,7 @@ interface AddItemDialogProps {
 export function AddItemDialog({
   open, onOpenChange, onAdd, editItem, onUpdate,
   customCategories = [], customLocations = [],
-  onEnsureCategory, onEnsureLocation,
+  onEnsureCategory, onEnsureLocation, businessCategories,
 }: AddItemDialogProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("hardware-tools");
