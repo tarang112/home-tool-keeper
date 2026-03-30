@@ -79,7 +79,8 @@ const Index = () => {
   };
 
   const handleAddItem = (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
-    addItem({ ...item, houseId: selectedHouseId });
+    const houseIdForItem = isSpecificHouse ? selectedHouseId : null;
+    addItem({ ...item, houseId: houseIdForItem });
   };
 
   const handleMoveItem = (itemId: string, houseId: string | null) => {
