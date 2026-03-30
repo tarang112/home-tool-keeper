@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +10,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X, Clock, Mail } from "lucide-react";
+import { Trash2, UserPlus, Crown, Eye, Pencil, Users, Share2, Check, X, Clock, Mail, Copy, Link } from "lucide-react";
 import type { House, HouseMember, PendingInvite } from "@/hooks/use-houses";
 import { PERSONAL_RELATIONSHIPS, BUSINESS_RELATIONSHIPS } from "@/hooks/use-houses";
 
@@ -21,6 +22,7 @@ interface HouseManageDialogProps {
   pendingInvites?: PendingInvite[];
   isOwner: boolean;
   onInvite: (houseId: string, email: string, role: "editor" | "viewer", relationship: string, shareMode: "full" | "selected") => void;
+  onCreateInviteLink?: (houseId: string, role: "editor" | "viewer", relationship: string, shareMode: "full" | "selected") => Promise<string | null>;
   onRename: (houseId: string, newName: string) => void;
   onRemoveMember: (memberId: string, houseId: string) => void;
   onCancelInvite?: (inviteId: string, houseId: string) => void;
@@ -35,7 +37,7 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function HouseManageDialog({
-  open, onOpenChange, house, members, pendingInvites = [], isOwner, onInvite, onRename, onRemoveMember, onCancelInvite, onDelete, currentUserId,
+  open, onOpenChange, house, members, pendingInvites = [], isOwner, onInvite, onCreateInviteLink, onRename, onRemoveMember, onCancelInvite, onDelete, currentUserId,
 }: HouseManageDialogProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "viewer">("editor");
@@ -168,17 +170,34 @@ export function HouseManageDialog({
                       Pending
                     </Badge>
                   </div>
-                  {isOwner && onCancelInvite && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive shrink-0"
-                      onClick={() => onCancelInvite(inv.id, house!.id)}
-                      title="Cancel invite"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isOwner && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => {
+                          const link = `${window.location.origin}/accept-invite?token=${inv.inviteToken}`;
+                          navigator.clipboard.writeText(link);
+                          toast.success("Invite link copied!");
+                        }}
+                        title="Copy invite link"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {isOwner && onCancelInvite && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive shrink-0"
+                        onClick={() => onCancelInvite(inv.id, house!.id)}
+                        title="Cancel invite"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -238,9 +257,27 @@ export function HouseManageDialog({
                 </p>
               )}
             </div>
-            <Button size="sm" className="gap-1" onClick={handleInvite} disabled={!email.trim()}>
-              <UserPlus className="h-4 w-4" /> Invite
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" className="gap-1" onClick={handleInvite} disabled={!email.trim()}>
+                <UserPlus className="h-4 w-4" /> Invite by Email
+              </Button>
+              {onCreateInviteLink && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  onClick={async () => {
+                    const link = await onCreateInviteLink(house.id, role, relationship, shareMode);
+                    if (link) {
+                      navigator.clipboard.writeText(link);
+                      toast.success("Invite link copied to clipboard!");
+                    }
+                  }}
+                >
+                  <Link className="h-4 w-4" /> Copy Invite Link
+                </Button>
+              )}
+            </div>
           </div>
         )}
 

@@ -23,7 +23,7 @@ const Index = () => {
   const {
     houses, selectedHouseId, selectedHouse, setSelectedHouseId,
     members, pendingInvites, isOwner, loading: housesLoading,
-    createHouse, renameHouse, deleteHouse, inviteMember, cancelInvite, removeMember,
+    createHouse, renameHouse, deleteHouse, inviteMember, createInviteLink, cancelInvite, removeMember,
   } = useHouses();
   const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(selectedHouseId);
   const {
@@ -202,6 +202,7 @@ const Index = () => {
         pendingInvites={pendingInvites}
         isOwner={isOwner}
         onInvite={inviteMember}
+        onCreateInviteLink={createInviteLink}
         onRename={renameHouse}
         onRemoveMember={removeMember}
         onCancelInvite={cancelInvite}

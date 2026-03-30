@@ -32,6 +32,7 @@ export interface PendingInvite {
   shareMode?: string;
   status: string;
   createdAt: string;
+  inviteToken: string;
 }
 
 export const PERSONAL_RELATIONSHIPS = [
@@ -124,6 +125,7 @@ export function useHouses() {
       shareMode: inv.share_mode,
       status: inv.status,
       createdAt: inv.created_at,
+      inviteToken: inv.invite_token,
     })));
   }, []);
 
@@ -251,6 +253,34 @@ export function useHouses() {
     fetchMembers(houseId);
   }, [fetchMembers]);
 
+  const createInviteLink = useCallback(async (
+    houseId: string,
+    role: "editor" | "viewer" = "editor",
+    relationship: string = "Household",
+    shareMode: "full" | "selected" = "full"
+  ): Promise<string | null> => {
+    if (!user) return null;
+    const { data, error } = await supabase
+      .from("house_invites")
+      .insert({
+        house_id: houseId,
+        email: `link-invite-${Date.now()}@invite.local`,
+        role,
+        relationship,
+        share_mode: shareMode,
+        invited_by: user.id,
+      } as any)
+      .select("invite_token")
+      .single();
+
+    if (error) {
+      toast.error("Failed to create invite link");
+      return null;
+    }
+    fetchMembers(houseId);
+    return `${window.location.origin}/accept-invite?token=${data.invite_token}`;
+  }, [user, fetchMembers]);
+
   const removeMember = useCallback(async (memberId: string, houseId: string) => {
     const { error } = await supabase.from("house_members").delete().eq("id", memberId);
     if (error) { toast.error("Failed to remove member"); return; }
@@ -274,6 +304,7 @@ export function useHouses() {
     renameHouse,
     deleteHouse,
     inviteMember,
+    createInviteLink,
     cancelInvite,
     removeMember,
   };

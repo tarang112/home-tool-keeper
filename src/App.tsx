@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
+import AcceptInvite from "./pages/AcceptInvite.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -19,8 +20,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const location = window.location;
+  const params = new URLSearchParams(location.search);
+  const redirect = params.get("redirect");
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to={redirect || "/"} replace />;
   return <>{children}</>;
 }
 
@@ -34,6 +38,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
+            <Route path="/accept-invite" element={<AcceptInvite />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
