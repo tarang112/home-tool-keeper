@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2, Clock } from "lucide-react";
 import { CATEGORIES, MAIN_CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 function proxyImg(url?: string, size = 200) {
   if (!url) return "";
@@ -37,21 +37,17 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
   const hasItemImg = !!item.itemImage;
   const hasLocationImg = !!item.locationImage;
   const [zoomedImg, setZoomedImg] = useState<string | null>(null);
+  const [showImages, setShowImages] = useState(false);
+  const hasAnyImage = hasProductImg || hasItemImg || hasLocationImg;
 
   return (
-    <Card className="animate-slide-up">
+    <Card
+      className="animate-slide-up group"
+      onMouseEnter={() => hasAnyImage && setShowImages(true)}
+      onMouseLeave={() => hasAnyImage && setShowImages(false)}
+    >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
-          {/* Product thumbnail */}
-          {hasProductImg && (
-            <img
-              src={proxyImg(item.productImage)}
-              alt={item.name}
-              referrerPolicy="no-referrer"
-              className="h-16 w-16 rounded-lg object-contain bg-white border shrink-0"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          )}
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
@@ -90,9 +86,20 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               </span>
             </div>
 
-            {/* Thumbnails row: product + location side by side */}
-            {(hasProductImg || hasItemImg || hasLocationImg) && (
-              <div className="flex gap-2 mb-2 flex-wrap">
+            {/* Image indicator for mobile tap */}
+            {hasAnyImage && (
+              <button
+                type="button"
+                className="text-xs text-muted-foreground flex items-center gap-1 md:hidden"
+                onClick={() => setShowImages((v) => !v)}
+              >
+                📷 {showImages ? "Hide" : "Show"} images
+              </button>
+            )}
+
+            {/* Thumbnails row: collapsed by default, shown on hover/tap */}
+            {hasAnyImage && showImages && (
+              <div className="flex gap-2 mb-2 flex-wrap animate-fade-in">
                 {hasProductImg && (
                   <div className="shrink-0 relative group/thumb cursor-pointer" onClick={() => setZoomedImg(fullImg(item.productImage))}>
                     <p className="text-[10px] text-muted-foreground mb-1">Product</p>
