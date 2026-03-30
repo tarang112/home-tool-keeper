@@ -61,7 +61,8 @@ export function AddItemDialog({
 
   const allLocations = [...LOCATIONS, ...customLocations.map(l => l.name)];
 
-  const selectedMain = MAIN_CATEGORIES.find(c => c.value === category);
+  const activeCategoryList = businessCategories || MAIN_CATEGORIES;
+  const selectedMain = activeCategoryList.find(c => c.value === category);
   const subcategories = selectedMain?.subcategories || [];
 
   useEffect(() => {
