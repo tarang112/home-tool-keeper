@@ -31,11 +31,15 @@ export interface InventoryItem {
   itemImage: string;
   notes: string;
   barcode: string;
+  expirationDate: string | null;
   houseId: string | null;
   createdAt: string;
   updatedAt: string;
   sharedFromHouse?: string;
 }
+
+// Categories that should show expiration date picker
+export const EXPIRABLE_CATEGORIES = ['groceries', 'produce', 'medicine'];
 
 function rowToItem(row: any): InventoryItem {
   const rawCat = row.category as string;
