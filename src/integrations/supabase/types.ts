@@ -214,6 +214,14 @@ export type Database = {
         Args: { _house_id: string; _user_id: string }
         Returns: boolean
       }
+      is_item_owner: {
+        Args: { _item_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_item_shared_to_user: {
+        Args: { _item_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       house_role: "owner" | "editor" | "viewer"
