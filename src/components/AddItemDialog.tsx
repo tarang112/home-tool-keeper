@@ -107,18 +107,28 @@ export function AddItemDialog({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editItem, open]);
 
+  const LEGACY_CATEGORY_MAP: Record<string, string> = {
+    tools: "hardware-tools",
+    materials: "hardware-tools",
+    hardware: "hardware-tools",
+    electrical: "electrical",
+    plumbing: "plumbing",
+    paint: "paint",
+  };
+
   const applyProduct = (p: any) => {
-    if (p.name && !name) setName(p.name);
+    if (p.name) setName(p.name);
     if (p.category) {
-      const mainMatch = MAIN_CATEGORIES.find(c => c.value === p.category);
+      const mapped = LEGACY_CATEGORY_MAP[p.category] || p.category;
+      const mainMatch = MAIN_CATEGORIES.find(c => c.value === mapped);
       if (mainMatch) {
-        setCategory(p.category);
+        setCategory(mapped);
         if (p.subcategory && mainMatch.subcategories.some(s => s.value === p.subcategory)) {
           setSubcategory(p.subcategory);
         }
       }
     }
-    if (p.notes && !notes) setNotes(p.notes);
+    if (p.notes) setNotes(p.notes);
     if (p.image_url) {
       setProductImage(p.image_url);
       if (!itemImage) setItemImage(p.image_url);
