@@ -173,7 +173,7 @@ export function useInventory(houseId?: string | null) {
     const { data, error } = await supabase.from("inventory_items").insert({
       user_id: user.id,
       name: item.name,
-      category: item.category,
+      category: item.category === "custom" ? `custom:${item.customCategory || "Other"}` : item.category,
       quantity: item.quantity,
       location: item.location,
       location_detail: item.locationDetail,
@@ -191,7 +191,9 @@ export function useInventory(houseId?: string | null) {
     if (!user) return;
     const dbUpdates: any = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.category !== undefined) {
+      dbUpdates.category = updates.category === "custom" ? `custom:${updates.customCategory || "Other"}` : updates.category;
+    }
     if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
     if (updates.location !== undefined) dbUpdates.location = updates.location;
     if (updates.locationDetail !== undefined) dbUpdates.location_detail = updates.locationDetail;

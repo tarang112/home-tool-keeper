@@ -26,6 +26,7 @@ interface AddItemDialogProps {
 export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }: AddItemDialogProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("tools");
+  const [customCategory, setCustomCategory] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [locationMode, setLocationMode] = useState("Garage");
   const [customLocation, setCustomLocation] = useState("");
@@ -42,6 +43,7 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
     if (editItem) {
       setName(editItem.name);
       setCategory(editItem.category);
+      setCustomCategory(editItem.customCategory || "");
       setQuantity(String(editItem.quantity));
       const loc = editItem.location;
       if (LOCATIONS.includes(loc)) {
@@ -58,6 +60,7 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
     } else {
       setName("");
       setCategory("tools");
+      setCustomCategory("");
       setQuantity("1");
       setLocationMode("Garage");
       setCustomLocation("");
@@ -109,6 +112,7 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
     const data = {
       name: name.trim(),
       category,
+      customCategory: category === "custom" ? customCategory.trim() : undefined,
       quantity: Math.max(0, parseInt(quantity) || 0),
       location: locationMode === "custom" ? customLocation.trim() : locationMode,
       locationDetail: locationDetail.trim(),
@@ -187,8 +191,17 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
                         {c.icon} {c.label}
                       </SelectItem>
                     ))}
+                    <SelectItem value="custom">✏️ Custom</SelectItem>
                   </SelectContent>
                 </Select>
+                {category === "custom" && (
+                  <Input
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    placeholder="Enter custom category name..."
+                    className="mt-2"
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="quantity">Quantity</Label>
