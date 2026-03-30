@@ -404,6 +404,20 @@ export function useHouses() {
     fetchMembers(houseId);
   }, [fetchMembers]);
 
+  const setDefaultHouse = useCallback(async (houseId: string | null) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ default_house_id: houseId } as any)
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("Failed to set default");
+      return;
+    }
+    setDefaultHouseId(houseId);
+    toast.success(houseId ? "Default location set" : "Default location cleared");
+  }, [user]);
+
   const selectedHouse = houses.find((h) => h.id === selectedHouseId) || null;
   const isOwner = selectedHouse ? selectedHouse.ownerId === user?.id : false;
 
@@ -416,6 +430,8 @@ export function useHouses() {
     pendingInvites,
     loading,
     isOwner,
+    defaultHouseId,
+    setDefaultHouse,
     createHouse,
     renameHouse,
     deleteHouse,
