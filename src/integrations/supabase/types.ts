@@ -206,6 +206,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_full_house_access: {
+        Args: { _house_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_house_member: {
         Args: { _house_id: string; _user_id: string }
         Returns: boolean
