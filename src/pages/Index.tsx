@@ -172,6 +172,14 @@ const Index = () => {
         onDelete={deleteHouse}
         currentUserId={user?.id}
       />
+
+      <MoveItemDialog
+        open={!!moveItem}
+        onOpenChange={(open) => { if (!open) setMoveItem(null); }}
+        item={moveItem}
+        houses={houses}
+        onMove={handleMoveItem}
+      />
     </div>
   );
 };
