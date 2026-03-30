@@ -99,7 +99,32 @@ export function AddItemDialog({ open, onOpenChange, onAdd, editItem, onUpdate }:
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUrlLookup = async () => {
+    if (!productUrl.trim()) return;
+    setUrlLookingUp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("barcode-lookup", {
+        body: { url: productUrl.trim() },
+      });
+      if (error) throw error;
+      if (data?.success && data.product) {
+        const p = data.product;
+        if (p.name && !name) setName(p.name);
+        if (p.category && CATEGORIES.some((c) => c.value === p.category)) {
+          setCategory(p.category as ItemCategory);
+        }
+        if (p.notes && !notes) setNotes(p.notes);
+        toast.success(`Found: ${p.name || "Product details loaded"}`);
+      } else {
+        toast.info("Could not extract product details from URL.");
+      }
+    } catch {
+      toast.error("URL lookup failed");
+    } finally {
+      setUrlLookingUp(false);
+    }
+  };
+
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
