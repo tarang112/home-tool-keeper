@@ -23,6 +23,17 @@ export interface HouseMember {
   email?: string;
 }
 
+export interface PendingInvite {
+  id: string;
+  houseId: string;
+  email: string;
+  role: string;
+  relationship?: string;
+  shareMode?: string;
+  status: string;
+  createdAt: string;
+}
+
 export const PERSONAL_RELATIONSHIPS = [
   "Household", "Family", "Friend", "Neighbor", "Colleague", "Contractor", "Other"
 ];
