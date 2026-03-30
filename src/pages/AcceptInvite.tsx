@@ -30,19 +30,17 @@ export default function AcceptInvite() {
 
     // Fetch invite details
     const fetchInvite = async () => {
-      const { data, error } = await supabase
-        .from("house_invites")
-        .select("*")
-        .eq("invite_token", token)
-        .eq("status", "pending")
-        .single();
+      const { data, error } = await supabase.rpc("get_invite_by_token", {
+        _token: token,
+      });
 
-      if (error || !data) {
+      if (error || !data || data.length === 0) {
         setStatus("not_found");
         return;
       }
 
-      setInvite(data);
+      const inviteData = data[0];
+      setInvite(inviteData);
 
       // Fetch house name
       const { data: house } = await supabase
