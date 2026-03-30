@@ -16,10 +16,24 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
   const cat = CATEGORIES.find((c) => c.value === item.category);
   const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label;
   const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon;
+  const hasProductImg = !!item.productImage;
+  const hasLocationImg = !!item.locationImage;
+
   return (
     <Card className="animate-slide-up">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
+          {/* Product thumbnail */}
+          {hasProductImg && (
+            <img
+              src={item.productImage}
+              alt={item.name}
+              referrerPolicy="no-referrer"
+              className="h-16 w-16 rounded-lg object-contain bg-white border shrink-0"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          )}
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">{categoryIcon}</span>
@@ -39,12 +53,35 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
                 {item.locationDetail && ` · ${item.locationDetail}`}
               </span>
             </div>
-            {item.productImage && (
-              <img src={item.productImage} alt={item.name} className="w-full h-20 object-contain rounded-md mb-2 bg-white" referrerPolicy="no-referrer" crossOrigin="anonymous" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+
+            {/* Thumbnails row: product + location side by side */}
+            {(hasProductImg || hasLocationImg) && (
+              <div className="flex gap-2 mb-2">
+                {hasProductImg && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground mb-1">Product</p>
+                    <img
+                      src={item.productImage}
+                      alt={item.name}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-20 object-contain rounded-md bg-white border"
+                      onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+                {hasLocationImg && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground mb-1">Location</p>
+                    <img
+                      src={item.locationImage}
+                      alt="Location"
+                      className="w-full h-20 object-cover rounded-md border"
+                    />
+                  </div>
+                )}
+              </div>
             )}
-            {item.locationImage && (
-              <img src={item.locationImage} alt="Location" className="w-full h-20 object-cover rounded-md mb-2" />
-            )}
+
             {item.barcode && (
               <p className="text-xs text-muted-foreground font-mono">Barcode: {item.barcode}</p>
             )}
