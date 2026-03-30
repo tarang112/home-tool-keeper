@@ -77,7 +77,8 @@ export function useHouses() {
       .eq("user_id", user.id)
       .single();
 
-    const savedDefault = (profile as any)?.default_house_id ?? null;
+    const savedDefault = profile?.default_house_id ?? null;
+    console.log("[useHouses] default_house_id from profile:", savedDefault);
     setDefaultHouseId(savedDefault);
 
     const { data, error } = await supabase
