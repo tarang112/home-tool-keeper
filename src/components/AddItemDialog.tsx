@@ -42,6 +42,7 @@ export function AddItemDialog({
   const [locationDetail, setLocationDetail] = useState("");
   const [locationImage, setLocationImage] = useState("");
   const [productImage, setProductImage] = useState("");
+  const [itemImage, setItemImage] = useState("");
   const [notes, setNotes] = useState("");
   const [barcode, setBarcode] = useState("");
   const [productUrl, setProductUrl] = useState("");
@@ -49,6 +50,7 @@ export function AddItemDialog({
   const [lookingUp, setLookingUp] = useState(false);
   const [urlLookingUp, setUrlLookingUp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const itemFileInputRef = useRef<HTMLInputElement>(null);
 
   const allLocations = [...LOCATIONS, ...customLocations.map(l => l.name)];
 
@@ -70,7 +72,8 @@ export function AddItemDialog({
       setLocationDetail(editItem.locationDetail ?? "");
       setLocationImage(editItem.locationImage ?? "");
       setProductImage(editItem.productImage ?? "");
-      setNotes(editItem.notes ?? "");
+      setItemImage(editItem.itemImage ?? "");
+      setNotes(editItem.notes ?? "");      
       setBarcode(editItem.barcode ?? "");
       setProductUrl("");
     } else {
@@ -83,6 +86,7 @@ export function AddItemDialog({
       setLocationDetail("");
       setLocationImage("");
       setProductImage("");
+      setItemImage("");
       setNotes("");
       setBarcode("");
       setProductUrl("");
@@ -149,6 +153,14 @@ export function AddItemDialog({
     reader.readAsDataURL(file);
   };
 
+  const handleItemImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setItemImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -172,6 +184,7 @@ export function AddItemDialog({
       locationDetail: locationDetail.trim(),
       locationImage,
       productImage,
+      itemImage,
       notes: notes.trim(),
       barcode: barcode.trim(),
       houseId: editItem?.houseId || null,
@@ -312,6 +325,24 @@ export function AddItemDialog({
               ) : (
                 <Button type="button" variant="outline" className="w-full gap-2" onClick={() => fileInputRef.current?.click()}>
                   <Camera className="h-4 w-4" /> Take or Choose Photo
+                </Button>
+              )}
+            </div>
+
+            {/* Item Photo */}
+            <div className="space-y-2">
+              <Label>Item Photo</Label>
+              <input ref={itemFileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleItemImageChange} />
+              {itemImage ? (
+                <div className="relative rounded-lg overflow-hidden border">
+                  <img src={itemImage} alt="Item" className="w-full h-32 object-cover" />
+                  <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => setItemImage("")}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <Button type="button" variant="outline" className="w-full gap-2" onClick={() => itemFileInputRef.current?.click()}>
+                  <Camera className="h-4 w-4" /> Take or Upload Item Photo
                 </Button>
               )}
             </div>
