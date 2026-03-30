@@ -25,7 +25,23 @@ const Index = () => {
     members, pendingInvites, isOwner, loading: housesLoading,
     createHouse, renameHouse, deleteHouse, inviteMember, createInviteLink, cancelInvite, removeMember,
   } = useHouses();
-  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(selectedHouseId);
+
+  // Compute inventory filter based on selection
+  const isAllPersonal = selectedHouseId === "all-personal" || !selectedHouseId;
+  const isAllBusiness = selectedHouseId === "all-business";
+  const isSpecificHouse = selectedHouseId && !selectedHouseId.startsWith("all-");
+
+  const personalHouseIds = useMemo(() => houses.filter(h => h.propertyType !== "business").map(h => h.id), [houses]);
+  const businessHouseIds = useMemo(() => houses.filter(h => h.propertyType === "business").map(h => h.id), [houses]);
+
+  const effectiveHouseId = isSpecificHouse ? selectedHouseId : null;
+  const effectiveHouseIds = isAllPersonal
+    ? personalHouseIds
+    : isAllBusiness
+      ? businessHouseIds
+      : undefined;
+
+  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(effectiveHouseId, effectiveHouseIds);
   const {
     customCategories, customLocations,
     addCategory, updateCategory, deleteCategory,
