@@ -16,7 +16,7 @@ import type { House } from "@/hooks/use-houses";
 interface HouseSelectorProps {
   houses: House[];
   selectedHouseId: string | null;
-  onSelect: (id: string | null) => void;
+  onSelect: (id: string) => void;
   onCreate: (name: string, propertyType: "personal" | "business", businessType?: string) => void;
   onManage: () => void;
 }
@@ -52,14 +52,17 @@ export function HouseSelector({ houses, selectedHouseId, onSelect, onCreate, onM
       <div className="flex items-center gap-2">
         <Home className="h-4 w-4 text-muted-foreground shrink-0" />
         <Select
-          value={selectedHouseId || "all"}
-          onValueChange={(v) => onSelect(v === "all" ? null : v)}
+          value={selectedHouseId || "all-personal"}
+          onValueChange={(v) => onSelect(v)}
         >
           <SelectTrigger className="h-8 text-sm">
             <SelectValue placeholder="All Items" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Items (Personal)</SelectItem>
+            <SelectItem value="all-personal">All Personal</SelectItem>
+            {businessHouses.length > 0 && (
+              <SelectItem value="all-business">All Business</SelectItem>
+            )}
             {personalHouses.length > 0 && (
               <SelectGroup>
                 <SelectLabel className="text-xs text-muted-foreground">🏠 Personal</SelectLabel>
@@ -88,7 +91,7 @@ export function HouseSelector({ houses, selectedHouseId, onSelect, onCreate, onM
         <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={resetAndOpen}>
           <Plus className="h-4 w-4" />
         </Button>
-        {selectedHouseId && (
+        {selectedHouseId && !selectedHouseId.startsWith("all-") && (
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onManage}>
             <Settings className="h-4 w-4" />
           </Button>

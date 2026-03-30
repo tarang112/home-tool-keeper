@@ -65,13 +65,55 @@ function rowToItem(row: any): InventoryItem {
   };
 }
 
-export function useInventory(houseId?: string | null) {
+export function useInventory(houseId?: string | null, houseIds?: string[], includeUnassigned?: boolean) {
   const { user } = useAuth();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchItems = useCallback(async () => {
     if (!user) { setItems([]); setLoading(false); return; }
+
+    if (houseIds && houseIds.length > 0) {
+      // Fetch items for multiple houses + optionally unassigned items
+      const queries = [
+        supabase
+          .from("inventory_items")
+          .select("*")
+          .in("house_id", houseIds)
+          .order("created_at", { ascending: false }),
+      ];
+
+      if (includeUnassigned) {
+        queries.push(
+          supabase
+            .from("inventory_items")
+            .select("*")
+            .is("house_id", null)
+            .order("created_at", { ascending: false })
+        );
+      }
+
+      const results = await Promise.all(queries);
+      let allItems: InventoryItem[] = [];
+      for (const res of results) {
+        if (res.error) {
+          toast.error("Failed to load items");
+          console.error(res.error);
+        } else {
+          allItems = [...allItems, ...(res.data || []).map(rowToItem)];
+        }
+      }
+      // Deduplicate
+      const seen = new Set<string>();
+      allItems = allItems.filter(item => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+      setItems(allItems);
+      setLoading(false);
+      return;
+    }
 
     if (houseId) {
       const [ownedRes, sharedRes] = await Promise.all([
@@ -156,7 +198,7 @@ export function useInventory(houseId?: string | null) {
       }
     }
     setLoading(false);
-  }, [user, houseId]);
+  }, [user, houseId, houseIds, includeUnassigned]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 

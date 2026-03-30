@@ -83,26 +83,24 @@ export function useHouses() {
 
       setHouses(mapped);
       setSelectedHouseId((current) => {
+        // Keep special filter values
+        if (current === "all-personal" || current === "all-business") return current;
+
         if (mapped.length === 0) {
           hasAutoSelectedHouse.current = false;
-          return null;
+          return "all-personal";
         }
 
         if (current && mapped.some((house) => house.id === current)) {
           return current;
         }
 
-        if (current && !mapped.some((house) => house.id === current)) {
-          hasAutoSelectedHouse.current = true;
-          return mapped[0].id;
-        }
-
         if (!hasAutoSelectedHouse.current) {
           hasAutoSelectedHouse.current = true;
-          return mapped[0].id;
+          return "all-personal";
         }
 
-        return current;
+        return "all-personal";
       });
     }
 
@@ -170,8 +168,9 @@ export function useHouses() {
   }, []);
 
   useEffect(() => {
-    if (selectedHouseId) fetchMembers(selectedHouseId);
-    else {
+    if (selectedHouseId && !selectedHouseId.startsWith("all-")) {
+      fetchMembers(selectedHouseId);
+    } else {
       setMembers([]);
       setPendingInvites([]);
     }
