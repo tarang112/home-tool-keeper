@@ -169,17 +169,34 @@ export function HouseManageDialog({
                       Pending
                     </Badge>
                   </div>
-                  {isOwner && onCancelInvite && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive shrink-0"
-                      onClick={() => onCancelInvite(inv.id, house!.id)}
-                      title="Cancel invite"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isOwner && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => {
+                          const link = `${window.location.origin}/accept-invite?token=${inv.inviteToken}`;
+                          navigator.clipboard.writeText(link);
+                          toast.success("Invite link copied!");
+                        }}
+                        title="Copy invite link"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {isOwner && onCancelInvite && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive shrink-0"
+                        onClick={() => onCancelInvite(inv.id, house!.id)}
+                        title="Cancel invite"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
