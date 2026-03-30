@@ -14,7 +14,6 @@ export function StatsBar({ items }: StatsBarProps) {
 
   const stats = [
     { label: "Items", value: totalItems, icon: Package, color: "text-primary" },
-    { label: "Total Qty", value: totalQuantity, icon: Wrench, color: "text-accent" },
     { label: "Out of Stock", value: lowStock, icon: AlertTriangle, color: "text-destructive" },
     { label: "Locations", value: locations, icon: MapPin, color: "text-muted-foreground" },
   ];
