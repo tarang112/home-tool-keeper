@@ -86,9 +86,20 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
               </span>
             </div>
 
-            {/* Thumbnails row: product + location side by side */}
-            {(hasProductImg || hasItemImg || hasLocationImg) && (
-              <div className="flex gap-2 mb-2 flex-wrap">
+            {/* Image indicator for mobile tap */}
+            {hasAnyImage && (
+              <button
+                type="button"
+                className="text-xs text-muted-foreground flex items-center gap-1 md:hidden"
+                onClick={() => setShowImages((v) => !v)}
+              >
+                📷 {showImages ? "Hide" : "Show"} images
+              </button>
+            )}
+
+            {/* Thumbnails row: collapsed by default, shown on hover/tap */}
+            {hasAnyImage && showImages && (
+              <div className="flex gap-2 mb-2 flex-wrap animate-fade-in">
                 {hasProductImg && (
                   <div className="shrink-0 relative group/thumb cursor-pointer" onClick={() => setZoomedImg(fullImg(item.productImage))}>
                     <p className="text-[10px] text-muted-foreground mb-1">Product</p>
