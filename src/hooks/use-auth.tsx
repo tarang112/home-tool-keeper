@@ -19,27 +19,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const acceptPendingInvitesForUser = async (sessionUser: User | null) => {
+      if (!sessionUser?.email) return;
+
+      const { error } = await supabase.rpc("accept_pending_invites", {
+        _user_id: sessionUser.id,
+        _email: sessionUser.email.toLowerCase(),
+      });
+
+      if (error) {
+        console.error("Failed to accept pending invites", error);
+      }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
       setLoading(false);
 
-      // Accept pending invites on sign in or sign up
-      if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session?.user) {
-        const u = session.user;
-        const email = u.email;
-        if (email) {
-          await supabase.rpc("accept_pending_invites", {
-            _user_id: u.id,
-            _email: email.toLowerCase(),
-          });
-        }
+      if (["SIGNED_IN", "USER_UPDATED", "INITIAL_SESSION"].includes(event) && nextSession?.user) {
+        await acceptPendingInvitesForUser(nextSession.user);
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+
+      if (currentSession?.user) {
+        await acceptPendingInvitesForUser(currentSession.user);
+      }
+
       setLoading(false);
     });
 
