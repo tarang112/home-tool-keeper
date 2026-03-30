@@ -352,6 +352,16 @@ export const MAIN_CATEGORIES: MainCategory[] = [
     ],
   },
   {
+    value: "medicine", label: "Medicine & Health", icon: "💊",
+    subcategories: [
+      { value: "prescription", label: "Prescription" },
+      { value: "otc", label: "Over-the-Counter" },
+      { value: "vitamins", label: "Vitamins & Supplements" },
+      { value: "first-aid", label: "First Aid" },
+      { value: "medical-devices", label: "Medical Devices" },
+    ],
+  },
+  {
     value: "other", label: "Other", icon: "📦",
     subcategories: [],
   },
