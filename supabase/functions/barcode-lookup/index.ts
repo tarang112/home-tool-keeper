@@ -218,7 +218,7 @@ function guessCategory(tags: string[]): { category: string; subcategory: string 
   // Groceries
   if (/dairy|milk|cheese|yogurt|butter|egg|cream/.test(joined)) return { category: 'groceries', subcategory: 'dairy' };
   if (/snack|chip|cookie|cracker|candy|chocolate|popcorn/.test(joined)) return { category: 'groceries', subcategory: 'snacks' };
-  if (/beverage|drink|soda|juice|water|coffee|tea|beer|wine/.test(joined)) return { category: 'groceries', subcategory: 'beverages' };
+  if (/beverage|drink|soda|juice|water|coffee|tea|beer|wine|bebida|refresco|gaseosa|cola/.test(joined)) return { category: 'groceries', subcategory: 'beverages' };
   if (/canned|can|soup|bean|tuna/.test(joined)) return { category: 'groceries', subcategory: 'canned' };
   if (/frozen|ice\s*cream|pizza|fries/.test(joined)) return { category: 'groceries', subcategory: 'frozen' };
   if (/bread|bakery|bun|roll|muffin|cake|pastry/.test(joined)) return { category: 'groceries', subcategory: 'bakery' };
