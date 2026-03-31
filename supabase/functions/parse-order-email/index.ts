@@ -102,7 +102,8 @@ Rules:
 - For medicine: set expirationDate to ${medicineExpiry}.
 - Use past defaults for known items.
 - Detect store/retailer name from the email.
-- Include order number if found.`;
+- Include order number if found.
+- Extract the price per unit (unitPrice) and total line price (totalPrice) for each item as numbers (e.g. 29.99 not "$29.99"). If quantity > 1, unitPrice = totalPrice / quantity.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
