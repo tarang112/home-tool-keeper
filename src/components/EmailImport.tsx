@@ -128,9 +128,6 @@ export function EmailImport({ onAdd, customLocations }: EmailImportProps) {
     ].filter(Boolean).join(" | ");
 
     for (const item of selected) {
-      const priceNote = item.price ? `Price: ${item.price}` : "";
-      const notes = [priceNote, orderInfo].filter(Boolean).join(" · ");
-
       onAdd({
         name: item.name,
         category: item.category,
@@ -142,10 +139,12 @@ export function EmailImport({ onAdd, customLocations }: EmailImportProps) {
         locationImage: "",
         productImage: "",
         itemImage: "",
-        notes,
+        notes: orderInfo,
         barcode: "",
         expirationDate: item.expirationDate || null,
         houseId: null,
+        unitPrice: item.unitPrice ?? null,
+        totalPrice: item.totalPrice ?? null,
       });
     }
 
