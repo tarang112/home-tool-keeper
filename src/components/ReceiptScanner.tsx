@@ -25,10 +25,14 @@ interface ExtractedItem {
 interface ReceiptScannerProps {
   onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
   customLocations: string[];
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
-export function ReceiptScanner({ onAdd, customLocations }: ReceiptScannerProps) {
-  const [open, setOpen] = useState(false);
+export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExternalOpenChange }: ReceiptScannerProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onExternalOpenChange || setInternalOpen;
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);

@@ -27,10 +27,14 @@ interface ExtractedItem {
 interface EmailImportProps {
   onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
   customLocations: string[];
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
-export function EmailImport({ onAdd, customLocations }: EmailImportProps) {
-  const [open, setOpen] = useState(false);
+export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOpenChange }: EmailImportProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onExternalOpenChange || setInternalOpen;
   const [emailContent, setEmailContent] = useState("");
   const [subject, setSubject] = useState("");
   const [parsing, setParsing] = useState(false);
