@@ -76,7 +76,8 @@ export function EmailImport({ onAdd, customLocations }: EmailImportProps) {
         subcategory: item.subcategory || "",
         location: item.location || "",
         expirationDate: item.expirationDate || null,
-        price: item.price || "",
+        unitPrice: item.unitPrice ?? null,
+        totalPrice: item.totalPrice ?? null,
         selected: true,
       }));
 
