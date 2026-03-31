@@ -120,9 +120,9 @@ const Index = () => {
             <Package className="h-6 w-6 text-primary" />
             <h1 className="font-heading font-bold text-xl">HomeStock</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1">
-              <Plus className="h-4 w-4" /> Add
+          <div className="flex items-center gap-1">
+            <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1 h-8 px-2 text-xs">
+              <Plus className="h-3.5 w-3.5" /> Add
             </Button>
             <ReceiptScanner
               onAdd={handleAddItem}

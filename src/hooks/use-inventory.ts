@@ -270,9 +270,8 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
     setItems((prev) => [newItem, ...prev]);
     toast.success("Item added!");
 
-    // Auto-generate image for produce items (background, non-blocking)
-    const effectiveCategory = item.category === "custom" ? `custom:${item.customCategory || "Other"}` : item.category;
-    if (effectiveCategory === "produce" && !item.productImage) {
+    // Auto-generate image for items without a product image (background, non-blocking)
+    if (!item.productImage) {
       supabase.functions.invoke("generate-item-image", {
         body: { itemName: item.name, itemId: data.id },
       }).then(({ data: imgData }) => {

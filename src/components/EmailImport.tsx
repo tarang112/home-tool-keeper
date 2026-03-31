@@ -168,10 +168,10 @@ export function EmailImport({ onAdd, customLocations }: EmailImportProps) {
       <Button
         size="sm"
         variant="outline"
-        className="gap-1"
+        className="gap-1 h-8 px-2 text-xs"
         onClick={() => setOpen(true)}
       >
-        <Mail className="h-4 w-4" /> Email
+        <Mail className="h-3.5 w-3.5" /> Email
       </Button>
 
       <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else setOpen(true); }}>

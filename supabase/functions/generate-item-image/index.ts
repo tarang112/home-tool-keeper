@@ -63,7 +63,7 @@ serve(async (req) => {
         messages: [
           {
             role: "user",
-            content: `Generate a clean, realistic photo of fresh ${itemName} on a plain white background. The image should look like a grocery store product photo — well-lit, centered, appetizing. No text, no labels, no watermarks.`,
+            content: `Generate a clean, realistic product photo of "${itemName}" on a plain white background. The image should be well-lit, centered, and look like a product listing photo. No text, no labels, no watermarks.`,
           },
         ],
         modalities: ["image", "text"],
