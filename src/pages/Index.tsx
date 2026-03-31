@@ -23,6 +23,7 @@ import { EmailImport } from "@/components/EmailImport";
 import { useItemDefaults } from "@/hooks/use-item-defaults";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessCategories } from "@/config/business-categories";
+import { InstallBanner } from "@/components/InstallBanner";
 
 const Index = () => {
   const { user, signOut } = useAuth();
