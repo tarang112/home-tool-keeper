@@ -142,6 +142,11 @@ export function HouseManageDialog({
             <p className="text-xs text-muted-foreground">
               {house.imageUrl ? "Click image to change" : isOwner ? "Click to add a logo or photo" : "No image set"}
             </p>
+            {house.imageUrl && isOwner && onRemoveImage && (
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-destructive mt-1" onClick={() => onRemoveImage(house.id)}>
+                <Trash2 className="h-3 w-3 mr-1" /> Remove photo
+              </Button>
+            )}
           </div>
           <input
             ref={fileInputRef}
