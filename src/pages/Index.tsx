@@ -18,6 +18,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileSettingsDialog } from "@/components/ProfileSettingsDialog";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 import { ReceiptScanner } from "@/components/ReceiptScanner";
+import { EmailImport } from "@/components/EmailImport";
 import { useItemDefaults } from "@/hooks/use-item-defaults";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessCategories } from "@/config/business-categories";
