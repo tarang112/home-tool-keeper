@@ -269,6 +269,16 @@ export function useHouses() {
     return imageUrl;
   }, [user]);
 
+  const removeHouseImage = useCallback(async (houseId: string) => {
+    const { error } = await supabase.from("houses").update({ image_url: null } as any).eq("id", houseId);
+    if (error) {
+      toast.error("Failed to remove image");
+      return;
+    }
+    setHouses((prev) => prev.map((h) => h.id === houseId ? { ...h, imageUrl: undefined } : h));
+    toast.success("Image removed");
+  }, []);
+
   const deleteHouse = useCallback(async (houseId: string) => {
     const { error } = await supabase.from("houses").delete().eq("id", houseId);
     if (error) {
@@ -445,5 +455,6 @@ export function useHouses() {
     cancelInvite,
     removeMember,
     uploadHouseImage,
+    removeHouseImage,
   };
 }

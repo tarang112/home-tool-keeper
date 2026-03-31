@@ -29,7 +29,7 @@ const Index = () => {
     houses, selectedHouseId, selectedHouse, setSelectedHouseId,
     members, pendingInvites, isOwner, loading: housesLoading,
     defaultHouseId, setDefaultHouse,
-    createHouse, renameHouse, deleteHouse, inviteMember, createInviteLink, cancelInvite, removeMember, uploadHouseImage,
+    createHouse, renameHouse, deleteHouse, inviteMember, createInviteLink, cancelInvite, removeMember, uploadHouseImage, removeHouseImage,
   } = useHouses();
 
   // Compute inventory filter based on selection
@@ -261,6 +261,7 @@ const Index = () => {
         onCancelInvite={cancelInvite}
         onDelete={deleteHouse}
         onUploadImage={uploadHouseImage}
+        onRemoveImage={removeHouseImage}
         currentUserId={user?.id}
       />
 
