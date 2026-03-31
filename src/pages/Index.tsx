@@ -83,7 +83,7 @@ const Index = () => {
     if (!open) setEditItem(null);
   };
 
-  const handleAddItem = (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
+  const handleAddItem = useCallback((item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
     let houseIdForItem: string | null = null;
     if (isSpecificHouse) {
       houseIdForItem = selectedHouseId;
@@ -97,7 +97,14 @@ const Index = () => {
       houseIdForItem = businessHouseIds[0];
     }
     addItem({ ...item, houseId: houseIdForItem });
-  };
+    // Save defaults for future voice commands
+    saveDefaults(item.name, {
+      category: item.category,
+      subcategory: item.subcategory,
+      location: item.location,
+      quantityUnit: item.quantityUnit,
+    });
+  }, [isSpecificHouse, selectedHouseId, isAllPersonal, personalHouseIds, isAllBusiness, businessHouseIds, addItem, saveDefaults]);
 
   const handleMoveItem = (itemId: string, houseId: string | null) => {
     updateItem(itemId, { houseId });
