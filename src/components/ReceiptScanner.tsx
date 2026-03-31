@@ -128,10 +128,12 @@ export function ReceiptScanner({ onAdd, customLocations }: ReceiptScannerProps) 
         locationImage: "",
         productImage: "",
         itemImage: "",
-        notes: item.price ? `Price: ${item.price}${storeName ? ` (${storeName})` : ""}` : "",
+        notes: storeName ? `From ${storeName}` : "",
         barcode: "",
         expirationDate: item.expirationDate || null,
         houseId: null,
+        unitPrice: item.unitPrice ?? null,
+        totalPrice: item.totalPrice ?? null,
       });
     }
 
