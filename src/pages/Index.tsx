@@ -96,7 +96,7 @@ const Index = () => {
 
   const handleDialogClose = (open: boolean) => {
     setDialogOpen(open);
-    if (!open) setEditItem(null);
+    if (!open) { setEditItem(null); setBarcodeMode(false); }
   };
 
   const handleAddItem = useCallback((item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
