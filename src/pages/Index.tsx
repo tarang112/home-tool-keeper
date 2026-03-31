@@ -18,6 +18,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileSettingsDialog } from "@/components/ProfileSettingsDialog";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 import { ReceiptScanner } from "@/components/ReceiptScanner";
+import { EmailImport } from "@/components/EmailImport";
 import { useItemDefaults } from "@/hooks/use-item-defaults";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessCategories } from "@/config/business-categories";
@@ -124,6 +125,10 @@ const Index = () => {
               <Plus className="h-4 w-4" /> Add
             </Button>
             <ReceiptScanner
+              onAdd={handleAddItem}
+              customLocations={customLocations.map((l) => l.name)}
+            />
+            <EmailImport
               onAdd={handleAddItem}
               customLocations={customLocations.map((l) => l.name)}
             />
