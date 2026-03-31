@@ -128,6 +128,10 @@ const Index = () => {
               onAdd={handleAddItem}
               customLocations={customLocations.map((l) => l.name)}
             />
+            <EmailImport
+              onAdd={handleAddItem}
+              customLocations={customLocations.map((l) => l.name)}
+            />
             <NotificationBell />
             <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
               <Settings2 className="h-4 w-4" />
