@@ -55,9 +55,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
         {/* Row 1: icon, name, quantity */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
-            {hasProductImg ? (
+            {hasPrimaryImg ? (
               <img
-                src={proxyImg(item.productImage, 32)}
+                src={proxyImg(primaryImage, 32)}
                 alt={item.name}
                 referrerPolicy="no-referrer"
                 className="h-6 w-6 rounded object-cover shrink-0"
