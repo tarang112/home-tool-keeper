@@ -261,7 +261,7 @@ const Index = () => {
               })}
             </div>
           );
-        })()
+        })()}
       </main>
 
       <AddItemDialog
