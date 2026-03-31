@@ -145,6 +145,9 @@ const Index = () => {
                 <DropdownMenuItem onClick={() => setDialogOpen(true)} className="gap-2">
                   <PlusCircle className="h-4 w-4" /> Manual Entry
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setBarcodeMode(true); setDialogOpen(true); }} className="gap-2">
+                  <ScanBarcode className="h-4 w-4" /> Scan Barcode
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setScannerOpen(true)} className="gap-2">
                   <ScanLine className="h-4 w-4" /> Scan Receipt
                 </DropdownMenuItem>
