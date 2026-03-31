@@ -312,6 +312,7 @@ const Index = () => {
             ? getBusinessCategories(selectedHouse.businessType)
             : undefined
         }
+        initialBarcodeScan={barcodeMode}
       />
 
       <ReceiptScanner
