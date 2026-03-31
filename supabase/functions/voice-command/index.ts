@@ -93,25 +93,32 @@ ${existingItemsContext || "None"}
 
 Today's date: ${new Date().toISOString().split("T")[0]}
 
-Return EXACTLY one JSON object with this structure:
+The user may mention MULTIPLE items in one command. Return a JSON object with an "actions" array.
+
+Return this structure:
 {
-  "action": "add" | "update" | "delete" | "unknown",
-  "confirmation": "A short sentence confirming what you'll do",
-  "item": {
-    "name": "item name",
-    "category": "category value (e.g. produce, groceries)",
-    "subcategory": "subcategory value (e.g. fruits, dairy) - ALWAYS assign the most appropriate subcategory",
-    "quantity": number,
-    "quantityUnit": "pcs|kg|g|lb|oz|L|ml|gal|fl oz",
-    "location": "location name",
-    "expirationDate": "YYYY-MM-DD or null",
-    "notes": "any notes mentioned"
-  },
-  "itemId": "existing item id (for update/delete only)",
-  "error": "error message if action is unknown"
+  "actions": [
+    {
+      "action": "add" | "update" | "delete" | "unknown",
+      "item": {
+        "name": "item name",
+        "category": "category value (e.g. produce, groceries)",
+        "subcategory": "subcategory value (e.g. fruits, dairy) - ALWAYS assign the most appropriate subcategory",
+        "quantity": number,
+        "quantityUnit": "pcs|kg|g|lb|oz|L|ml|gal|fl oz",
+        "location": "location name",
+        "expirationDate": "YYYY-MM-DD or null",
+        "notes": "any notes mentioned"
+      },
+      "itemId": "existing item id (for update/delete only)"
+    }
+  ],
+  "confirmation": "A short sentence summarizing ALL actions (e.g. 'Adding 1 lb strawberry and 2 lb blueberry to Refrigerator')",
+  "error": "error message if nothing could be understood"
 }
 
 Rules:
+- Parse ALL items mentioned. "Add 1 lb strawberry and 2 lb blueberry" = TWO actions.
 - For "add": fill in item details. If the item was added before, use the remembered defaults for category/location/unit unless the user specifies otherwise.
 - ALWAYS assign a subcategory. For example: strawberry → produce/fruits, milk → groceries/dairy, batteries → electrical/batteries, aspirin → medicine/otc.
 - For produce items: set expirationDate to 7 days from today (${new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]}) unless user specifies otherwise.
@@ -120,7 +127,7 @@ Rules:
 - For "delete"/"remove": find the matching item and return its id.
 - If quantity is not specified, default to 1.
 - Match item names fuzzily (e.g. "rice" matches "Basmati Rice").
-- If you can't determine the action, set action to "unknown" with an error message.`;
+- If you can't determine anything, return an empty actions array with an error message.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -148,40 +155,49 @@ Rules:
             {
               type: "function",
               function: {
-                name: "inventory_action",
-                description: "Execute an inventory action based on voice command",
+                name: "inventory_actions",
+                description: "Execute one or more inventory actions based on voice command",
                 parameters: {
                   type: "object",
                   properties: {
-                    action: {
-                      type: "string",
-                      enum: ["add", "update", "delete", "unknown"],
-                    },
-                    confirmation: { type: "string" },
-                    item: {
-                      type: "object",
-                      properties: {
-                        name: { type: "string" },
-                        category: { type: "string" },
-                        subcategory: { type: "string" },
-                        quantity: { type: "number" },
-                        quantityUnit: { type: "string" },
-                        location: { type: "string" },
-                        expirationDate: { type: "string", description: "YYYY-MM-DD or null" },
-                        notes: { type: "string" },
+                    actions: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          action: {
+                            type: "string",
+                            enum: ["add", "update", "delete"],
+                          },
+                          item: {
+                            type: "object",
+                            properties: {
+                              name: { type: "string" },
+                              category: { type: "string" },
+                              subcategory: { type: "string" },
+                              quantity: { type: "number" },
+                              quantityUnit: { type: "string" },
+                              location: { type: "string" },
+                              expirationDate: { type: "string" },
+                              notes: { type: "string" },
+                            },
+                          },
+                          itemId: { type: "string" },
+                        },
+                        required: ["action"],
                       },
                     },
-                    itemId: { type: "string" },
+                    confirmation: { type: "string" },
                     error: { type: "string" },
                   },
-                  required: ["action", "confirmation"],
+                  required: ["actions", "confirmation"],
                 },
               },
             },
           ],
           tool_choice: {
             type: "function",
-            function: { name: "inventory_action" },
+            function: { name: "inventory_actions" },
           },
         }),
       }

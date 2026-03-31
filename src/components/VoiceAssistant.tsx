@@ -66,7 +66,7 @@ export function VoiceAssistant({
           return;
         }
 
-        if (data?.error || data?.action === "unknown") {
+        if (data?.error && (!data?.actions || data.actions.length === 0)) {
           toast.error(data?.error || "Couldn't understand that command");
           setState("idle");
           return;
@@ -139,41 +139,55 @@ export function VoiceAssistant({
   const executeAction = useCallback(() => {
     if (!pendingAction) return;
 
-    const { action, item, itemId } = pendingAction;
+    // Support both new multi-action format and legacy single-action
+    const actions = pendingAction.actions || [pendingAction];
+    let addedCount = 0;
+    let updatedCount = 0;
+    let deletedCount = 0;
 
-    if (action === "add" && item) {
-      onAdd({
-        name: item.name || "Unnamed",
-        category: item.category || "other",
-        subcategory: item.subcategory || "",
-        quantity: item.quantity || 1,
-        quantityUnit: item.quantityUnit || "pcs",
-        location: item.location || "",
-        locationDetail: "",
-        locationImage: "",
-        productImage: "",
-        itemImage: "",
-        notes: item.notes || "",
-        barcode: "",
-        expirationDate: item.expirationDate || null,
-        houseId: houseId,
-      });
-      toast.success(`Added "${item.name}"`);
-    } else if (action === "update" && itemId && item) {
-      const updates: any = {};
-      if (item.name) updates.name = item.name;
-      if (item.category) updates.category = item.category;
-      if (item.subcategory !== undefined) updates.subcategory = item.subcategory;
-      if (item.quantity !== undefined) updates.quantity = item.quantity;
-      if (item.quantityUnit) updates.quantityUnit = item.quantityUnit;
-      if (item.location) updates.location = item.location;
-      if (item.notes) updates.notes = item.notes;
-      onUpdate(itemId, updates);
-      toast.success(`Updated "${item.name || "item"}"`);
-    } else if (action === "delete" && itemId) {
-      onDelete(itemId);
-      toast.success("Item removed");
+    for (const entry of actions) {
+      const { action, item, itemId } = entry;
+
+      if (action === "add" && item) {
+        onAdd({
+          name: item.name || "Unnamed",
+          category: item.category || "other",
+          subcategory: item.subcategory || "",
+          quantity: item.quantity || 1,
+          quantityUnit: item.quantityUnit || "pcs",
+          location: item.location || "",
+          locationDetail: "",
+          locationImage: "",
+          productImage: "",
+          itemImage: "",
+          notes: item.notes || "",
+          barcode: "",
+          expirationDate: item.expirationDate || null,
+          houseId: houseId,
+        });
+        addedCount++;
+      } else if (action === "update" && itemId && item) {
+        const updates: any = {};
+        if (item.name) updates.name = item.name;
+        if (item.category) updates.category = item.category;
+        if (item.subcategory !== undefined) updates.subcategory = item.subcategory;
+        if (item.quantity !== undefined) updates.quantity = item.quantity;
+        if (item.quantityUnit) updates.quantityUnit = item.quantityUnit;
+        if (item.location) updates.location = item.location;
+        if (item.notes) updates.notes = item.notes;
+        onUpdate(itemId, updates);
+        updatedCount++;
+      } else if (action === "delete" && itemId) {
+        onDelete(itemId);
+        deletedCount++;
+      }
     }
+
+    const parts = [];
+    if (addedCount) parts.push(`Added ${addedCount} item${addedCount > 1 ? "s" : ""}`);
+    if (updatedCount) parts.push(`Updated ${updatedCount} item${updatedCount > 1 ? "s" : ""}`);
+    if (deletedCount) parts.push(`Removed ${deletedCount} item${deletedCount > 1 ? "s" : ""}`);
+    if (parts.length) toast.success(parts.join(", "));
 
     setState("idle");
     setTranscript("");
