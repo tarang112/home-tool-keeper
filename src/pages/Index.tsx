@@ -123,6 +123,10 @@ const Index = () => {
             <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1">
               <Plus className="h-4 w-4" /> Add
             </Button>
+            <ReceiptScanner
+              onAdd={handleAddItem}
+              customLocations={customLocations.map((l) => l.name)}
+            />
             <NotificationBell />
             <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
               <Settings2 className="h-4 w-4" />
