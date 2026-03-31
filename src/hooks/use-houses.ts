@@ -455,5 +455,6 @@ export function useHouses() {
     cancelInvite,
     removeMember,
     uploadHouseImage,
+    removeHouseImage,
   };
 }
