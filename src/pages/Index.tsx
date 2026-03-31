@@ -52,6 +52,7 @@ const Index = () => {
     addLocation, updateLocation, deleteLocation,
     ensureCategory, ensureLocation,
   } = useCustomOptions(isAllBusiness || selectedHouse?.propertyType === "business" ? "business" : "personal");
+  const { saveDefaults } = useItemDefaults();
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ItemCategory | "all">("all");
