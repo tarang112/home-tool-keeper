@@ -39,12 +39,15 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
     : undefined;
   const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label || item.category;
   const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon || "📦";
-  const hasProductImg = !!item.productImage;
   const hasItemImg = !!item.itemImage;
+  const hasProductImg = !!item.productImage;
   const hasLocationImg = !!item.locationImage;
+  // Prefer item image over product image for display; only show one primary image
+  const primaryImage = hasItemImg ? item.itemImage : (hasProductImg ? item.productImage : "");
+  const hasPrimaryImg = !!primaryImage;
   const [zoomedImg, setZoomedImg] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const hasAnyImage = hasProductImg || hasItemImg || hasLocationImg;
+  const hasAnyImage = hasPrimaryImg || hasLocationImg;
 
   return (
     <Card className="animate-slide-up">
