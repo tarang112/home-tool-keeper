@@ -27,10 +27,14 @@ interface ExtractedItem {
 interface EmailImportProps {
   onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
   customLocations: string[];
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
-export function EmailImport({ onAdd, customLocations }: EmailImportProps) {
-  const [open, setOpen] = useState(false);
+export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOpenChange }: EmailImportProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onExternalOpenChange || setInternalOpen;
   const [emailContent, setEmailContent] = useState("");
   const [subject, setSubject] = useState("");
   const [parsing, setParsing] = useState(false);
@@ -166,14 +170,16 @@ export function EmailImport({ onAdd, customLocations }: EmailImportProps) {
 
   return (
     <>
-      <Button
-        size="sm"
-        variant="outline"
-        className="gap-1 h-8 px-2 text-xs"
-        onClick={() => setOpen(true)}
-      >
-        <Mail className="h-3.5 w-3.5" /> Email
-      </Button>
+      {externalOpen === undefined && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 h-8 px-2 text-xs"
+          onClick={() => setOpen(true)}
+        >
+          <Mail className="h-3.5 w-3.5" /> Email
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else setOpen(true); }}>
         <DialogContent className="max-w-md max-h-[90vh] flex flex-col">

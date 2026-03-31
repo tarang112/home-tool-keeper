@@ -25,10 +25,14 @@ interface ExtractedItem {
 interface ReceiptScannerProps {
   onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
   customLocations: string[];
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
-export function ReceiptScanner({ onAdd, customLocations }: ReceiptScannerProps) {
-  const [open, setOpen] = useState(false);
+export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExternalOpenChange }: ReceiptScannerProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onExternalOpenChange || setInternalOpen;
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
@@ -179,14 +183,16 @@ export function ReceiptScanner({ onAdd, customLocations }: ReceiptScannerProps) 
 
   return (
     <>
-      <Button
-        size="sm"
-        variant="outline"
-        className="gap-1 h-8 px-2 text-xs"
-        onClick={() => setOpen(true)}
-      >
-        <Receipt className="h-3.5 w-3.5" /> Scan
-      </Button>
+      {externalOpen === undefined && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 h-8 px-2 text-xs"
+          onClick={() => setOpen(true)}
+        >
+          <Receipt className="h-3.5 w-3.5" /> Scan
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else setOpen(true); }}>
         <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
