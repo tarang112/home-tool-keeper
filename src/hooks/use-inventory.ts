@@ -76,6 +76,8 @@ function rowToItem(row: any): InventoryItem {
     barcode: row.barcode || "",
     expirationDate: row.expiration_date || null,
     houseId: row.house_id || null,
+    unitPrice: row.unit_price ?? null,
+    totalPrice: row.total_price ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
