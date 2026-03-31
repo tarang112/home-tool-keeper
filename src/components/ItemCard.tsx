@@ -138,6 +138,18 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
             {item.barcode && (
               <p className="text-xs text-muted-foreground font-mono">Barcode: {item.barcode}</p>
             )}
+            {(item.unitPrice != null || item.totalPrice != null) && (
+              <div className="flex items-center gap-2 text-xs">
+                {item.totalPrice != null && (
+                  <Badge variant="secondary" className="text-xs gap-0.5">
+                    💰 ${item.totalPrice.toFixed(2)}
+                  </Badge>
+                )}
+                {item.unitPrice != null && (
+                  <span className="text-muted-foreground">${item.unitPrice.toFixed(2)}/ea</span>
+                )}
+              </div>
+            )}
             {item.notes && (
               <p className="text-xs text-muted-foreground line-clamp-2">{item.notes}</p>
             )}
