@@ -57,6 +57,13 @@ export function AddItemDialog({
   const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
   const [productUrl, setProductUrl] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
+
+  // Auto-open barcode scanner when initialBarcodeScan is set
+  useEffect(() => {
+    if (open && initialBarcodeScan && !editItem) {
+      setScannerOpen(true);
+    }
+  }, [open, initialBarcodeScan, editItem]);
   const [lookingUp, setLookingUp] = useState(false);
   const [urlLookingUp, setUrlLookingUp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
