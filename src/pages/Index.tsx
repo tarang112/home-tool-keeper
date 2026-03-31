@@ -310,7 +310,20 @@ const Index = () => {
         }
       />
 
-      <HouseManageDialog
+      <ReceiptScanner
+        onAdd={handleAddItem}
+        customLocations={customLocations.map((l) => l.name)}
+        externalOpen={scannerOpen}
+        onExternalOpenChange={setScannerOpen}
+      />
+
+      <EmailImport
+        onAdd={handleAddItem}
+        customLocations={customLocations.map((l) => l.name)}
+        externalOpen={emailOpen}
+        onExternalOpenChange={setEmailOpen}
+      />
+
         open={manageOpen}
         onOpenChange={setManageOpen}
         house={selectedHouse}
