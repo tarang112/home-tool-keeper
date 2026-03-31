@@ -17,7 +17,8 @@ interface ExtractedItem {
   quantityUnit: string;
   location: string;
   expirationDate?: string;
-  price?: string;
+  unitPrice?: number;
+  totalPrice?: number;
   selected: boolean;
 }
 
