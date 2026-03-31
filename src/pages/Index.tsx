@@ -214,20 +214,54 @@ const Index = () => {
                 : "Try a different search or category."}
             </p>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                onAdjust={adjustQuantity}
-                onEdit={handleEdit}
-                onDelete={deleteItem}
-                onMove={(item) => setMoveItem(item)}
-              />
-            ))}
-          </div>
-        )}
+        ) : (() => {
+          // Group items by category
+          const grouped = new Map<string, InventoryItem[]>();
+          for (const item of filtered) {
+            const key = item.category;
+            if (!grouped.has(key)) grouped.set(key, []);
+            grouped.get(key)!.push(item);
+          }
+
+          // Sort category groups by a consistent order (known categories first, then custom)
+          const categoryOrder = CATEGORIES.map(c => c.value);
+          const sortedGroups = [...grouped.entries()].sort(([a], [b]) => {
+            const ai = categoryOrder.indexOf(a);
+            const bi = categoryOrder.indexOf(b);
+            return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+          });
+
+          return (
+            <div className="space-y-5">
+              {sortedGroups.map(([catValue, catItems]) => {
+                const cat = CATEGORIES.find(c => c.value === catValue);
+                const label = catValue.startsWith("custom:") ? catValue.replace("custom:", "") : (cat?.label || catValue);
+                const icon = cat?.icon || "📦";
+                return (
+                  <div key={catValue}>
+                    <div className="flex items-center gap-1.5 mb-2 px-1">
+                      <span className="text-sm">{icon}</span>
+                      <h2 className="text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wide">{label}</h2>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">{catItems.length}</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      {catItems.map((item) => (
+                        <ItemCard
+                          key={item.id}
+                          item={item}
+                          onAdjust={adjustQuantity}
+                          onEdit={handleEdit}
+                          onDelete={deleteItem}
+                          onMove={(item) => setMoveItem(item)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </main>
 
       <AddItemDialog
