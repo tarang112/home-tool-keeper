@@ -164,6 +164,8 @@ export function VoiceAssistant({
           barcode: "",
           expirationDate: item.expirationDate || null,
           houseId: houseId,
+          unitPrice: null,
+          totalPrice: null,
         });
         addedCount++;
       } else if (action === "update" && itemId && item) {
