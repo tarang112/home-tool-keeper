@@ -155,40 +155,49 @@ Rules:
             {
               type: "function",
               function: {
-                name: "inventory_action",
-                description: "Execute an inventory action based on voice command",
+                name: "inventory_actions",
+                description: "Execute one or more inventory actions based on voice command",
                 parameters: {
                   type: "object",
                   properties: {
-                    action: {
-                      type: "string",
-                      enum: ["add", "update", "delete", "unknown"],
-                    },
-                    confirmation: { type: "string" },
-                    item: {
-                      type: "object",
-                      properties: {
-                        name: { type: "string" },
-                        category: { type: "string" },
-                        subcategory: { type: "string" },
-                        quantity: { type: "number" },
-                        quantityUnit: { type: "string" },
-                        location: { type: "string" },
-                        expirationDate: { type: "string", description: "YYYY-MM-DD or null" },
-                        notes: { type: "string" },
+                    actions: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          action: {
+                            type: "string",
+                            enum: ["add", "update", "delete"],
+                          },
+                          item: {
+                            type: "object",
+                            properties: {
+                              name: { type: "string" },
+                              category: { type: "string" },
+                              subcategory: { type: "string" },
+                              quantity: { type: "number" },
+                              quantityUnit: { type: "string" },
+                              location: { type: "string" },
+                              expirationDate: { type: "string" },
+                              notes: { type: "string" },
+                            },
+                          },
+                          itemId: { type: "string" },
+                        },
+                        required: ["action"],
                       },
                     },
-                    itemId: { type: "string" },
+                    confirmation: { type: "string" },
                     error: { type: "string" },
                   },
-                  required: ["action", "confirmation"],
+                  required: ["actions", "confirmation"],
                 },
               },
             },
           ],
           tool_choice: {
             type: "function",
-            function: { name: "inventory_action" },
+            function: { name: "inventory_actions" },
           },
         }),
       }
