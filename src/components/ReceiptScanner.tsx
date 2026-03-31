@@ -317,7 +317,8 @@ export function ReceiptScanner({ onAdd, customLocations }: ReceiptScannerProps) 
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                           <span>{item.quantity} {item.quantityUnit}</span>
                           {item.location && <span>· {item.location}</span>}
-                          {item.price && <span>· {item.price}</span>}
+                          {item.totalPrice != null && <span>· ${item.totalPrice.toFixed(2)}</span>}
+                          {item.unitPrice != null && item.quantity > 1 && <span className="text-[10px]">(${item.unitPrice.toFixed(2)}/ea)</span>}
                         </div>
                       </div>
                       <Button
