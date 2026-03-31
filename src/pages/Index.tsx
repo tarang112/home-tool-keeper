@@ -135,27 +135,18 @@ const Index = () => {
             <h1 className="font-heading font-bold text-xl">HomeStock</h1>
           </div>
           <div className="flex items-center gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" className="gap-1 h-8 px-2 text-xs">
-                  <Plus className="h-3.5 w-3.5" /> Add Item
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem onClick={() => setDialogOpen(true)} className="gap-2">
-                  <PlusCircle className="h-4 w-4" /> Manual Entry
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { setBarcodeMode(true); setDialogOpen(true); }} className="gap-2">
-                  <ScanBarcode className="h-4 w-4" /> Scan Barcode
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setScannerOpen(true)} className="gap-2">
-                  <ScanLine className="h-4 w-4" /> Scan Receipt
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setEmailOpen(true)} className="gap-2">
-                  <Mail className="h-4 w-4" /> Import Email
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setDialogOpen(true)} title="Manual Entry">
+              <PlusCircle className="h-3.5 w-3.5" />
+            </Button>
+            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => { setBarcodeMode(true); setDialogOpen(true); }} title="Scan Barcode">
+              <ScanBarcode className="h-3.5 w-3.5" />
+            </Button>
+            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setScannerOpen(true)} title="Scan Receipt">
+              <ScanLine className="h-3.5 w-3.5" />
+            </Button>
+            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setEmailOpen(true)} title="Import Email">
+              <Mail className="h-3.5 w-3.5" />
+            </Button>
             <NotificationBell />
             <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
               <Settings2 className="h-4 w-4" />
