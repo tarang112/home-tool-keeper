@@ -62,9 +62,27 @@ export function ReceiptScanner({ onAdd, customLocations }: ReceiptScannerProps) 
         body: { imageBase64: imagePreview, locations: customLocations },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle AI credit/rate limit errors from edge function
+        const errMsg = typeof error === "object" && error?.context?.status
+          ? undefined : error?.message;
+        const status = error?.context?.status;
+        if (status === 402 || /credits exhausted/i.test(errMsg || "")) {
+          toast.error("AI credits exhausted. Please add funds in Settings → Workspace → Usage.");
+          return;
+        }
+        if (status === 429 || /rate limit/i.test(errMsg || "")) {
+          toast.error("Too many requests. Please wait a moment and try again.");
+          return;
+        }
+        throw error;
+      }
       if (data?.error) {
-        toast.error(data.error);
+        if (/credits exhausted/i.test(data.error)) {
+          toast.error("AI credits exhausted. Please add funds in Settings → Workspace → Usage.");
+        } else {
+          toast.error(data.error);
+        }
         return;
       }
 
