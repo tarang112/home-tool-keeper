@@ -255,8 +255,8 @@ export function useHouses() {
       toast.error("Image upload failed");
       return null;
     }
-    const { data: urlData } = supabase.storage.from("inventory-images").getPublicUrl(path);
-    const imageUrl = urlData.publicUrl;
+    const { data: urlData } = await supabase.storage.from("inventory-images").createSignedUrl(path, 60 * 60 * 24 * 365);
+    const imageUrl = urlData?.signedUrl || "";
 
     const { error } = await supabase.from("houses").update({ image_url: imageUrl } as any).eq("id", houseId);
     if (error) {
