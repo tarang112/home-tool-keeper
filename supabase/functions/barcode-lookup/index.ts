@@ -352,7 +352,7 @@ function guessCategory(tags: string[]): { category: string; subcategory: string 
   if (/canned|can|soup|bean|tuna/.test(joined)) return { category: 'groceries', subcategory: 'canned' };
   if (/bread|bakery|bun|roll|muffin|cake|pastry|dough/.test(joined)) return { category: 'groceries', subcategory: 'bakery' };
   if (/sauce|ketchup|mustard|mayo|dressing|condiment|vinegar|oil/.test(joined)) return { category: 'groceries', subcategory: 'condiments' };
-  if (/grocery|food|cereal|pasta|rice|flour|sugar/.test(joined)) return { category: 'groceries', subcategory: '' };
+  if (/grocery|food|cereal|pasta|rice|flour|sugar|nutrition\s*facts|calories|serving\s*size|ingredients/.test(joined)) return { category: 'groceries', subcategory: '' };
 
   // Household
   if (/clean|bleach|detergent|disinfect|sponge|mop|broom/.test(joined)) return { category: 'household', subcategory: 'cleaning' };
