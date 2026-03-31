@@ -370,6 +370,7 @@ const Index = () => {
         customLocations={customLocations.map((l) => l.name)}
         houseId={effectiveHouseId}
       />
+      <InstallBanner />
     </div>
   );
 };
