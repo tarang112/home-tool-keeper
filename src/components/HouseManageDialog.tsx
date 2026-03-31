@@ -28,6 +28,7 @@ interface HouseManageDialogProps {
   onCancelInvite?: (inviteId: string, houseId: string) => void;
   onDelete: (houseId: string) => void;
   onUploadImage?: (houseId: string, file: File) => Promise<string | null>;
+  onRemoveImage?: (houseId: string) => void;
   currentUserId?: string;
 }
 
