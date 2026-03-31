@@ -15,11 +15,13 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Find items expiring within 3 months
-    const threeMonthsFromNow = new Date();
-    threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
-    const today = new Date().toISOString().split('T')[0];
-    const futureDate = threeMonthsFromNow.toISOString().split('T')[0];
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Find items expiring within 7 days (covers the 3-day warning window + already expired)
+    const sevenDaysOut = new Date(today);
+    sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
+    const futureDate = sevenDaysOut.toISOString().split('T')[0];
 
     const { data: expiringItems, error } = await supabase
       .from('inventory_items')
@@ -40,8 +42,11 @@ Deno.serve(async (req) => {
 
     for (const item of expiringItems || []) {
       const expDate = new Date(item.expiration_date);
-      const diffMs = expDate.getTime() - new Date().getTime();
+      const diffMs = expDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      // Only notify for: expired, today, or within 3 days
+      if (diffDays > 3) continue;
 
       let title: string;
       let message: string;
@@ -52,32 +57,26 @@ Deno.serve(async (req) => {
       } else if (diffDays === 0) {
         title = `⚠️ ${item.name} expires today!`;
         message = `This item expires today. Please check and take action.`;
-      } else if (diffDays <= 30) {
-        title = `🔴 ${item.name} expires in ${diffDays} day(s)`;
-        message = `Expiring on ${expDate.toLocaleDateString()}. Consider using or replacing it soon.`;
-      } else if (diffDays <= 60) {
-        title = `🟡 ${item.name} expires in ${diffDays} day(s)`;
-        message = `Expiring on ${expDate.toLocaleDateString()}.`;
       } else {
-        title = `📋 ${item.name} expires in ${diffDays} day(s)`;
-        message = `Expiring on ${expDate.toLocaleDateString()}.`;
+        title = `🔴 ${item.name} expires in ${diffDays} day(s)`;
+        message = `Expiring on ${expDate.toLocaleDateString()}. Use it soon!`;
       }
 
-      // Check if we already sent a notification for this item this month
-      const monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
+      // Check if we already sent a notification for this item TODAY (daily dedup)
+      const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
+      const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
 
       const { data: existing } = await supabase
         .from('notifications')
         .select('id')
         .eq('item_id', item.id)
         .eq('user_id', item.user_id)
-        .gte('created_at', monthStart.toISOString())
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd)
         .limit(1);
 
       if (existing && existing.length > 0) {
-        continue; // Already notified this month
+        continue; // Already notified today
       }
 
       const { error: insertError } = await supabase

@@ -155,7 +155,7 @@ export function VoiceAssistant({
         itemImage: "",
         notes: item.notes || "",
         barcode: "",
-        expirationDate: null,
+        expirationDate: item.expirationDate || null,
         houseId: houseId,
       });
       toast.success(`Added "${item.name}"`);

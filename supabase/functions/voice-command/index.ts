@@ -68,7 +68,21 @@ serve(async (req) => {
     const systemPrompt = `You are a voice assistant for an inventory management app called HomeStock.
 Parse the user's voice command and return a JSON action.
 
-Available categories: ${(categories || []).map((c: any) => c.value).join(", ")}
+Available categories with their subcategories:
+- groceries: dairy, snacks, beverages, canned, frozen, bakery, condiments
+- produce: fruits, vegetables, herbs (DEFAULT EXPIRY: 7 days from today)
+- household: cleaning, kitchen, bathroom, laundry, storage
+- hardware-tools: hand-tools, power-tools, fasteners, measuring, safety
+- electrical: wiring, lighting, switches, batteries
+- plumbing: pipes, fixtures, valves
+- paint: interior-paint, exterior-paint, stain, brushes-rollers
+- outdoor: garden-tools, seeds-plants, fertilizer, outdoor-furniture
+- automotive: fluids, parts, car-care
+- medicine: prescription, otc, vitamins, first-aid, medical-devices (DEFAULT EXPIRY: 365 days)
+- stationery: pens-pencils, notebooks, paper, art-supplies
+- office-supply: desk-accessories, filing, printer-supplies, tech-accessories
+- other: (no subcategories)
+
 Available locations: ${(locations || []).join(", ")}
 
 Known item defaults from past usage:
@@ -77,17 +91,20 @@ ${defaultsContext || "None yet"}
 Current inventory items:
 ${existingItemsContext || "None"}
 
+Today's date: ${new Date().toISOString().split("T")[0]}
+
 Return EXACTLY one JSON object with this structure:
 {
   "action": "add" | "update" | "delete" | "unknown",
   "confirmation": "A short sentence confirming what you'll do",
   "item": {
     "name": "item name",
-    "category": "category value",
-    "subcategory": "subcategory value or empty string",
+    "category": "category value (e.g. produce, groceries)",
+    "subcategory": "subcategory value (e.g. fruits, dairy) - ALWAYS assign the most appropriate subcategory",
     "quantity": number,
     "quantityUnit": "pcs|kg|g|lb|oz|L|ml|gal|fl oz",
     "location": "location name",
+    "expirationDate": "YYYY-MM-DD or null",
     "notes": "any notes mentioned"
   },
   "itemId": "existing item id (for update/delete only)",
@@ -96,6 +113,9 @@ Return EXACTLY one JSON object with this structure:
 
 Rules:
 - For "add": fill in item details. If the item was added before, use the remembered defaults for category/location/unit unless the user specifies otherwise.
+- ALWAYS assign a subcategory. For example: strawberry → produce/fruits, milk → groceries/dairy, batteries → electrical/batteries, aspirin → medicine/otc.
+- For produce items: set expirationDate to 7 days from today (${new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]}) unless user specifies otherwise.
+- For medicine items: set expirationDate to 365 days from today unless user specifies otherwise.
 - For "update": find the matching item from current inventory by name and return its id. Only include fields the user wants to change.
 - For "delete"/"remove": find the matching item and return its id.
 - If quantity is not specified, default to 1.
@@ -147,6 +167,7 @@ Rules:
                         quantity: { type: "number" },
                         quantityUnit: { type: "string" },
                         location: { type: "string" },
+                        expirationDate: { type: "string", description: "YYYY-MM-DD or null" },
                         notes: { type: "string" },
                       },
                     },
