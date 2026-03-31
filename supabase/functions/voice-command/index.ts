@@ -167,6 +167,7 @@ Rules:
                         quantity: { type: "number" },
                         quantityUnit: { type: "string" },
                         location: { type: "string" },
+                        expirationDate: { type: "string", description: "YYYY-MM-DD or null" },
                         notes: { type: "string" },
                       },
                     },
