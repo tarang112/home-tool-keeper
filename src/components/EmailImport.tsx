@@ -170,14 +170,16 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
 
   return (
     <>
-      <Button
-        size="sm"
-        variant="outline"
-        className="gap-1 h-8 px-2 text-xs"
-        onClick={() => setOpen(true)}
-      >
-        <Mail className="h-3.5 w-3.5" /> Email
-      </Button>
+      {externalOpen === undefined && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 h-8 px-2 text-xs"
+          onClick={() => setOpen(true)}
+        >
+          <Mail className="h-3.5 w-3.5" /> Email
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else setOpen(true); }}>
         <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
