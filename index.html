@@ -9,23 +9,27 @@
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#3B82F6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Inventory" />
+    <meta name="apple-mobile-web-app-title" content="HomeStock" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
 
+    <!-- Splash screens for iOS -->
+    <meta name="apple-mobile-web-app-orientations" content="portrait" />
+
     <!-- OG -->
-    
-    
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
     <meta property="og:title" content="HomeStock">
-  <meta name="twitter:title" content="HomeStock">
-  <meta property="og:description" content="Track and manage your home and business inventory">
-  <meta name="twitter:description" content="Track and manage your home and business inventory">
-  <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b489a802-c2cf-4b06-a8f0-80cdfa80f2c4?Expires=1774906204&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=4XqcwD13Onx6XvoFVthX%2Fg5WcMVsQE%2BrxD1cRsoeDbrX%2BiyxQqo0MPUxBXIPSGhGehWVmBil9eUyqvrxlno0KflzlZ8k1GfWGBnk1qbpohN10dkwRnaaypnf8X3tmC0lZqk3ZgbdERRf4tLdQEcqY7qnWIgItbUld%2BT9wGeaVTSoS6NWdIJXQJTjfPMJXGXq87Nl%2FwnUIlh9OYzxK8xUlB75tv1XbPjkO1IpJKln16kbEdtKkmSWceb%2BovKElqIAXa3PoJdZyP75SMgaFlYl%2F9Dyax9WIxNprRJL684R%2BhQ7kRiT0RxYBd1m5CLF4QUQbwCryb1XgrUSSZa5q9iv4g%3D%3D">
-  <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b489a802-c2cf-4b06-a8f0-80cdfa80f2c4?Expires=1774906204&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=4XqcwD13Onx6XvoFVthX%2Fg5WcMVsQE%2BrxD1cRsoeDbrX%2BiyxQqo0MPUxBXIPSGhGehWVmBil9eUyqvrxlno0KflzlZ8k1GfWGBnk1qbpohN10dkwRnaaypnf8X3tmC0lZqk3ZgbdERRf4tLdQEcqY7qnWIgItbUld%2BT9wGeaVTSoS6NWdIJXQJTjfPMJXGXq87Nl%2FwnUIlh9OYzxK8xUlB75tv1XbPjkO1IpJKln16kbEdtKkmSWceb%2BovKElqIAXa3PoJdZyP75SMgaFlYl%2F9Dyax9WIxNprRJL684R%2BhQ7kRiT0RxYBd1m5CLF4QUQbwCryb1XgrUSSZa5q9iv4g%3D%3D">
-</head>
+    <meta name="twitter:title" content="HomeStock">
+    <meta property="og:description" content="Track and manage your home and business inventory">
+    <meta name="twitter:description" content="Track and manage your home and business inventory">
+    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b489a802-c2cf-4b06-a8f0-80cdfa80f2c4?Expires=1774906204&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=4XqcwD13Onx6XvoFVthX%2Fg5WcMVsQE%2BrxD1cRsoeDbrX%2BiyxQqo0MPUxBXIPSGhGehWVmBil9eUyqvrxlno0KflzlZ8k1GfWGBnk1qbpohN10dkwRnaaypnf8X3tmC0lZqk3ZgbdERRf4tLdQEcqY7qnWIgItbUld%2BT9wGeaVTSoS6NWdIJXQJTjfPMJXGXq87Nl%2FwnUIlh9OYzxK8xUlB75tv1XbPjkO1IpJKln16kbEdtKkmSWceb%2BovKElqIAXa3PoJdZyP75SMgaFlYl%2F9Dyax9WIxNprRJL684R%2BhQ7kRiT0RxYBd1m5CLF4QUQbwCryb1XgrUSSZa5q9iv4g%3D%3D">
+    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b489a802-c2cf-4b06-a8f0-80cdfa80f2c4?Expires=1774906204&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=4XqcwD13Onx6XvoFVthX%2Fg5WcMVsQE%2BrxD1cRsoeDbrX%2BiyxQqo0MPUxBXIPSGhGehWVmBil9eUyqvrxlno0KflzlZ8k1GfWGBnk1qbpohN10dkwRnaaypnf8X3tmC0lZqk3ZgbdERRf4tLdQEcqY7qnWIgItbUld%2BT9wGeaVTSoS6NWdIJXQJTjfPMJXGXq87Nl%2FwnUIlh9OYzxK8xUlB75tv1XbPjkO1IpJKln16kbEdtKkmSWceb%2BovKElqIAXa3PoJdZyP75SMgaFlYl%2F9Dyax9WIxNprRJL684R%2BhQ7kRiT0RxYBd1m5CLF4QUQbwCryb1XgrUSSZa5q9iv4g%3D%3D">
+  </head>
 
   <body>
     <div id="root"></div>

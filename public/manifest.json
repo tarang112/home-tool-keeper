@@ -1,12 +1,13 @@
 {
-  "name": "Home Inventory",
-  "short_name": "Inventory",
+  "name": "HomeStock - Home Inventory",
+  "short_name": "HomeStock",
   "description": "Track and manage your home and business inventory",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0F172A",
   "theme_color": "#3B82F6",
   "orientation": "portrait-primary",
+  "categories": ["utilities", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -23,6 +24,15 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Add Item",
+      "short_name": "Add",
+      "url": "/?action=add",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
