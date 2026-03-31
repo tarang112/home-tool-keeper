@@ -39,12 +39,15 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
     : undefined;
   const categoryLabel = item.category === "custom" ? (item.customCategory || "Custom") : cat?.label || item.category;
   const categoryIcon = item.category === "custom" ? "✏️" : cat?.icon || "📦";
-  const hasProductImg = !!item.productImage;
   const hasItemImg = !!item.itemImage;
+  const hasProductImg = !!item.productImage;
   const hasLocationImg = !!item.locationImage;
+  // Prefer item image over product image for display; only show one primary image
+  const primaryImage = hasItemImg ? item.itemImage : (hasProductImg ? item.productImage : "");
+  const hasPrimaryImg = !!primaryImage;
   const [zoomedImg, setZoomedImg] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const hasAnyImage = hasProductImg || hasItemImg || hasLocationImg;
+  const hasAnyImage = hasPrimaryImg || hasLocationImg;
 
   return (
     <Card className="animate-slide-up">
@@ -52,9 +55,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
         {/* Row 1: icon, name, quantity */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
-            {hasProductImg ? (
+            {hasPrimaryImg ? (
               <img
-                src={proxyImg(item.productImage, 32)}
+                src={proxyImg(primaryImage, 32)}
                 alt={item.name}
                 referrerPolicy="no-referrer"
                 className="h-6 w-6 rounded object-cover shrink-0"
@@ -157,25 +160,14 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
             {/* Images */}
             {hasAnyImage && (
               <div className="flex gap-2 flex-wrap">
-                {hasProductImg && (
-                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(fullImg(item.productImage))}>
-                    <p className="text-[10px] text-muted-foreground mb-1">Product</p>
+                {hasPrimaryImg && (
+                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(fullImg(primaryImage))}>
+                    <p className="text-[10px] text-muted-foreground mb-1">{hasItemImg ? "Item" : "Product"}</p>
                     <img
-                      src={proxyImg(item.productImage)}
+                      src={proxyImg(primaryImage)}
                       alt={item.name}
                       referrerPolicy="no-referrer"
                       className="h-20 max-w-[120px] object-contain rounded-md bg-white border"
-                      onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
-                    />
-                  </div>
-                )}
-                {hasItemImg && (
-                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(fullImg(item.itemImage))}>
-                    <p className="text-[10px] text-muted-foreground mb-1">Item</p>
-                    <img
-                      src={proxyImg(item.itemImage)}
-                      alt="Item"
-                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>

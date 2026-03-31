@@ -18,14 +18,14 @@ Deno.serve(async (req) => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
-    // Find items expiring within 7 days (covers the 3-day warning window + already expired)
+    // Find items expiring within 7 days
     const sevenDaysOut = new Date(today);
     sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
     const futureDate = sevenDaysOut.toISOString().split('T')[0];
 
     const { data: expiringItems, error } = await supabase
       .from('inventory_items')
-      .select('id, name, user_id, expiration_date, category')
+      .select('id, name, user_id, expiration_date, category, created_at')
       .not('expiration_date', 'is', null)
       .lte('expiration_date', futureDate)
       .order('expiration_date', { ascending: true });
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
         message = `Expiring on ${expDate.toLocaleDateString()}. Use it soon!`;
       }
 
-      // Check if we already sent a notification for this item TODAY (daily dedup)
+      // Dedup: check if already sent today
       const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
       const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
 
@@ -75,24 +75,58 @@ Deno.serve(async (req) => {
         .lte('created_at', todayEnd)
         .limit(1);
 
-      if (existing && existing.length > 0) {
-        continue; // Already notified today
-      }
+      if (existing && existing.length > 0) continue;
+
+      const { error: insertError } = await supabase
+        .from('notifications')
+        .insert({ user_id: item.user_id, item_id: item.id, title, message });
+
+      if (!insertError) notificationsCreated++;
+      else console.error('Error creating notification:', insertError);
+    }
+
+    // === Produce auto-delete prompt: notify for produce items older than 10 days ===
+    const tenDaysAgo = new Date(today);
+    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+    const tenDaysAgoStr = tenDaysAgo.toISOString();
+
+    const { data: oldProduce } = await supabase
+      .from('inventory_items')
+      .select('id, name, user_id, created_at')
+      .eq('category', 'produce')
+      .lt('created_at', tenDaysAgoStr)
+      .gt('quantity', 0);
+
+    let produceNotifications = 0;
+    for (const item of oldProduce || []) {
+      const ageMs = today.getTime() - new Date(item.created_at).getTime();
+      const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+
+      // Dedup
+      const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
+      const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
+
+      const { data: existing } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('item_id', item.id)
+        .eq('user_id', item.user_id)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd)
+        .limit(1);
+
+      if (existing && existing.length > 0) continue;
 
       const { error: insertError } = await supabase
         .from('notifications')
         .insert({
           user_id: item.user_id,
           item_id: item.id,
-          title,
-          message,
+          title: `🥬 ${item.name} is ${ageDays} days old`,
+          message: `This produce was added ${ageDays} days ago. Consider using it up or removing it from inventory.`,
         });
 
-      if (!insertError) {
-        notificationsCreated++;
-      } else {
-        console.error('Error creating notification:', insertError);
-      }
+      if (!insertError) produceNotifications++;
     }
 
     return new Response(
@@ -100,6 +134,7 @@ Deno.serve(async (req) => {
         success: true,
         checked: expiringItems?.length || 0,
         notificationsCreated,
+        produceNotifications,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
