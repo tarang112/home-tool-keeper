@@ -156,7 +156,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-4 space-y-4">
+      <main className="max-w-lg lg:max-w-5xl mx-auto px-4 py-4 space-y-4">
         {/* House selector */}
         <HouseSelector
           houses={houses}
