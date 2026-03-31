@@ -64,6 +64,16 @@ const Index = () => {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [moveItem, setMoveItem] = useState<InventoryItem | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = useCallback((cat: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  }, []);
   const filtered = useMemo(() => {
     return items.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
