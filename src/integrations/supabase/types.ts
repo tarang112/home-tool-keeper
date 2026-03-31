@@ -251,6 +251,42 @@ export type Database = {
           },
         ]
       }
+      item_defaults: {
+        Row: {
+          category: string | null
+          house_id: string | null
+          id: string
+          item_name: string
+          location: string | null
+          quantity_unit: string | null
+          subcategory: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          house_id?: string | null
+          id?: string
+          item_name: string
+          location?: string | null
+          quantity_unit?: string | null
+          subcategory?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          house_id?: string | null
+          id?: string
+          item_name?: string
+          location?: string | null
+          quantity_unit?: string | null
+          subcategory?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       item_shares: {
         Row: {
           created_at: string

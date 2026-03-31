@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, Search, Package, LogOut, Settings2, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,8 @@ import { MoveItemDialog } from "@/components/MoveItemDialog";
 import { ManageOptionsDialog } from "@/components/ManageOptionsDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileSettingsDialog } from "@/components/ProfileSettingsDialog";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
+import { useItemDefaults } from "@/hooks/use-item-defaults";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessCategories } from "@/config/business-categories";
 
@@ -50,6 +52,7 @@ const Index = () => {
     addLocation, updateLocation, deleteLocation,
     ensureCategory, ensureLocation,
   } = useCustomOptions(isAllBusiness || selectedHouse?.propertyType === "business" ? "business" : "personal");
+  const { saveDefaults } = useItemDefaults();
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<ItemCategory | "all">("all");
@@ -80,7 +83,7 @@ const Index = () => {
     if (!open) setEditItem(null);
   };
 
-  const handleAddItem = (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
+  const handleAddItem = useCallback((item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
     let houseIdForItem: string | null = null;
     if (isSpecificHouse) {
       houseIdForItem = selectedHouseId;
@@ -94,7 +97,14 @@ const Index = () => {
       houseIdForItem = businessHouseIds[0];
     }
     addItem({ ...item, houseId: houseIdForItem });
-  };
+    // Save defaults for future voice commands
+    saveDefaults(item.name, {
+      category: item.category,
+      subcategory: item.subcategory,
+      location: item.location,
+      quantityUnit: item.quantityUnit,
+    });
+  }, [isSpecificHouse, selectedHouseId, isAllPersonal, personalHouseIds, isAllBusiness, businessHouseIds, addItem, saveDefaults]);
 
   const handleMoveItem = (itemId: string, houseId: string | null) => {
     updateItem(itemId, { houseId });
@@ -266,6 +276,15 @@ const Index = () => {
       />
 
       <ProfileSettingsDialog open={profileOpen} onOpenChange={setProfileOpen} houses={houses} defaultHouseId={defaultHouseId} onSetDefaultHouse={setDefaultHouse} />
+
+      <VoiceAssistant
+        items={items}
+        onAdd={handleAddItem}
+        onUpdate={updateItem}
+        onDelete={deleteItem}
+        customLocations={customLocations.map((l) => l.name)}
+        houseId={effectiveHouseId}
+      />
     </div>
   );
 };
