@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Search, Package, LogOut, Settings2, UserCog } from "lucide-react";
+import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +64,16 @@ const Index = () => {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [moveItem, setMoveItem] = useState<InventoryItem | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = useCallback((cat: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  }, []);
   const filtered = useMemo(() => {
     return items.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -239,23 +249,32 @@ const Index = () => {
                 const icon = cat?.icon || "📦";
                 return (
                   <div key={catValue}>
-                    <div className="flex items-center gap-1.5 mb-2 px-1">
+                    <button
+                      className="flex items-center gap-1.5 mb-2 px-1 w-full text-left hover:opacity-80 transition-opacity"
+                      onClick={() => toggleCategory(catValue)}
+                    >
+                      {collapsedCategories.has(catValue)
+                        ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      }
                       <span className="text-sm">{icon}</span>
                       <h2 className="text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wide">{label}</h2>
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">{catItems.length}</Badge>
-                    </div>
-                    <div className="space-y-2">
-                      {catItems.map((item) => (
-                        <ItemCard
-                          key={item.id}
-                          item={item}
-                          onAdjust={adjustQuantity}
-                          onEdit={handleEdit}
-                          onDelete={deleteItem}
-                          onMove={(item) => setMoveItem(item)}
-                        />
-                      ))}
-                    </div>
+                    </button>
+                    {!collapsedCategories.has(catValue) && (
+                      <div className="space-y-2">
+                        {catItems.map((item) => (
+                          <ItemCard
+                            key={item.id}
+                            item={item}
+                            onAdjust={adjustQuantity}
+                            onEdit={handleEdit}
+                            onDelete={deleteItem}
+                            onMove={(item) => setMoveItem(item)}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
