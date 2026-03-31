@@ -455,6 +455,10 @@ export type Database = {
         Args: { _house_id: string; _user_id: string }
         Returns: boolean
       }
+      is_invite_for_user: {
+        Args: { _invite_email: string; _user_id: string }
+        Returns: boolean
+      }
       is_item_owner: {
         Args: { _item_id: string; _user_id: string }
         Returns: boolean
