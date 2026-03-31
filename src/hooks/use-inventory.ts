@@ -34,6 +34,8 @@ export interface InventoryItem {
   barcode: string;
   expirationDate: string | null;
   houseId: string | null;
+  unitPrice: number | null;
+  totalPrice: number | null;
   createdAt: string;
   updatedAt: string;
   sharedFromHouse?: string;
