@@ -244,6 +244,25 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
 
   const addItem = useCallback(async (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
     if (!user) return;
+
+    // For produce items: auto-delete older duplicate entries of the same name
+    const isProduce = item.category === "produce";
+    if (isProduce) {
+      const { data: existingItems } = await supabase
+        .from("inventory_items")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("category", "produce")
+        .ilike("name", item.name);
+
+      if (existingItems && existingItems.length > 0) {
+        const idsToDelete = existingItems.map((e: any) => e.id);
+        await supabase.from("inventory_items").delete().in("id", idsToDelete);
+        setItems((prev) => prev.filter((i) => !idsToDelete.includes(i.id)));
+        toast.info(`Replaced old "${item.name}" entry with fresh one`);
+      }
+    }
+
     let imageUrl = "";
     if (item.locationImage) {
       imageUrl = await uploadImage(item.locationImage);
@@ -277,7 +296,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
     toast.success("Item added!");
 
     // Auto-generate image for items without a product image (background, non-blocking)
-    if (!item.productImage) {
+    if (!item.productImage && !item.itemImage) {
       supabase.functions.invoke("generate-item-image", {
         body: { itemName: item.name, itemId: data.id },
       }).then(({ data: imgData }) => {
