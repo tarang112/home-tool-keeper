@@ -261,6 +261,7 @@ const Index = () => {
         onCancelInvite={cancelInvite}
         onDelete={deleteHouse}
         onUploadImage={uploadHouseImage}
+        onRemoveImage={removeHouseImage}
         currentUserId={user?.id}
       />
 
