@@ -52,7 +52,16 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
         {/* Row 1: icon, name, quantity */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
-            <span className="text-sm">{categoryIcon}</span>
+            {hasProductImg ? (
+              <img
+                src={proxyImg(item.productImage, 32)}
+                alt={item.name}
+                referrerPolicy="no-referrer"
+                className="h-6 w-6 rounded object-cover shrink-0"
+              />
+            ) : (
+              <span className="text-sm">{categoryIcon}</span>
+            )}
             <h3 className="font-heading font-semibold text-sm truncate">{item.name}</h3>
             <span className="text-muted-foreground shrink-0">
               {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
