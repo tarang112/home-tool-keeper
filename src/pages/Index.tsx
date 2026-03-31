@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle } from "lucide-react";
+import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +67,7 @@ const Index = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [barcodeMode, setBarcodeMode] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   const toggleCategory = useCallback((cat: string) => {
@@ -95,7 +96,7 @@ const Index = () => {
 
   const handleDialogClose = (open: boolean) => {
     setDialogOpen(open);
-    if (!open) setEditItem(null);
+    if (!open) { setEditItem(null); setBarcodeMode(false); }
   };
 
   const handleAddItem = useCallback((item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
@@ -143,6 +144,9 @@ const Index = () => {
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem onClick={() => setDialogOpen(true)} className="gap-2">
                   <PlusCircle className="h-4 w-4" /> Manual Entry
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setBarcodeMode(true); setDialogOpen(true); }} className="gap-2">
+                  <ScanBarcode className="h-4 w-4" /> Scan Barcode
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setScannerOpen(true)} className="gap-2">
                   <ScanLine className="h-4 w-4" /> Scan Receipt
@@ -308,6 +312,7 @@ const Index = () => {
             ? getBusinessCategories(selectedHouse.businessType)
             : undefined
         }
+        initialBarcodeScan={barcodeMode}
       />
 
       <ReceiptScanner

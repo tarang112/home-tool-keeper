@@ -31,12 +31,14 @@ interface AddItemDialogProps {
   onEnsureCategory?: (name: string, icon?: string) => Promise<void>;
   onEnsureLocation?: (name: string) => Promise<void>;
   businessCategories?: MainCategory[];
+  initialBarcodeScan?: boolean;
 }
 
 export function AddItemDialog({
   open, onOpenChange, onAdd, editItem, onUpdate,
   customCategories = [], customLocations = [],
   onEnsureCategory, onEnsureLocation, businessCategories,
+  initialBarcodeScan,
 }: AddItemDialogProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("hardware-tools");
@@ -55,6 +57,13 @@ export function AddItemDialog({
   const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
   const [productUrl, setProductUrl] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
+
+  // Auto-open barcode scanner when initialBarcodeScan is set
+  useEffect(() => {
+    if (open && initialBarcodeScan && !editItem) {
+      setScannerOpen(true);
+    }
+  }, [open, initialBarcodeScan, editItem]);
   const [lookingUp, setLookingUp] = useState(false);
   const [urlLookingUp, setUrlLookingUp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
