@@ -266,8 +266,23 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
       house_id: item.houseId || null,
     }).select().single();
     if (error) { toast.error("Failed to add item"); return; }
-    setItems((prev) => [rowToItem(data), ...prev]);
+    const newItem = rowToItem(data);
+    setItems((prev) => [newItem, ...prev]);
     toast.success("Item added!");
+
+    // Auto-generate image for produce items (background, non-blocking)
+    const effectiveCategory = item.category === "custom" ? `custom:${item.customCategory || "Other"}` : item.category;
+    if (effectiveCategory === "produce" && !item.productImage) {
+      supabase.functions.invoke("generate-item-image", {
+        body: { itemName: item.name, itemId: data.id },
+      }).then(({ data: imgData }) => {
+        if (imgData?.imageUrl) {
+          setItems((prev) =>
+            prev.map((i) => i.id === data.id ? { ...i, productImage: imgData.imageUrl } : i)
+          );
+        }
+      }).catch((e) => console.error("Image generation failed:", e));
+    }
   }, [user, uploadImage]);
 
   const updateItem = useCallback(async (id: string, updates: Partial<Omit<InventoryItem, "id" | "createdAt">>) => {
