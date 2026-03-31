@@ -31,12 +31,14 @@ interface AddItemDialogProps {
   onEnsureCategory?: (name: string, icon?: string) => Promise<void>;
   onEnsureLocation?: (name: string) => Promise<void>;
   businessCategories?: MainCategory[];
+  initialBarcodeScan?: boolean;
 }
 
 export function AddItemDialog({
   open, onOpenChange, onAdd, editItem, onUpdate,
   customCategories = [], customLocations = [],
   onEnsureCategory, onEnsureLocation, businessCategories,
+  initialBarcodeScan,
 }: AddItemDialogProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("hardware-tools");
