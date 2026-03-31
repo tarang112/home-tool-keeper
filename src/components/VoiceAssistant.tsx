@@ -14,7 +14,7 @@ interface VoiceAssistantProps {
   houseId: string | null;
 }
 
-type VoiceState = "idle" | "listening" | "processing";
+type VoiceState = "idle" | "listening" | "processing" | "confirming";
 
 export function VoiceAssistant({
   items,
@@ -29,25 +29,24 @@ export function VoiceAssistant({
   const [confirmation, setConfirmation] = useState("");
   const [pendingAction, setPendingAction] = useState<any>(null);
   const recognitionRef = useRef<any>(null);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
   const allLocations = [...LOCATIONS, ...customLocations];
-
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    if (state === "listening") setState("idle");
-  }, [state]);
+  const allLocationsRef = useRef(allLocations);
+  allLocationsRef.current = allLocations;
 
   const processTranscript = useCallback(
     async (text: string) => {
       setState("processing");
       try {
+        const currentItems = itemsRef.current;
+        const currentLocations = allLocationsRef.current;
+
         const { data, error } = await supabase.functions.invoke("voice-command", {
           body: {
             transcript: text,
-            items: items.map((i) => ({
+            items: currentItems.map((i) => ({
               id: i.id,
               name: i.name,
               quantity: i.quantity,
@@ -56,30 +55,33 @@ export function VoiceAssistant({
               category: i.category,
             })),
             categories: CATEGORIES,
-            locations: allLocations,
+            locations: currentLocations,
           },
         });
 
         if (error) {
+          console.error("Voice command error:", error);
           toast.error("Failed to process voice command");
           setState("idle");
           return;
         }
 
-        if (data.error || data.action === "unknown") {
-          toast.error(data.error || "Couldn't understand that command");
+        if (data?.error || data?.action === "unknown") {
+          toast.error(data?.error || "Couldn't understand that command");
           setState("idle");
           return;
         }
 
-        setConfirmation(data.confirmation);
+        setConfirmation(data.confirmation || "Execute this action?");
         setPendingAction(data);
+        setState("confirming");
       } catch (e) {
+        console.error("Voice processing failed:", e);
         toast.error("Voice processing failed");
         setState("idle");
       }
     },
-    [items, allLocations]
+    []
   );
 
   const startListening = useCallback(() => {
@@ -95,24 +97,21 @@ export function VoiceAssistant({
     recognition.interimResults = true;
     recognition.continuous = false;
 
+    let finalText = "";
+
     recognition.onresult = (event: any) => {
       const results = Array.from(event.results as SpeechRecognitionResultList);
       const text = results.map((r: any) => r[0].transcript).join("");
+      finalText = text;
       setTranscript(text);
     };
 
     recognition.onend = () => {
-      const finalTranscript = transcript;
-      // Use a small timeout to ensure transcript state is set
-      setTimeout(() => {
-        const el = document.getElementById("voice-transcript-holder");
-        const text = el?.dataset.transcript || "";
-        if (text.trim()) {
-          processTranscript(text.trim());
-        } else {
-          setState("idle");
-        }
-      }, 100);
+      if (finalText.trim()) {
+        processTranscript(finalText.trim());
+      } else {
+        setState("idle");
+      }
     };
 
     recognition.onerror = (event: any) => {
@@ -128,7 +127,14 @@ export function VoiceAssistant({
     setTranscript("");
     setConfirmation("");
     setPendingAction(null);
-  }, [processTranscript, transcript]);
+  }, [processTranscript]);
+
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+  }, []);
 
   const executeAction = useCallback(() => {
     if (!pendingAction) return;
@@ -185,11 +191,8 @@ export function VoiceAssistant({
 
   return (
     <>
-      {/* Hidden element to pass transcript to onend handler */}
-      <span id="voice-transcript-holder" data-transcript={transcript} className="hidden" />
-
       {/* Floating mic button */}
-      {state === "idle" && !confirmation && (
+      {state === "idle" && (
         <Button
           size="icon"
           onClick={startListening}
@@ -200,8 +203,8 @@ export function VoiceAssistant({
         </Button>
       )}
 
-      {/* Listening / Processing overlay */}
-      {(state === "listening" || state === "processing" || confirmation) && (
+      {/* Listening / Processing / Confirming overlay */}
+      {state !== "idle" && (
         <div className="fixed inset-x-0 bottom-0 z-50 bg-background border-t shadow-2xl rounded-t-2xl p-4 animate-in slide-in-from-bottom">
           <div className="max-w-lg mx-auto space-y-3">
             <div className="flex items-center justify-between">
@@ -221,7 +224,7 @@ export function VoiceAssistant({
                     <span className="text-sm font-medium">Processing...</span>
                   </>
                 )}
-                {confirmation && state !== "processing" && (
+                {state === "confirming" && (
                   <span className="text-sm font-medium">Confirm action</span>
                 )}
               </div>
@@ -236,7 +239,7 @@ export function VoiceAssistant({
               </p>
             )}
 
-            {confirmation && state !== "processing" && (
+            {state === "confirming" && (
               <>
                 <p className="text-sm font-medium">{confirmation}</p>
                 <div className="flex gap-2">
