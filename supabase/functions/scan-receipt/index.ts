@@ -99,6 +99,7 @@ Rules:
 - For produce items: set expirationDate to ${produceExpiry}.
 - For medicine items: set expirationDate to ${medicineExpiry}.
 - If an item was in past defaults, use those defaults for category/location/unit unless the receipt says otherwise.
+- Extract the price per unit (unitPrice) and total line price (totalPrice) for each item as numbers (e.g. 3.99 not "$3.99"). If quantity > 1, unitPrice = totalPrice / quantity.
 - Also extract the store name if visible.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -154,7 +155,8 @@ Rules:
                           quantityUnit: { type: "string" },
                           location: { type: "string" },
                           expirationDate: { type: "string", description: "YYYY-MM-DD or empty" },
-                          price: { type: "string", description: "Price as shown on receipt" },
+                          unitPrice: { type: "number", description: "Price per unit/item in dollars" },
+                          totalPrice: { type: "number", description: "Total line price in dollars" },
                         },
                         required: ["name", "category", "quantity", "quantityUnit"],
                       },

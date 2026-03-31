@@ -198,6 +198,8 @@ export type Database = {
           quantity: number
           quantity_unit: string
           subcategory: string | null
+          total_price: number | null
+          unit_price: number | null
           updated_at: string
           user_id: string
         }
@@ -218,6 +220,8 @@ export type Database = {
           quantity?: number
           quantity_unit?: string
           subcategory?: string | null
+          total_price?: number | null
+          unit_price?: number | null
           updated_at?: string
           user_id: string
         }
@@ -238,6 +242,8 @@ export type Database = {
           quantity?: number
           quantity_unit?: string
           subcategory?: string | null
+          total_price?: number | null
+          unit_price?: number | null
           updated_at?: string
           user_id?: string
         }

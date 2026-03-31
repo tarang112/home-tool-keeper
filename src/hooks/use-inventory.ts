@@ -34,6 +34,8 @@ export interface InventoryItem {
   barcode: string;
   expirationDate: string | null;
   houseId: string | null;
+  unitPrice: number | null;
+  totalPrice: number | null;
   createdAt: string;
   updatedAt: string;
   sharedFromHouse?: string;
@@ -74,6 +76,8 @@ function rowToItem(row: any): InventoryItem {
     barcode: row.barcode || "",
     expirationDate: row.expiration_date || null,
     houseId: row.house_id || null,
+    unitPrice: row.unit_price ?? null,
+    totalPrice: row.total_price ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -264,7 +268,9 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
       barcode: item.barcode || "",
       expiration_date: item.expirationDate || null,
       house_id: item.houseId || null,
-    }).select().single();
+      unit_price: item.unitPrice ?? null,
+      total_price: item.totalPrice ?? null,
+    } as any).select().single();
     if (error) { toast.error("Failed to add item"); return; }
     const newItem = rowToItem(data);
     setItems((prev) => [newItem, ...prev]);

@@ -256,6 +256,8 @@ export function AddItemDialog({
       barcode: barcode.trim(),
       expirationDate: expirationDate ? format(expirationDate, 'yyyy-MM-dd') : null,
       houseId: editItem?.houseId || null,
+      unitPrice: editItem?.unitPrice ?? null,
+      totalPrice: editItem?.totalPrice ?? null,
     };
 
     if (editItem && onUpdate) {
