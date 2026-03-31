@@ -16,6 +16,8 @@ import { MoveItemDialog } from "@/components/MoveItemDialog";
 import { ManageOptionsDialog } from "@/components/ManageOptionsDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProfileSettingsDialog } from "@/components/ProfileSettingsDialog";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
+import { useItemDefaults } from "@/hooks/use-item-defaults";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessCategories } from "@/config/business-categories";
 
