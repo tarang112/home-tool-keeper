@@ -125,7 +125,7 @@ const Index = () => {
   return (
     <div className="min-h-screen pb-24">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
+        <div className="max-w-lg lg:max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 shrink-0">
             <Package className="h-6 w-6 text-primary" />
             <h1 className="font-heading font-bold text-xl">HomeStock</h1>
