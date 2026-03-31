@@ -67,6 +67,7 @@ const Index = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [barcodeMode, setBarcodeMode] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   const toggleCategory = useCallback((cat: string) => {
