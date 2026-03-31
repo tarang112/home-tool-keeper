@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Package, AlertTriangle, MapPin } from "lucide-react";
+import { Package, AlertTriangle, MapPin, DollarSign } from "lucide-react";
 import type { InventoryItem } from "@/hooks/use-inventory";
 
 interface StatsBarProps {
@@ -8,24 +8,26 @@ interface StatsBarProps {
 
 export function StatsBar({ items }: StatsBarProps) {
   const totalItems = items.length;
+  const totalValue = items.reduce((sum, i) => sum + (i.totalPrice ?? 0), 0);
   const lowStock = items.filter((i) => i.quantity === 0).length;
   const locations = new Set(items.map((i) => i.sharedFromHouse || i.houseId || i.location || "personal")).size;
 
   const stats = [
-    { label: "Items", value: totalItems, icon: Package, color: "text-primary" },
-    { label: "Out of Stock", value: lowStock, icon: AlertTriangle, color: "text-destructive" },
-    { label: "Locations", value: locations, icon: MapPin, color: "text-muted-foreground" },
+    { label: "Items", value: String(totalItems), icon: Package, color: "text-primary" },
+    { label: "Total Value", value: totalValue > 0 ? `$${totalValue.toFixed(0)}` : "$0", icon: DollarSign, color: "text-emerald-500" },
+    { label: "Out of Stock", value: String(lowStock), icon: AlertTriangle, color: "text-destructive" },
+    { label: "Locations", value: String(locations), icon: MapPin, color: "text-muted-foreground" },
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-4 gap-2">
       {stats.map((stat) => (
         <Card key={stat.label} className="animate-fade-in">
-          <CardContent className="p-3 flex items-center gap-3">
-            <stat.icon className={`h-5 w-5 ${stat.color} shrink-0`} />
-            <div>
-              <p className="font-heading font-bold text-xl leading-none">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
+          <CardContent className="p-2.5 flex items-center gap-2">
+            <stat.icon className={`h-4 w-4 ${stat.color} shrink-0`} />
+            <div className="min-w-0">
+              <p className="font-heading font-bold text-lg leading-none truncate">{stat.value}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{stat.label}</p>
             </div>
           </CardContent>
         </Card>
