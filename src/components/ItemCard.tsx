@@ -160,25 +160,14 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
             {/* Images */}
             {hasAnyImage && (
               <div className="flex gap-2 flex-wrap">
-                {hasProductImg && (
-                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(fullImg(item.productImage))}>
-                    <p className="text-[10px] text-muted-foreground mb-1">Product</p>
+                {hasPrimaryImg && (
+                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(fullImg(primaryImage))}>
+                    <p className="text-[10px] text-muted-foreground mb-1">{hasItemImg ? "Item" : "Product"}</p>
                     <img
-                      src={proxyImg(item.productImage)}
+                      src={proxyImg(primaryImage)}
                       alt={item.name}
                       referrerPolicy="no-referrer"
                       className="h-20 max-w-[120px] object-contain rounded-md bg-white border"
-                      onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
-                    />
-                  </div>
-                )}
-                {hasItemImg && (
-                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(fullImg(item.itemImage))}>
-                    <p className="text-[10px] text-muted-foreground mb-1">Item</p>
-                    <img
-                      src={proxyImg(item.itemImage)}
-                      alt="Item"
-                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                   </div>
