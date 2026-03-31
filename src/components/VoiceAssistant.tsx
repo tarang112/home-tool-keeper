@@ -66,7 +66,7 @@ export function VoiceAssistant({
           return;
         }
 
-        if (data?.error || data?.action === "unknown") {
+        if (data?.error && (!data?.actions || data.actions.length === 0)) {
           toast.error(data?.error || "Couldn't understand that command");
           setState("idle");
           return;
