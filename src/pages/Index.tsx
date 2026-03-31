@@ -324,6 +324,7 @@ const Index = () => {
         onExternalOpenChange={setEmailOpen}
       />
 
+      <HouseManageDialog
         open={manageOpen}
         onOpenChange={setManageOpen}
         house={selectedHouse}
