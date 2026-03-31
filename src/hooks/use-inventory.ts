@@ -268,7 +268,9 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
       barcode: item.barcode || "",
       expiration_date: item.expirationDate || null,
       house_id: item.houseId || null,
-    }).select().single();
+      unit_price: item.unitPrice ?? null,
+      total_price: item.totalPrice ?? null,
+    } as any).select().single();
     if (error) { toast.error("Failed to add item"); return; }
     const newItem = rowToItem(data);
     setItems((prev) => [newItem, ...prev]);
