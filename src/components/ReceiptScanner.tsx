@@ -183,14 +183,16 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
 
   return (
     <>
-      <Button
-        size="sm"
-        variant="outline"
-        className="gap-1 h-8 px-2 text-xs"
-        onClick={() => setOpen(true)}
-      >
-        <Receipt className="h-3.5 w-3.5" /> Scan
-      </Button>
+      {externalOpen === undefined && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 h-8 px-2 text-xs"
+          onClick={() => setOpen(true)}
+        >
+          <Receipt className="h-3.5 w-3.5" /> Scan
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else setOpen(true); }}>
         <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
