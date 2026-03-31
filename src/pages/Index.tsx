@@ -276,6 +276,15 @@ const Index = () => {
       />
 
       <ProfileSettingsDialog open={profileOpen} onOpenChange={setProfileOpen} houses={houses} defaultHouseId={defaultHouseId} onSetDefaultHouse={setDefaultHouse} />
+
+      <VoiceAssistant
+        items={items}
+        onAdd={handleAddItem}
+        onUpdate={updateItem}
+        onDelete={deleteItem}
+        customLocations={customLocations.map((l) => l.name)}
+        houseId={effectiveHouseId}
+      />
     </div>
   );
 };
