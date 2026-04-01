@@ -236,6 +236,16 @@ export function AddItemDialog({
     }
   };
 
+  const handleSubcategoryChange = (val: string) => {
+    setSubcategory(val);
+    // Auto-set 3-month expiry for snacks
+    if (val === "snacks" && !expirationDate) {
+      const threeMonths = new Date();
+      threeMonths.setMonth(threeMonths.getMonth() + 3);
+      setExpirationDate(threeMonths);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
