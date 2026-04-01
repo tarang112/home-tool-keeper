@@ -320,7 +320,7 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
                 </span>
               </div>
 
-              <ScrollArea className="flex-1 max-h-[40vh]">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="space-y-1 pr-2">
                   {extractedItems.map((item, i) => (
                     <div
