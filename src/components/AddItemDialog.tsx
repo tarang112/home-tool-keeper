@@ -383,7 +383,7 @@ export function AddItemDialog({
                     placeholder="Enter custom subcategory (optional)..."
                   />
                 ) : (
-                  <Select value={subcategory || "none"} onValueChange={(v) => setSubcategory(v === "none" ? "" : v)}>
+                  <Select value={subcategory || "none"} onValueChange={(v) => handleSubcategoryChange(v === "none" ? "" : v)}>
                     <SelectTrigger><SelectValue placeholder="Select subcategory..." /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">— General —</SelectItem>
