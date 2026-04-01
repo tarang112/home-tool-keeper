@@ -172,6 +172,7 @@ Deno.serve(async (req) => {
         success: true,
         checked: expiringItems?.length || 0,
         notificationsCreated,
+        snackNotifications,
         produceNotifications,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
