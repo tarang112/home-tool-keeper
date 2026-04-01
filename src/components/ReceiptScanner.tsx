@@ -304,7 +304,7 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
 
           {/* Extracted items list */}
           {extractedItems.length > 0 && (
-            <div className="flex flex-col flex-1 min-h-0 space-y-2">
+            <div className="flex flex-col flex-1 min-h-0 space-y-2 overflow-hidden">
               {storeName && (
                 <p className="text-sm text-muted-foreground">
                   Store: <span className="font-medium text-foreground">{storeName}</span>
