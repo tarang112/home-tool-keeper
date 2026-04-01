@@ -85,6 +85,45 @@ Deno.serve(async (req) => {
       else console.error('Error creating notification:', insertError);
     }
 
+    // === Snack expiry alerts: notify when expired but do NOT auto-remove ===
+    const { data: expiredSnacks } = await supabase
+      .from('inventory_items')
+      .select('id, name, user_id, expiration_date')
+      .eq('subcategory', 'snacks')
+      .not('expiration_date', 'is', null)
+      .lt('expiration_date', todayStr)
+      .gt('quantity', 0);
+
+    let snackNotifications = 0;
+    for (const item of expiredSnacks || []) {
+      // Dedup: one notification per item per day
+      const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
+      const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
+
+      const { data: existing } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('item_id', item.id)
+        .eq('user_id', item.user_id)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd)
+        .limit(1);
+
+      if (existing && existing.length > 0) continue;
+
+      const expDate = new Date(item.expiration_date);
+      const { error: insertError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: item.user_id,
+          item_id: item.id,
+          title: `🍿 ${item.name} has expired!`,
+          message: `This snack expired on ${expDate.toLocaleDateString()}. Please review and remove it from your inventory if needed.`,
+        });
+
+      if (!insertError) snackNotifications++;
+    }
+
     // === Produce auto-delete prompt: notify for produce items older than 10 days ===
     const tenDaysAgo = new Date(today);
     tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
@@ -102,7 +141,6 @@ Deno.serve(async (req) => {
       const ageMs = today.getTime() - new Date(item.created_at).getTime();
       const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
 
-      // Dedup
       const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
       const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
 
@@ -134,6 +172,7 @@ Deno.serve(async (req) => {
         success: true,
         checked: expiringItems?.length || 0,
         notificationsCreated,
+        snackNotifications,
         produceNotifications,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
