@@ -151,6 +151,12 @@ export function AddItemDialog({
         setCategory(mapped);
         if (p.subcategory && mainMatch.subcategories.some(s => s.value === p.subcategory)) {
           setSubcategory(p.subcategory);
+          // Auto-set 3-month expiry for snacks from barcode/URL lookup
+          if (p.subcategory === "snacks") {
+            const threeMonths = new Date();
+            threeMonths.setMonth(threeMonths.getMonth() + 3);
+            setExpirationDate(threeMonths);
+          }
         }
       }
     }
