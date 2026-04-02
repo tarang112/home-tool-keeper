@@ -12,6 +12,8 @@ interface VoiceAssistantProps {
   onDelete: (id: string) => void;
   customLocations: string[];
   houseId: string | null;
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
 type VoiceState = "idle" | "listening" | "processing" | "confirming";
