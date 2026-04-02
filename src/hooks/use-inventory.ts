@@ -127,7 +127,13 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
   const fetchItems = useCallback(async () => {
     if (!user) { setItems([]); setLoading(false); return; }
 
-    if (houseIds && houseIds.length > 0) {
+    if (houseIds) {
+      if (houseIds.length === 0) {
+        // Houses not loaded yet — wait
+        setItems([]);
+        setLoading(true);
+        return;
+      }
       // Fetch items for multiple houses + optionally unassigned items
       const queries = [
         supabase
