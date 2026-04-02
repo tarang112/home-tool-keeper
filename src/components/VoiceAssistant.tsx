@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Mic, MicOff, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,8 @@ interface VoiceAssistantProps {
   onDelete: (id: string) => void;
   customLocations: string[];
   houseId: string | null;
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
 type VoiceState = "idle" | "listening" | "processing" | "confirming";
@@ -23,6 +25,8 @@ export function VoiceAssistant({
   onDelete,
   customLocations,
   houseId,
+  externalOpen,
+  onExternalOpenChange,
 }: VoiceAssistantProps) {
   const [state, setState] = useState<VoiceState>("idle");
   const [transcript, setTranscript] = useState("");
@@ -31,6 +35,15 @@ export function VoiceAssistant({
   const recognitionRef = useRef<any>(null);
   const itemsRef = useRef(items);
   itemsRef.current = items;
+
+  // Handle external open trigger
+  useEffect(() => {
+    if (externalOpen && state === "idle") {
+      startListeningRef.current?.();
+      onExternalOpenChange?.(false);
+    }
+  }, [externalOpen]);
+  const startListeningRef = useRef<(() => void) | null>(null);
 
   const allLocations = [...LOCATIONS, ...customLocations];
   const allLocationsRef = useRef(allLocations);
@@ -128,6 +141,7 @@ export function VoiceAssistant({
     setConfirmation("");
     setPendingAction(null);
   }, [processTranscript]);
+  startListeningRef.current = startListening;
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
@@ -210,18 +224,6 @@ export function VoiceAssistant({
 
   return (
     <>
-      {/* Floating mic button */}
-      {state === "idle" && (
-        <Button
-          size="icon"
-          onClick={startListening}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg"
-          title="Voice command"
-        >
-          <Mic className="h-6 w-6" />
-        </Button>
-      )}
-
       {/* Listening / Processing / Confirming overlay */}
       {state !== "idle" && (
         <div className="fixed inset-x-0 bottom-0 z-50 bg-background border-t shadow-2xl rounded-t-2xl p-4 animate-in slide-in-from-bottom">
