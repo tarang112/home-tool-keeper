@@ -367,7 +367,7 @@ const Index = () => {
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">{catItems.length}</Badge>
                     </button>
                     {!collapsedCategories.has(catValue) && (
-                      <div className="space-y-2 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-3 lg:space-y-0">
+                      <div className="space-y-2 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-3 lg:space-y-0 items-start">
                         {catItems.map((item) => (
                           <ItemCard
                             key={item.id}
