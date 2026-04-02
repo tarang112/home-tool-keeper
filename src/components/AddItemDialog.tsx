@@ -308,6 +308,9 @@ export function AddItemDialog({
       houseId: editItem?.houseId || null,
       unitPrice: editItem?.unitPrice ?? null,
       totalPrice: editItem?.totalPrice ?? null,
+      lentTo: editItem?.lentTo ?? null,
+      lentAt: editItem?.lentAt ?? null,
+      lentNotes: editItem?.lentNotes ?? null,
     };
 
     if (editItem && onUpdate) {

@@ -1,10 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2, Clock, ChevronDown, ChevronUp, HandHelping, Undo2 } from "lucide-react";
 import { CATEGORIES, MAIN_CATEGORIES, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
 import { BUSINESS_TYPES } from "@/config/business-categories";
 import { useState, useMemo } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ALL_CATEGORIES: MainCategory[] = [
   ...MAIN_CATEGORIES,
@@ -36,11 +39,14 @@ interface ItemCardProps {
   onEdit: (item: InventoryItem) => void;
   onDelete: (id: string) => void;
   onMove?: (item: InventoryItem) => void;
+  onLend?: (id: string, lentTo: string | null, lentNotes: string | null) => void;
   /** All raw items for resolving batch entry editing */
   allItems?: InventoryItem[];
+  /** House members for lend-to selection */
+  houseMembers?: { user_id: string; display_name: string }[];
 }
 
-export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, allItems }: ItemCardProps) {
+export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, allItems, houseMembers }: ItemCardProps) {
   const allCat = ALL_CATEGORIES.find((c) => c.value === item.category);
   const cat = CATEGORIES.find((c) => c.value === item.category) || (allCat ? { value: allCat.value, label: allCat.label, icon: allCat.icon } : undefined);
   const subLabel = item.subcategory
@@ -55,9 +61,14 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, allItems }:
   const hasPrimaryImg = !!primaryImage;
   const [zoomedImg, setZoomedImg] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [lendOpen, setLendOpen] = useState(false);
+  const [lendName, setLendName] = useState(item.lentTo || "");
+  const [lendNotes, setLendNotes] = useState(item.lentNotes || "");
   const hasAnyImage = hasPrimaryImg || hasLocationImg;
   const batchEntries = (item.batchEntries || []).filter((entry) => entry.quantity > 0);
   const batchExpiries = batchEntries.filter((entry) => !!entry.expirationDate).sort((a, b) => new Date(a.expirationDate!).getTime() - new Date(b.expirationDate!).getTime());
+  const isLent = !!item.lentTo;
+  const LENDABLE_CATEGORIES = ["hardware-tools", "building-materials", "electrical", "plumbing", "outdoor", "automotive"];
 
   return (
     <Card className="animate-slide-up">
@@ -99,6 +110,12 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, allItems }:
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 max-w-[40vw] truncate" title={`${categoryLabel}${subLabel ? ` › ${subLabel}` : ""}`}>
               {categoryLabel}{subLabel ? ` › ${subLabel}` : ""}
             </Badge>
+            {isLent && (
+              <Badge variant="default" className="text-[10px] px-1.5 py-0 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
+                <HandHelping className="h-2.5 w-2.5" />
+                Lent to {item.lentTo}
+              </Badge>
+            )}
             {item.location && (
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 max-w-[30vw] truncate" title={item.location}>
                 <MapPin className="h-2.5 w-2.5 shrink-0" />{item.location}
@@ -136,6 +153,17 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, allItems }:
             })()}
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
+            {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
+              isLent ? (
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-orange-500" onClick={() => onLend(item.id, null, null)} title="Mark as returned">
+                  <Undo2 className="h-2.5 w-2.5" />
+                </Button>
+              ) : (
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }} title="Lend item">
+                  <HandHelping className="h-2.5 w-2.5" />
+                </Button>
+              )
+            )}
             {onMove && (
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onMove(item)} title="Move">
                 <ArrowRightLeft className="h-2.5 w-2.5" />
@@ -306,6 +334,74 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, allItems }:
 
           </div>
         )}
+
+        {/* Lend dialog */}
+        <Dialog open={lendOpen} onOpenChange={setLendOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <HandHelping className="h-4 w-4" /> Lend "{item.name}"
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Lent to</label>
+                {houseMembers && houseMembers.length > 0 ? (
+                  <div className="space-y-2">
+                    <Select value={lendName} onValueChange={setLendName}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Select member..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {houseMembers.map((m) => (
+                          <SelectItem key={m.user_id} value={m.display_name || m.user_id}>
+                            {m.display_name || "Member"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      placeholder="Or type a name..."
+                      value={lendName}
+                      onChange={(e) => setLendName(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    placeholder="Enter name..."
+                    value={lendName}
+                    onChange={(e) => setLendName(e.target.value)}
+                    className="h-8 text-sm"
+                    autoFocus
+                  />
+                )}
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Notes (optional)</label>
+                <Input
+                  placeholder="e.g. Return by Friday"
+                  value={lendNotes}
+                  onChange={(e) => setLendNotes(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" size="sm" onClick={() => setLendOpen(false)}>Cancel</Button>
+              <Button
+                size="sm"
+                disabled={!lendName.trim()}
+                onClick={() => {
+                  onLend?.(item.id, lendName.trim(), lendNotes.trim() || null);
+                  setLendOpen(false);
+                }}
+              >
+                Mark as Lent
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Full-size image overlay */}
         {zoomedImg && (

@@ -166,6 +166,9 @@ export function VoiceAssistant({
           houseId: houseId,
           unitPrice: null,
           totalPrice: null,
+          lentTo: null,
+          lentAt: null,
+          lentNotes: null,
         });
         addedCount++;
       } else if (action === "update" && itemId && item) {

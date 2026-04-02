@@ -149,6 +149,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
         houseId: null,
         unitPrice: item.unitPrice ?? null,
         totalPrice: item.totalPrice ?? null,
+        lentTo: null,
+        lentAt: null,
+        lentNotes: null,
       });
     }
 

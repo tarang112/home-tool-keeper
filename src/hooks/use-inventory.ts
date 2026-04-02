@@ -39,6 +39,9 @@ export interface InventoryItem {
   createdAt: string;
   updatedAt: string;
   sharedFromHouse?: string;
+  lentTo: string | null;
+  lentAt: string | null;
+  lentNotes: string | null;
 }
 
 export const QUANTITY_UNITS = [
@@ -116,6 +119,9 @@ function rowToItem(row: any): InventoryItem {
     totalPrice: row.total_price ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    lentTo: row.lent_to || null,
+    lentAt: row.lent_at || null,
+    lentNotes: row.lent_notes || null,
   };
 }
 
@@ -379,6 +385,9 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
       }
     }
     if (updates.houseId !== undefined) dbUpdates.house_id = updates.houseId || null;
+    if (updates.lentTo !== undefined) dbUpdates.lent_to = updates.lentTo || null;
+    if (updates.lentAt !== undefined) dbUpdates.lent_at = updates.lentAt || null;
+    if (updates.lentNotes !== undefined) dbUpdates.lent_notes = updates.lentNotes || null;
     if (updates.locationImage !== undefined) {
       if (updates.locationImage && !updates.locationImage.startsWith("http")) {
         dbUpdates.location_image_url = await uploadImage(updates.locationImage);
