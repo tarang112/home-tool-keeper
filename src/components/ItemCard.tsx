@@ -81,110 +81,125 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
 
   return (
     <Card className={`animate-slide-up border-l-[3px] ${borderColor}`}>
-      <CardContent className="px-3 py-2 space-y-1">
-        {/* Row 1: icon, name, quantity */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
+      <CardContent className="px-3 py-2.5 space-y-1.5">
+        {/* Main row: thumbnail + info + quantity/price */}
+        <div className="flex gap-3">
+          {/* Thumbnail */}
+          <div
+            className="shrink-0 cursor-pointer"
+            onClick={() => hasPrimaryImg ? setZoomedImg(fullImg(primaryImage)) : setExpanded((v) => !v)}
+          >
             {hasPrimaryImg ? (
               <img
-                src={proxyImg(primaryImage, 32)}
+                src={proxyImg(primaryImage, 96)}
                 alt={item.name}
                 referrerPolicy="no-referrer"
-                className="h-6 w-6 rounded object-cover shrink-0"
+                className="h-14 w-14 rounded-lg object-cover bg-muted"
               />
             ) : (
-              <span className="text-sm">{categoryIcon}</span>
+              <div className="h-14 w-14 rounded-lg bg-muted/60 dark:bg-muted/30 flex items-center justify-center text-xl">
+                {categoryIcon}
+              </div>
             )}
-            <h3 className="font-heading font-semibold text-sm truncate">{item.name}</h3>
-            <span className="text-muted-foreground shrink-0">
-              {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </span>
           </div>
-          <div className="flex items-center gap-0.5 shrink-0">
-            <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
-              <Minus className="h-2.5 w-2.5" />
-            </Button>
-            <span className={`font-heading font-bold text-sm text-center min-w-[2ch] ${item.quantity === 0 ? "text-destructive" : ""}`}>
-              {item.quantity}{item.quantityUnit && item.quantityUnit !== "pcs" ? ` ${item.quantityUnit}` : ""}
-            </span>
-            <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => onAdjust(item.id, 1)}>
-              <Plus className="h-2.5 w-2.5" />
-            </Button>
+
+          {/* Info: name, subtitle, badges */}
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
+                <h3 className="font-heading font-semibold text-sm leading-tight truncate">{item.name}</h3>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {item.location || "No location"}{subLabel ? ` · ${subLabel}` : categoryLabel ? ` · ${categoryLabel}` : ""}
+                </p>
+              </div>
+              {/* Quantity + Price */}
+              <div className="shrink-0 text-right space-y-0.5">
+                <div className="flex items-center gap-0.5">
+                  <Button variant="outline" size="icon" className="h-5 w-5" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
+                    <Minus className="h-2 w-2" />
+                  </Button>
+                  <span className={`font-heading font-bold text-sm text-center min-w-[2.5ch] ${item.quantity === 0 ? "text-destructive" : ""}`}>
+                    x{item.quantity}{item.quantityUnit && item.quantityUnit !== "pcs" ? ` ${item.quantityUnit}` : ""}
+                  </span>
+                  <Button variant="outline" size="icon" className="h-5 w-5" onClick={() => onAdjust(item.id, 1)}>
+                    <Plus className="h-2 w-2" />
+                  </Button>
+                </div>
+                {item.totalPrice != null && (
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">${item.totalPrice.toFixed(2)}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Inline badges row */}
+            <div className="flex flex-wrap items-center gap-1">
+              {isLent && (
+                <Badge variant="default" className="text-[10px] px-1.5 py-0 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
+                  <HandHelping className="h-2.5 w-2.5" />
+                  Lent to {item.lentTo}
+                </Badge>
+              )}
+              {batchExpiries.length > 1 ? batchExpiries.map((entry, idx) => {
+                const exp = new Date(entry.expirationDate!);
+                const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                const isExpired = diffDays < 0;
+                const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
+                return (
+                  <Badge
+                    key={`${entry.id}-${idx}`}
+                    variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
+                    className={`text-[10px] px-1.5 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                  >
+                    <Clock className="h-2.5 w-2.5" />
+                    {exp.toLocaleDateString()}
+                  </Badge>
+                );
+              }) : item.expirationDate && (() => {
+                const exp = new Date(item.expirationDate);
+                const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                const isExpired = diffDays < 0;
+                const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
+                return (
+                  <Badge
+                    variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
+                    className={`text-[10px] px-1.5 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                  >
+                    <Clock className="h-2.5 w-2.5" />
+                    {isExpired ? "Expired" : `${exp.toLocaleDateString()}`}
+                  </Badge>
+                );
+              })()}
+            </div>
           </div>
         </div>
 
-        {/* Row 2: badges + actions */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 max-w-[40vw] truncate" title={`${categoryLabel}${subLabel ? ` › ${subLabel}` : ""}`}>
-              {categoryLabel}{subLabel ? ` › ${subLabel}` : ""}
-            </Badge>
-            {isLent && (
-              <Badge variant="default" className="text-[10px] px-1.5 py-0 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
-                <HandHelping className="h-2.5 w-2.5" />
-                Lent to {item.lentTo}
-              </Badge>
-            )}
-            {item.location && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 max-w-[30vw] truncate" title={item.location}>
-                <MapPin className="h-2.5 w-2.5 shrink-0" />{item.location}
-              </Badge>
-            )}
-            {batchExpiries.length > 1 ? batchExpiries.map((entry, idx) => {
-              const exp = new Date(entry.expirationDate!);
-              const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-              const isExpired = diffDays < 0;
-              const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
-              return (
-                <Badge
-                  key={`${entry.id}-${idx}`}
-                  variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
-                  className={`text-[10px] px-1.5 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-                >
-                  <Clock className="h-2.5 w-2.5" />
-                  {exp.toLocaleDateString()}
-                </Badge>
-              );
-            }) : item.expirationDate && (() => {
-              const exp = new Date(item.expirationDate);
-              const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-              const isExpired = diffDays < 0;
-              const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
-              return (
-                <Badge
-                  variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
-                  className={`text-[10px] px-1.5 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-                >
-                  <Clock className="h-2.5 w-2.5" />
-                  {isExpired ? "Expired" : `${exp.toLocaleDateString()}`}
-                </Badge>
-              );
-            })()}
-          </div>
-          <div className="flex items-center gap-0.5 shrink-0">
-            {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
-              isLent ? (
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-orange-500" onClick={() => onLend(item.id, null, null)} title="Mark as returned">
-                  <Undo2 className="h-2.5 w-2.5" />
-                </Button>
-              ) : (
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }} title="Lend item">
-                  <HandHelping className="h-2.5 w-2.5" />
-                </Button>
-              )
-            )}
-            {onMove && (
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onMove(item)} title="Move">
-                <ArrowRightLeft className="h-2.5 w-2.5" />
+        {/* Action buttons row */}
+        <div className="flex items-center justify-end gap-0.5 -mt-0.5">
+          {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
+            isLent ? (
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-orange-500" onClick={() => onLend(item.id, null, null)} title="Mark as returned">
+                <Undo2 className="h-2.5 w-2.5" />
               </Button>
-            )}
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(item)} title="Edit">
-              <Pencil className="h-2.5 w-2.5" />
+            ) : (
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }} title="Lend item">
+                <HandHelping className="h-2.5 w-2.5" />
+              </Button>
+            )
+          )}
+          {onMove && (
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onMove(item)} title="Move">
+              <ArrowRightLeft className="h-2.5 w-2.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(item.id)} title="Delete">
-              <Trash2 className="h-2.5 w-2.5" />
-            </Button>
-          </div>
+          )}
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(item)} title="Edit">
+            <Pencil className="h-2.5 w-2.5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(item.id)} title="Delete">
+            <Trash2 className="h-2.5 w-2.5" />
+          </Button>
+          <span className="text-muted-foreground cursor-pointer ml-1" onClick={() => setExpanded((v) => !v)}>
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </span>
         </div>
 
         {/* Expanded details */}
