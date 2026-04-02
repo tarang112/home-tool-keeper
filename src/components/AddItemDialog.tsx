@@ -152,6 +152,7 @@ export function AddItemDialog({
       setNotes("");
       setBarcode("");
       setExpirationDate(undefined);
+      setBatchEntries([]);
       setProductUrl("");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
