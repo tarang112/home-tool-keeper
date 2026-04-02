@@ -70,8 +70,17 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
   const isLent = !!item.lentTo;
   const LENDABLE_CATEGORIES = ["hardware-tools", "building-materials", "electrical", "plumbing", "outdoor", "automotive"];
 
+  // Determine left border color based on item status
+  const borderColor = isLent
+    ? "border-l-orange-500"
+    : item.quantity === 0
+      ? "border-l-destructive"
+      : item.expirationDate && Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 7
+        ? "border-l-amber-500"
+        : "border-l-emerald-500";
+
   return (
-    <Card className="animate-slide-up">
+    <Card className={`animate-slide-up border-l-[3px] ${borderColor}`}>
       <CardContent className="px-3 py-2 space-y-1">
         {/* Row 1: icon, name, quantity */}
         <div className="flex items-center justify-between gap-2">
