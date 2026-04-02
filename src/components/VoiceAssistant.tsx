@@ -224,18 +224,6 @@ export function VoiceAssistant({
 
   return (
     <>
-      {/* Floating mic button */}
-      {state === "idle" && (
-        <Button
-          size="icon"
-          onClick={startListening}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg"
-          title="Voice command"
-        >
-          <Mic className="h-6 w-6" />
-        </Button>
-      )}
-
       {/* Listening / Processing / Confirming overlay */}
       {state !== "idle" && (
         <div className="fixed inset-x-0 bottom-0 z-50 bg-background border-t shadow-2xl rounded-t-2xl p-4 animate-in slide-in-from-bottom">
