@@ -141,6 +141,7 @@ export function VoiceAssistant({
     setConfirmation("");
     setPendingAction(null);
   }, [processTranscript]);
+  startListeningRef.current = startListening;
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
