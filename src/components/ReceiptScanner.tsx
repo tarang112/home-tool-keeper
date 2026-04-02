@@ -53,13 +53,16 @@ const applyDefaultExpiry = <T extends { category?: string | null; subcategory?: 
 function normalizeName(name: string) {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\bmixrure\b/g, "mixture")
     .replace(/\bmixure\b/g, "mixture")
     .replace(/\bjerra\b/g, "jeera")
     .replace(/\bkhahara\b/g, "khakhra")
     .replace(/\bbomnay\b/g, "bombay")
-    .replace(/\s+\d+(\.\d+)?\s*(ct|pcs|pc|pack|pk|oz|gm|g|kg|lb|lbs|ml|l)?$/g, "")
+    .replace(/\bcilntro\b/g, "cilantro")
+    .replace(/\bcilatro\b/g, "cilantro")
+    .replace(/\bcinlatro\b/g, "cilantro")
+    .replace(/\s+\d+(\.\d+)?\s*(ct|pcs|pc|pack|pk|oz|gm|g|kg|lb|lbs|ml|l|bunch|ea)?$/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
