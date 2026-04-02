@@ -79,90 +79,67 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
         ? "border-l-amber-500"
         : "border-l-emerald-500";
 
+  // Expiry/Lent tags for bottom-right
+  const expiryTag = useMemo(() => {
+    if (item.expirationDate) {
+      const exp = new Date(item.expirationDate);
+      const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) return { label: "Expired", color: "text-destructive" };
+      if (diffDays <= 90) return { label: "Expiry", color: "text-amber-500" };
+    }
+    return null;
+  }, [item.expirationDate]);
+
   return (
     <Card className={`animate-slide-up border-l-[3px] ${borderColor} cursor-pointer`} onClick={() => setExpanded((v) => !v)}>
-      <CardContent className="px-3 py-2 space-y-0">
+      <CardContent className="px-3 py-2.5 space-y-0">
         {/* Main row: thumbnail + info + quantity/price */}
-        <div className="flex gap-2.5 items-center">
+        <div className="flex gap-3 items-start">
           {/* Thumbnail */}
           <div className="shrink-0" onClick={(e) => { if (hasPrimaryImg) { e.stopPropagation(); setZoomedImg(fullImg(primaryImage)); } }}>
             {hasPrimaryImg ? (
               <img
-                src={proxyImg(primaryImage, 96)}
+                src={proxyImg(primaryImage, 160)}
                 alt={item.name}
                 referrerPolicy="no-referrer"
-                className="h-11 w-11 rounded-lg object-cover bg-muted"
+                className="h-16 w-16 rounded-lg object-cover bg-muted"
               />
             ) : (
-              <div className="h-11 w-11 rounded-lg bg-muted/60 dark:bg-muted/30 flex items-center justify-center text-lg">
+              <div className="h-16 w-16 rounded-lg bg-muted/60 dark:bg-muted/30 flex items-center justify-center text-2xl">
                 {categoryIcon}
               </div>
             )}
           </div>
 
-          {/* Info */}
+          {/* Info + tags */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-1.5">
-              <h3 className="font-heading font-semibold text-sm leading-tight truncate">{item.name}</h3>
-              <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
-                  <Minus className="h-2.5 w-2.5" />
-                </Button>
-                <span className={`font-heading font-bold text-xs text-center min-w-[2ch] ${item.quantity === 0 ? "text-destructive" : ""}`}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="font-heading font-bold text-base leading-tight truncate">{item.name}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {item.location || "No location"} · {subLabel || categoryLabel}
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <span className="font-heading font-bold text-sm">
                   x{item.quantity}{item.quantityUnit && item.quantityUnit !== "pcs" ? ` ${item.quantityUnit}` : ""}
                 </span>
-                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onAdjust(item.id, 1)}>
-                  <Plus className="h-2.5 w-2.5" />
-                </Button>
+                {item.totalPrice != null && (
+                  <p className="text-xs font-medium text-muted-foreground">${item.totalPrice.toFixed(2)}</p>
+                )}
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] text-muted-foreground truncate">
-                {item.location || "No location"}{subLabel ? ` · ${subLabel}` : categoryLabel ? ` · ${categoryLabel}` : ""}
-              </p>
-              {item.totalPrice != null && (
-                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">${item.totalPrice.toFixed(2)}</span>
-              )}
-            </div>
-            {/* Compact badges */}
-            <div className="flex flex-wrap items-center gap-1 mt-0.5">
-              {isLent && (
-                <Badge variant="default" className="text-[9px] px-1 py-0 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
-                  <HandHelping className="h-2 w-2" />
-                  Lent: {item.lentTo}
-                </Badge>
-              )}
-              {batchExpiries.length > 1 ? batchExpiries.map((entry, idx) => {
-                const exp = new Date(entry.expirationDate!);
-                const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                const isExpired = diffDays < 0;
-                const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
-                return (
-                  <Badge
-                    key={`${entry.id}-${idx}`}
-                    variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
-                    className={`text-[9px] px-1 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-                  >
-                    <Clock className="h-2 w-2" />
-                    {exp.toLocaleDateString()}
-                  </Badge>
-                );
-              }) : item.expirationDate && (() => {
-                const exp = new Date(item.expirationDate);
-                const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                const isExpired = diffDays < 0;
-                const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
-                return (
-                  <Badge
-                    variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
-                    className={`text-[9px] px-1 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-                  >
-                    <Clock className="h-2 w-2" />
-                    {isExpired ? "Expired" : exp.toLocaleDateString()}
-                  </Badge>
-                );
-              })()}
-            </div>
+            {/* Bottom-right tags */}
+            {(expiryTag || isLent) && (
+              <div className="flex items-center justify-end gap-2 mt-1">
+                {expiryTag && (
+                  <span className={`text-[11px] font-semibold ${expiryTag.color}`}>{expiryTag.label}</span>
+                )}
+                {isLent && (
+                  <span className="text-[11px] font-semibold text-orange-500">Lent<sup>+</sup></span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
