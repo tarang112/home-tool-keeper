@@ -386,7 +386,15 @@ const Index = () => {
                             onEdit={handleEdit}
                             onDelete={deleteItem}
                             onMove={(item) => setMoveItem(item)}
+                            onLend={(id, lentTo, lentNotes) => {
+                              updateItem(id, {
+                                lentTo,
+                                lentAt: lentTo ? new Date().toISOString() : null,
+                                lentNotes,
+                              });
+                            }}
                             allItems={items}
+                            houseMembers={members.map(m => ({ user_id: m.userId, display_name: m.displayName }))}
                           />
                         ))}
                       </div>
