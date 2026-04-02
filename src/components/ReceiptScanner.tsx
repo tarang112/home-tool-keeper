@@ -75,9 +75,10 @@ interface ReceiptScannerProps {
   customLocations: string[];
   externalOpen?: boolean;
   onExternalOpenChange?: (open: boolean) => void;
+  houseId?: string | null;
 }
 
-export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItems = [], customLocations, externalOpen, onExternalOpenChange }: ReceiptScannerProps) {
+export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItems = [], customLocations, externalOpen, onExternalOpenChange, houseId }: ReceiptScannerProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = onExternalOpenChange || setInternalOpen;
