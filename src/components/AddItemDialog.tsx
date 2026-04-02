@@ -259,6 +259,8 @@ export function AddItemDialog({
       setCategory(val);
       setCustomCategory("");
       setSubcategory("");
+      // Auto-set location for top-level categories
+      if (val === "produce" || val === "herbs") setLocationMode("Refrigerator");
     }
   };
 
