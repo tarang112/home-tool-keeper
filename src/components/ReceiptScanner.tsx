@@ -338,6 +338,9 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
           houseId: houseId ?? null,
           unitPrice: item.unitPrice ?? null,
           totalPrice: item.totalPrice ?? null,
+          lentTo: null,
+          lentAt: null,
+          lentNotes: null,
         });
         replacedCount++;
       } else {
