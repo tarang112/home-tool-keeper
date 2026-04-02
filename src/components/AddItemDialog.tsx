@@ -46,10 +46,10 @@ interface AddItemDialogProps {
 }
 
 export function AddItemDialog({
-  open, onOpenChange, onAdd, editItem, onUpdate,
+  open, onOpenChange, onAdd, editItem, onUpdate, onDelete,
   customCategories = [], customLocations = [],
   onEnsureCategory, onEnsureLocation, businessCategories,
-  initialBarcodeScan,
+  initialBarcodeScan, allItems = [],
 }: AddItemDialogProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("hardware-tools");
