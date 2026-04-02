@@ -216,9 +216,18 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                   <div key={entry.id} className="flex items-center justify-between gap-1 pl-6">
                     <Badge className={`text-[9px] px-1.5 py-0 gap-0.5 ${expiryColor}`}>
                       <Clock className="h-2 w-2" />
-                      {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? entry.quantityUnit : ""} · {expiryLabel}
+                      {expiryLabel}
                     </Badge>
-                    <div className="flex items-center gap-0 shrink-0">
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Button variant="outline" size="icon" className="h-5 w-5 rounded-full" onClick={() => onAdjust(entry.id, -1)} disabled={entry.quantity <= 0}>
+                        <Minus className="h-2.5 w-2.5" />
+                      </Button>
+                      <span className="text-[10px] font-bold min-w-[2ch] text-center">
+                        {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? entry.quantityUnit : ""}
+                      </span>
+                      <Button variant="outline" size="icon" className="h-5 w-5 rounded-full" onClick={() => onAdjust(entry.id, 1)}>
+                        <Plus className="h-2.5 w-2.5" />
+                      </Button>
                       {onMove && entryItem && (
                         <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onMove(entryItem)} title="Move">
                           <ArrowRightLeft className="h-2.5 w-2.5 text-muted-foreground" />
