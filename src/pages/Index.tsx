@@ -49,7 +49,7 @@ const Index = () => {
       ? businessHouseIds
       : undefined;
 
-  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findExpiredRepurchaseCandidate } = useInventory(effectiveHouseId, effectiveHouseIds, isAllPersonal);
+  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findDuplicateCandidate } = useInventory(effectiveHouseId, effectiveHouseIds, isAllPersonal);
   const {
     customCategories, customLocations,
     addCategory, updateCategory, deleteCategory,
@@ -115,20 +115,23 @@ const Index = () => {
     }
 
     const nextItem = { ...item, houseId: houseIdForItem };
-    const expiredMatch = findExpiredRepurchaseCandidate(nextItem);
+    const duplicateMatch = findDuplicateCandidate(nextItem);
 
-    if (expiredMatch) {
+    if (duplicateMatch) {
       const replaceOldItem = window.confirm(
-        `An expired \"${expiredMatch.name}\" is already in inventory. Press OK to delete the old entry and add this fresh purchase, or Cancel to add the new quantity to the existing item.`
+        `\"${duplicateMatch.name}\" is already in inventory. Press OK to delete the previous entry and add this one as new, or Cancel to update the existing item quantity.`
       );
 
       if (replaceOldItem) {
-        await deleteItem(expiredMatch.id);
+        await deleteItem(duplicateMatch.id);
         await addItem(nextItem);
       } else {
-        await updateItem(expiredMatch.id, {
-          quantity: expiredMatch.quantity + nextItem.quantity,
-          expirationDate: nextItem.expirationDate,
+        await updateItem(duplicateMatch.id, {
+          quantity: duplicateMatch.quantity + nextItem.quantity,
+          expirationDate: nextItem.expirationDate || duplicateMatch.expirationDate,
+          category: nextItem.category || duplicateMatch.category,
+          subcategory: nextItem.subcategory || duplicateMatch.subcategory,
+          location: nextItem.location || duplicateMatch.location,
         });
       }
     } else {
@@ -142,7 +145,7 @@ const Index = () => {
       location: nextItem.location,
       quantityUnit: nextItem.quantityUnit,
     });
-  }, [isSpecificHouse, selectedHouseId, isAllPersonal, personalHouseIds, isAllBusiness, businessHouseIds, addItem, deleteItem, findExpiredRepurchaseCandidate, saveDefaults, updateItem]);
+  }, [isSpecificHouse, selectedHouseId, isAllPersonal, personalHouseIds, isAllBusiness, businessHouseIds, addItem, deleteItem, findDuplicateCandidate, saveDefaults, updateItem]);
 
   const handleMoveItem = (itemId: string, houseId: string | null) => {
     updateItem(itemId, { houseId });
