@@ -146,6 +146,31 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                 {item.location}
               </span>
             )}
+            {/* Expiry badges inline next to location */}
+            {batchExpiries.length > 0 && batchExpiries.map((entry) => {
+              const exp = new Date(entry.expirationDate!);
+              const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+              const expiryColor = diffDays < 0 ? "bg-destructive text-destructive-foreground"
+                : diffDays <= 7 ? "bg-destructive text-destructive-foreground"
+                : diffDays <= 90 ? "bg-amber-500 text-white"
+                : "bg-muted text-muted-foreground";
+              const expiryLabel = diffDays < 0 ? "Expired" : exp.toLocaleDateString();
+              return (
+                <Badge key={entry.id} className={`text-[9px] px-1.5 py-0.5 gap-0.5 ${expiryColor}`}>
+                  <Clock className="h-2 w-2" />
+                  {expiryLabel}
+                </Badge>
+              );
+            })}
+            {batchExpiries.length === 0 && expiryTag && (
+              <Badge
+                variant={expiryTag.color === "text-destructive" ? "destructive" : expiryTag.color === "text-amber-500" ? "default" : "outline"}
+                className={`text-[9px] px-1.5 py-0.5 gap-0.5 ${expiryTag.color === "text-amber-500" ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+              >
+                <Clock className="h-2 w-2" />
+                {expiryTag.label.replace("Exp ", "")}
+              </Badge>
+            )}
             {isLent && (
               <Badge variant="default" className="text-[10px] px-1.5 py-0.5 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
                 <HandHelping className="h-2.5 w-2.5" />
@@ -178,38 +203,6 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
             </Button>
           </div>
         </div>
-
-        {/* Expiry badges - always visible */}
-        {batchExpiries.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap pl-1">
-            {batchExpiries.map((entry) => {
-              const exp = new Date(entry.expirationDate!);
-              const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-              const expiryColor = diffDays < 0 ? "bg-destructive text-destructive-foreground"
-                : diffDays <= 7 ? "bg-destructive text-destructive-foreground"
-                : diffDays <= 90 ? "bg-amber-500 text-white"
-                : "bg-muted text-muted-foreground";
-              const expiryLabel = diffDays < 0 ? "Expired" : exp.toLocaleDateString();
-              return (
-                <Badge key={entry.id} className={`text-[9px] px-1.5 py-0.5 gap-0.5 ${expiryColor}`}>
-                  <Clock className="h-2 w-2" />
-                  {expiryLabel}
-                </Badge>
-              );
-            })}
-          </div>
-        )}
-        {batchExpiries.length === 0 && expiryTag && (
-          <div className="pl-1">
-            <Badge
-              variant={expiryTag.color === "text-destructive" ? "destructive" : expiryTag.color === "text-amber-500" ? "default" : "outline"}
-              className={`text-[9px] px-1.5 py-0.5 gap-0.5 ${expiryTag.color === "text-amber-500" ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-            >
-              <Clock className="h-2 w-2" />
-              {expiryTag.label.replace("Exp ", "")}
-            </Badge>
-          </div>
-        )}
 
         {/* Per-entry controls - visible only when expanded */}
         {expanded && batchEntries.length > 1 && (
