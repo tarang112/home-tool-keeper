@@ -25,6 +25,8 @@ export function VoiceAssistant({
   onDelete,
   customLocations,
   houseId,
+  externalOpen,
+  onExternalOpenChange,
 }: VoiceAssistantProps) {
   const [state, setState] = useState<VoiceState>("idle");
   const [transcript, setTranscript] = useState("");
