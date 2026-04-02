@@ -444,6 +444,7 @@ const Index = () => {
         onAdd={handleAddItem}
         editItem={editItem}
         onUpdate={updateItem}
+        onDelete={deleteItem}
         customCategories={customCategories}
         customLocations={customLocations}
         onEnsureCategory={ensureCategory}
@@ -454,6 +455,7 @@ const Index = () => {
             : undefined
         }
         initialBarcodeScan={barcodeMode}
+        allItems={items}
       />
 
       <ReceiptScanner

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Plus, Trash2 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -20,25 +21,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { CustomCategory, CustomLocation } from "@/hooks/use-custom-options";
 
+interface BatchEntry {
+  id?: string; // existing entry ID (for edit mode)
+  quantity: string;
+  quantityUnit: string;
+  expirationDate: Date | undefined;
+}
+
 interface AddItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
   editItem?: InventoryItem | null;
   onUpdate?: (id: string, updates: Partial<Omit<InventoryItem, "id" | "createdAt">>) => void;
+  onDelete?: (id: string) => void;
   customCategories?: CustomCategory[];
   customLocations?: CustomLocation[];
   onEnsureCategory?: (name: string, icon?: string) => Promise<void>;
   onEnsureLocation?: (name: string) => Promise<void>;
   businessCategories?: MainCategory[];
   initialBarcodeScan?: boolean;
+  /** All inventory items - used to find sibling batch entries when editing */
+  allItems?: InventoryItem[];
 }
 
 export function AddItemDialog({
-  open, onOpenChange, onAdd, editItem, onUpdate,
+  open, onOpenChange, onAdd, editItem, onUpdate, onDelete,
   customCategories = [], customLocations = [],
   onEnsureCategory, onEnsureLocation, businessCategories,
-  initialBarcodeScan,
+  initialBarcodeScan, allItems = [],
 }: AddItemDialogProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("hardware-tools");
@@ -55,6 +66,7 @@ export function AddItemDialog({
   const [barcode, setBarcode] = useState("");
   const [quantityUnit, setQuantityUnit] = useState("pcs");
   const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
+  const [batchEntries, setBatchEntries] = useState<BatchEntry[]>([]);
   const [productUrl, setProductUrl] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
 
@@ -112,6 +124,18 @@ export function AddItemDialog({
       setBarcode(editItem.barcode ?? "");
       setExpirationDate(editItem.expirationDate ? new Date(editItem.expirationDate) : undefined);
       setProductUrl("");
+      // Find sibling batch entries (same name, category, location)
+      const siblings = allItems.filter(
+        (i) => i.name === editItem.name && i.category === editItem.category && i.location === editItem.location && i.id !== editItem.id
+      );
+      if (siblings.length > 0) {
+        setBatchEntries([
+          { id: editItem.id, quantity: String(editItem.quantity), quantityUnit: editItem.quantityUnit || "pcs", expirationDate: editItem.expirationDate ? new Date(editItem.expirationDate) : undefined },
+          ...siblings.map((s) => ({ id: s.id, quantity: String(s.quantity), quantityUnit: s.quantityUnit || "pcs", expirationDate: s.expirationDate ? new Date(s.expirationDate) : undefined })),
+        ]);
+      } else {
+        setBatchEntries([]);
+      }
     } else {
       setName("");
       setCategory("hardware-tools");
@@ -128,6 +152,7 @@ export function AddItemDialog({
       setNotes("");
       setBarcode("");
       setExpirationDate(undefined);
+      setBatchEntries([]);
       setProductUrl("");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -290,12 +315,11 @@ export function AddItemDialog({
       await onEnsureLocation(customLocation.trim());
     }
 
-    const data = {
+    const baseData = {
       name: name.trim(),
       category,
       subcategory: subcategory || "",
       customCategory: category === "custom" ? customCategory.trim() : undefined,
-      quantity: Math.max(0, parseFloat(quantity) || 0),
       quantityUnit,
       location: finalLocation,
       locationDetail: locationDetail.trim(),
@@ -304,7 +328,6 @@ export function AddItemDialog({
       itemImage,
       notes: notes.trim(),
       barcode: barcode.trim(),
-      expirationDate: expirationDate ? format(expirationDate, 'yyyy-MM-dd') : null,
       houseId: editItem?.houseId || null,
       unitPrice: editItem?.unitPrice ?? null,
       totalPrice: editItem?.totalPrice ?? null,
@@ -313,10 +336,32 @@ export function AddItemDialog({
       lentNotes: editItem?.lentNotes ?? null,
     };
 
-    if (editItem && onUpdate) {
-      onUpdate(editItem.id, data);
+    if (batchEntries.length > 0) {
+      // Handle batch entries
+      for (const entry of batchEntries) {
+        const entryData = {
+          ...baseData,
+          quantity: Math.max(0, parseFloat(entry.quantity) || 0),
+          quantityUnit: entry.quantityUnit,
+          expirationDate: entry.expirationDate ? format(entry.expirationDate, 'yyyy-MM-dd') : null,
+        };
+        if (entry.id && onUpdate) {
+          onUpdate(entry.id, entryData);
+        } else {
+          onAdd(entryData);
+        }
+      }
     } else {
-      onAdd(data);
+      const data = {
+        ...baseData,
+        quantity: Math.max(0, parseFloat(quantity) || 0),
+        expirationDate: expirationDate ? format(expirationDate, 'yyyy-MM-dd') : null,
+      };
+      if (editItem && onUpdate) {
+        onUpdate(editItem.id, data);
+      } else {
+        onAdd(data);
+      }
     }
 
     onOpenChange(false);
@@ -430,83 +475,198 @@ export function AddItemDialog({
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity</Label>
-              <div className="flex gap-2">
-                <Input id="quantity" type="number" min="0" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="flex-1" />
-                <Select value={quantityUnit} onValueChange={setQuantityUnit}>
-                  <SelectTrigger className="w-28">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {QUANTITY_UNITS.map((u) => (
-                      <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Expiration Date - only for food/medicine categories */}
-            {EXPIRABLE_CATEGORIES.includes(category) && (
-              <div className="space-y-2">
-                <Label>Expiration Date</Label>
-                <div className="flex gap-2 items-center">
-                  <Select
-                    value={expirationDate ? String(expirationDate.getMonth()) : ""}
-                    onValueChange={(v) => {
-                      const month = parseInt(v);
-                      const current = expirationDate || new Date();
-                      const newDate = new Date(current.getFullYear(), month, Math.min(current.getDate(), new Date(current.getFullYear(), month + 1, 0).getDate()));
-                      setExpirationDate(newDate);
-                    }}
-                  >
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
-                        <SelectItem key={i} value={String(i)}>{m}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={31}
-                    placeholder="Day"
-                    className="w-20"
-                    value={expirationDate ? expirationDate.getDate() : ""}
-                    onChange={(e) => {
-                      const day = parseInt(e.target.value) || 1;
-                      const current = expirationDate || new Date();
-                      const maxDay = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
-                      const newDate = new Date(current.getFullYear(), current.getMonth(), Math.min(day, maxDay));
-                      setExpirationDate(newDate);
-                    }}
-                  />
-                  <Input
-                    type="number"
-                    min={2020}
-                    max={2099}
-                    placeholder="Year"
-                    className="w-24"
-                    value={expirationDate ? expirationDate.getFullYear() : ""}
-                    onChange={(e) => {
-                      const year = parseInt(e.target.value) || new Date().getFullYear();
-                      const current = expirationDate || new Date();
-                      const maxDay = new Date(year, current.getMonth() + 1, 0).getDate();
-                      const newDate = new Date(year, current.getMonth(), Math.min(current.getDate(), maxDay));
-                      setExpirationDate(newDate);
-                    }}
-                  />
-                </div>
-                {expirationDate && (
-                  <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setExpirationDate(undefined)}>
-                    Clear expiration date
+            {/* Quantity & Expiration - batch aware */}
+            {batchEntries.length > 0 ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Entries ({batchEntries.length})</Label>
+                  <Button type="button" variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => setBatchEntries([...batchEntries, { quantity: "1", quantityUnit, expirationDate: undefined }])}>
+                    <Plus className="h-3 w-3" /> Add Entry
                   </Button>
-                )}
+                </div>
+                {batchEntries.map((entry, idx) => (
+                  <div key={idx} className="border rounded-md p-2.5 space-y-2 relative">
+                    <div className="flex gap-2 items-center">
+                      <div className="flex-1">
+                        <Label className="text-[10px] text-muted-foreground">Qty</Label>
+                        <Input type="number" min="0" step="any" value={entry.quantity} onChange={(e) => {
+                          const updated = [...batchEntries];
+                          updated[idx] = { ...updated[idx], quantity: e.target.value };
+                          setBatchEntries(updated);
+                        }} className="h-8" />
+                      </div>
+                      <div className="w-24">
+                        <Label className="text-[10px] text-muted-foreground">Unit</Label>
+                        <Select value={entry.quantityUnit} onValueChange={(v) => {
+                          const updated = [...batchEntries];
+                          updated[idx] = { ...updated[idx], quantityUnit: v };
+                          setBatchEntries(updated);
+                        }}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {QUANTITY_UNITS.map((u) => (
+                              <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {batchEntries.length > 1 && (
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 mt-4 shrink-0" onClick={() => {
+                          if (entry.id && onDelete) onDelete(entry.id);
+                          setBatchEntries(batchEntries.filter((_, i) => i !== idx));
+                        }}>
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                    {EXPIRABLE_CATEGORIES.includes(category) && (
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Expiration</Label>
+                        <div className="flex gap-1.5 items-center">
+                          <Select
+                            value={entry.expirationDate ? String(entry.expirationDate.getMonth()) : ""}
+                            onValueChange={(v) => {
+                              const month = parseInt(v);
+                              const current = entry.expirationDate || new Date();
+                              const newDate = new Date(current.getFullYear(), month, Math.min(current.getDate(), new Date(current.getFullYear(), month + 1, 0).getDate()));
+                              const updated = [...batchEntries];
+                              updated[idx] = { ...updated[idx], expirationDate: newDate };
+                              setBatchEntries(updated);
+                            }}
+                          >
+                            <SelectTrigger className="flex-1 h-8"><SelectValue placeholder="Month" /></SelectTrigger>
+                            <SelectContent>
+                              {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
+                                <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input type="number" min={1} max={31} placeholder="Day" className="w-16 h-8"
+                            value={entry.expirationDate ? entry.expirationDate.getDate() : ""}
+                            onChange={(e) => {
+                              const day = parseInt(e.target.value) || 1;
+                              const current = entry.expirationDate || new Date();
+                              const maxDay = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
+                              const updated = [...batchEntries];
+                              updated[idx] = { ...updated[idx], expirationDate: new Date(current.getFullYear(), current.getMonth(), Math.min(day, maxDay)) };
+                              setBatchEntries(updated);
+                            }}
+                          />
+                          <Input type="number" min={2020} max={2099} placeholder="Year" className="w-20 h-8"
+                            value={entry.expirationDate ? entry.expirationDate.getFullYear() : ""}
+                            onChange={(e) => {
+                              const year = parseInt(e.target.value) || new Date().getFullYear();
+                              const current = entry.expirationDate || new Date();
+                              const maxDay = new Date(year, current.getMonth() + 1, 0).getDate();
+                              const updated = [...batchEntries];
+                              updated[idx] = { ...updated[idx], expirationDate: new Date(year, current.getMonth(), Math.min(current.getDate(), maxDay)) };
+                              setBatchEntries(updated);
+                            }}
+                          />
+                          {entry.expirationDate && (
+                            <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => {
+                              const updated = [...batchEntries];
+                              updated[idx] = { ...updated[idx], expirationDate: undefined };
+                              setBatchEntries(updated);
+                            }}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 text-[10px] text-muted-foreground" onClick={() => setBatchEntries([
+                      { quantity, quantityUnit, expirationDate },
+                      { quantity: "1", quantityUnit, expirationDate: undefined },
+                    ])}>
+                      <Plus className="h-2.5 w-2.5" /> Add batch entry
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input id="quantity" type="number" min="0" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="flex-1" />
+                    <Select value={quantityUnit} onValueChange={setQuantityUnit}>
+                      <SelectTrigger className="w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {QUANTITY_UNITS.map((u) => (
+                          <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Expiration Date - only for food/medicine categories */}
+                {EXPIRABLE_CATEGORIES.includes(category) && (
+                  <div className="space-y-2">
+                    <Label>Expiration Date</Label>
+                    <div className="flex gap-2 items-center">
+                      <Select
+                        value={expirationDate ? String(expirationDate.getMonth()) : ""}
+                        onValueChange={(v) => {
+                          const month = parseInt(v);
+                          const current = expirationDate || new Date();
+                          const newDate = new Date(current.getFullYear(), month, Math.min(current.getDate(), new Date(current.getFullYear(), month + 1, 0).getDate()));
+                          setExpirationDate(newDate);
+                        }}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
+                            <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={31}
+                        placeholder="Day"
+                        className="w-20"
+                        value={expirationDate ? expirationDate.getDate() : ""}
+                        onChange={(e) => {
+                          const day = parseInt(e.target.value) || 1;
+                          const current = expirationDate || new Date();
+                          const maxDay = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
+                          const newDate = new Date(current.getFullYear(), current.getMonth(), Math.min(day, maxDay));
+                          setExpirationDate(newDate);
+                        }}
+                      />
+                      <Input
+                        type="number"
+                        min={2020}
+                        max={2099}
+                        placeholder="Year"
+                        className="w-24"
+                        value={expirationDate ? expirationDate.getFullYear() : ""}
+                        onChange={(e) => {
+                          const year = parseInt(e.target.value) || new Date().getFullYear();
+                          const current = expirationDate || new Date();
+                          const maxDay = new Date(year, current.getMonth() + 1, 0).getDate();
+                          const newDate = new Date(year, current.getMonth(), Math.min(current.getDate(), maxDay));
+                          setExpirationDate(newDate);
+                        }}
+                      />
+                    </div>
+                    {expirationDate && (
+                      <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setExpirationDate(undefined)}>
+                        Clear expiration date
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
             <div className="space-y-2">
