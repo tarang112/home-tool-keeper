@@ -36,6 +36,15 @@ export function VoiceAssistant({
   const itemsRef = useRef(items);
   itemsRef.current = items;
 
+  // Handle external open trigger
+  useEffect(() => {
+    if (externalOpen && state === "idle") {
+      startListeningRef.current?.();
+      onExternalOpenChange?.(false);
+    }
+  }, [externalOpen]);
+  const startListeningRef = useRef<(() => void) | null>(null);
+
   const allLocations = [...LOCATIONS, ...customLocations];
   const allLocationsRef = useRef(allLocations);
   allLocationsRef.current = allLocations;
