@@ -411,6 +411,7 @@ const Index = () => {
         customLocations={customLocations.map((l) => l.name)}
         externalOpen={scannerOpen}
         onExternalOpenChange={setScannerOpen}
+        houseId={resolvedHouseIdForImport}
       />
 
       <EmailImport
