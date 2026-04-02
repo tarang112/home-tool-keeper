@@ -83,6 +83,7 @@ Available categories with their subcategories:
 - medicine: prescription, otc, vitamins, first-aid, medical-devices (DEFAULT EXPIRY: 365 days → ${medicineExpiry})
 - stationery: pens-pencils, notebooks, paper, art-supplies
 - office-supply: desk-accessories, filing, printer-supplies, tech-accessories
+- building-materials: lumber, concrete-masonry, bricks-blocks, drywall-insulation, roofing, flooring, doors-windows, siding, paint-supplies, fasteners-hardware (items like drywall, cement, lumber, plywood, shingles, tiles, bricks, insulation, screws, nails, bolts, caulk, sealant, sandpaper, PVC pipe, etc.)
 - other: (no subcategories)
 
 DEFAULT LOCATIONS BY CATEGORY/SUBCATEGORY:
