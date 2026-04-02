@@ -66,6 +66,7 @@ export function AddItemDialog({
   const [barcode, setBarcode] = useState("");
   const [quantityUnit, setQuantityUnit] = useState("pcs");
   const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
+  const [batchEntries, setBatchEntries] = useState<BatchEntry[]>([]);
   const [productUrl, setProductUrl] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
 
