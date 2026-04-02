@@ -160,6 +160,7 @@ const Index = () => {
   };
 
   return (
+    <>
     <div className="min-h-screen pb-24 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[max(6rem,env(safe-area-inset-bottom))]">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] space-y-2">
         <div className="max-w-lg lg:max-w-5xl mx-auto flex items-center justify-between gap-3">
@@ -407,16 +408,7 @@ const Index = () => {
       <InstallBanner />
     </div>
 
-    {/* Duplicate item prompt dialog */}
-    </>;
-  }
-
-  return (
-    <>
-      {renderContent()}
-
-      {/* Duplicate item prompt dialog */}
-      <Dialog open={!!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
+    <Dialog open={!!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Item Already Exists</DialogTitle>
@@ -462,6 +454,7 @@ const Index = () => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 
