@@ -8,7 +8,7 @@ interface BottomActionBarProps {
   onVoice: () => void;
 }
 
-function NavIcon({ icon: Icon, label, onClick }: { icon: typeof ScanBarcode; label: string; onClick: () => void }) {
+function NavIcon({ icon: Icon, label, onClick }: { icon: typeof Barcode; label: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1.5 px-3 py-1.5 hover:opacity-70 transition-opacity active:scale-95">
       <Icon className="h-6 w-6 text-foreground/80" strokeWidth={1.5} />
