@@ -40,7 +40,7 @@ interface ItemCardProps {
   allItems?: InventoryItem[];
 }
 
-export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardProps) {
+export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, allItems }: ItemCardProps) {
   const allCat = ALL_CATEGORIES.find((c) => c.value === item.category);
   const cat = CATEGORIES.find((c) => c.value === item.category) || (allCat ? { value: allCat.value, label: allCat.label, icon: allCat.icon } : undefined);
   const subLabel = item.subcategory
