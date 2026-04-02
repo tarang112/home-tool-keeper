@@ -36,6 +36,8 @@ interface ItemCardProps {
   onEdit: (item: InventoryItem) => void;
   onDelete: (id: string) => void;
   onMove?: (item: InventoryItem) => void;
+  /** All raw items for resolving batch entry editing */
+  allItems?: InventoryItem[];
 }
 
 export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardProps) {
