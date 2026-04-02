@@ -185,6 +185,7 @@ export type Database = {
           barcode: string | null
           category: string
           created_at: string
+          deleted_at: string | null
           expiration_date: string | null
           house_id: string | null
           id: string
@@ -207,6 +208,7 @@ export type Database = {
           barcode?: string | null
           category?: string
           created_at?: string
+          deleted_at?: string | null
           expiration_date?: string | null
           house_id?: string | null
           id?: string
@@ -229,6 +231,7 @@ export type Database = {
           barcode?: string | null
           category?: string
           created_at?: string
+          deleted_at?: string | null
           expiration_date?: string | null
           house_id?: string | null
           id?: string
