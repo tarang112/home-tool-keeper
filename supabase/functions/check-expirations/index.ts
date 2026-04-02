@@ -85,18 +85,17 @@ Deno.serve(async (req) => {
       else console.error('Error creating notification:', insertError);
     }
 
-    // === Snack expiry alerts: notify when expired but do NOT auto-remove ===
-    const { data: expiredSnacks } = await supabase
+    // === Snack & frozen expiry alerts: notify when expired but do NOT auto-remove ===
+    const { data: expiredSnacksAndFrozen } = await supabase
       .from('inventory_items')
-      .select('id, name, user_id, expiration_date')
-      .eq('subcategory', 'snacks')
+      .select('id, name, user_id, expiration_date, subcategory')
+      .in('subcategory', ['snacks', 'frozen'])
       .not('expiration_date', 'is', null)
       .lt('expiration_date', todayStr)
       .gt('quantity', 0);
 
     let snackNotifications = 0;
-    for (const item of expiredSnacks || []) {
-      // Dedup: one notification per item per day
+    for (const item of expiredSnacksAndFrozen || []) {
       const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
       const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
 
@@ -112,13 +111,14 @@ Deno.serve(async (req) => {
       if (existing && existing.length > 0) continue;
 
       const expDate = new Date(item.expiration_date);
+      const icon = item.subcategory === 'frozen' ? '🧊' : '🍿';
       const { error: insertError } = await supabase
         .from('notifications')
         .insert({
           user_id: item.user_id,
           item_id: item.id,
-          title: `🍿 ${item.name} has expired!`,
-          message: `This snack expired on ${expDate.toLocaleDateString()}. Please review and remove it from your inventory if needed.`,
+          title: `${icon} ${item.name} has expired!`,
+          message: `This ${item.subcategory} item expired on ${expDate.toLocaleDateString()}. Please review and remove it from your inventory if needed.`,
         });
 
       if (!insertError) snackNotifications++;
