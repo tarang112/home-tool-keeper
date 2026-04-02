@@ -25,6 +25,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessCategories } from "@/config/business-categories";
 import { InstallBanner } from "@/components/InstallBanner";
 
+const normalizeGroupedItemName = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const getEarliestExpiry = (dates: Array<string | null | undefined>) => {
+  const validDates = dates.filter(Boolean) as string[];
+  if (validDates.length === 0) return null;
+  return [...validDates].sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0];
+};
+
 const Index = () => {
   const { user, signOut } = useAuth();
   const {
@@ -277,12 +290,41 @@ const Index = () => {
             </p>
           </div>
         ) : (() => {
-          // Group items by category
-          const grouped = new Map<string, InventoryItem[]>();
+          // Group items by category, then collapse duplicate product rows into one display card
+          const grouped = new Map<string, Array<InventoryItem & { batchEntries?: Array<{ id: string; quantity: number; quantityUnit: string; expirationDate: string | null }> }>>();
           for (const item of filtered) {
-            const key = item.category;
-            if (!grouped.has(key)) grouped.set(key, []);
-            grouped.get(key)!.push(item);
+            const categoryKey = item.category;
+            if (!grouped.has(categoryKey)) grouped.set(categoryKey, []);
+
+            const categoryItems = grouped.get(categoryKey)!;
+            const itemKey = normalizeGroupedItemName(item.name);
+            const existingGroup = categoryItems.find((entry) => normalizeGroupedItemName(entry.name) === itemKey);
+
+            if (existingGroup) {
+              existingGroup.quantity += item.quantity;
+              existingGroup.expirationDate = getEarliestExpiry([existingGroup.expirationDate, item.expirationDate]);
+              existingGroup.batchEntries = [
+                ...(existingGroup.batchEntries || []),
+                {
+                  id: item.id,
+                  quantity: item.quantity,
+                  quantityUnit: item.quantityUnit,
+                  expirationDate: item.expirationDate,
+                },
+              ];
+            } else {
+              categoryItems.push({
+                ...item,
+                batchEntries: [
+                  {
+                    id: item.id,
+                    quantity: item.quantity,
+                    quantityUnit: item.quantityUnit,
+                    expirationDate: item.expirationDate,
+                  },
+                ],
+              });
+            }
           }
 
           // Sort category groups by a consistent order (known categories first, then custom)
