@@ -190,6 +190,9 @@ export type Database = {
           house_id: string | null
           id: string
           item_image_url: string | null
+          lent_at: string | null
+          lent_notes: string | null
+          lent_to: string | null
           location: string
           location_detail: string | null
           location_image_url: string | null
@@ -213,6 +216,9 @@ export type Database = {
           house_id?: string | null
           id?: string
           item_image_url?: string | null
+          lent_at?: string | null
+          lent_notes?: string | null
+          lent_to?: string | null
           location?: string
           location_detail?: string | null
           location_image_url?: string | null
@@ -236,6 +242,9 @@ export type Database = {
           house_id?: string | null
           id?: string
           item_image_url?: string | null
+          lent_at?: string | null
+          lent_notes?: string | null
+          lent_to?: string | null
           location?: string
           location_detail?: string | null
           location_image_url?: string | null
