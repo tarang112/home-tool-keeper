@@ -116,7 +116,6 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           <h3 className="font-heading font-bold text-[15px] leading-tight truncate flex-1 min-w-0">
             {item.name}
           </h3>
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           {/* Quantity controls */}
           <div className="flex items-center gap-1 shrink-0 ml-1">
             <Button variant="outline" size="icon" className="h-6 w-6 rounded-full" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
