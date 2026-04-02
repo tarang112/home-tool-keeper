@@ -136,18 +136,6 @@ const Index = () => {
             <h1 className="font-heading font-bold text-xl">HomeStock</h1>
           </div>
           <div className="flex items-center gap-1">
-            <Button size="sm" variant="outline" className="gap-1 h-8 px-2 text-xs" onClick={() => setDialogOpen(true)} title="Manual Entry">
-              <PlusCircle className="h-4 w-4" /> Add
-            </Button>
-            <Button size="sm" variant="outline" className="gap-1 h-8 px-2 text-xs" onClick={() => { setBarcodeMode(true); setDialogOpen(true); }} title="Scan Barcode">
-              <ScanBarcode className="h-4 w-4" /> Barcode
-            </Button>
-            <Button size="sm" variant="outline" className="gap-1 h-8 px-2 text-xs" onClick={() => setScannerOpen(true)} title="Scan Receipt">
-              <ScanLine className="h-4 w-4" /> Receipt
-            </Button>
-            <Button size="sm" variant="outline" className="gap-1 h-8 px-2 text-xs" onClick={() => setEmailOpen(true)} title="Import Email">
-              <Mail className="h-4 w-4" /> Email
-            </Button>
             <NotificationBell />
             <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
               <Settings2 className="h-4 w-4" />
