@@ -385,10 +385,20 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
                             {getCategoryBadge(item.category, item.subcategory)}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                            <span>{item.quantity} {item.quantityUnit}</span>
                             {item.location && <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{item.location}</span>}
                             {item.totalPrice != null && <span>· ${item.totalPrice.toFixed(2)}</span>}
                             {item.expirationDate && <span>· exp {item.expirationDate}</span>}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <label className="text-[10px] text-muted-foreground">Qty:</label>
+                            <Input
+                              type="number"
+                              min={1}
+                              value={item.quantity}
+                              onChange={(e) => updateItemField(i, "quantity", Math.max(1, parseInt(e.target.value) || 1))}
+                              className="h-6 w-16 text-xs px-1.5"
+                            />
+                            <span className="text-[10px] text-muted-foreground">{item.quantityUnit}</span>
                           </div>
                         </div>
                         <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={() => toggleEditing(i)} title="Edit">
