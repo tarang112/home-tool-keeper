@@ -271,6 +271,7 @@ export function AddItemDialog({
     // Auto-set location for frozen/dairy/produce subcategories
     if (val === "frozen") setLocationMode("Freezer");
     if (val === "dairy" || val === "condiments") setLocationMode("Refrigerator");
+    if (val === "snacks") setLocationMode("Pantry");
     if (val === "fruits" || val === "vegetables" || val === "herbs") setLocationMode("Refrigerator");
   };
 

@@ -90,6 +90,7 @@ DEFAULT LOCATIONS BY CATEGORY/SUBCATEGORY:
 - groceries/dairy: Refrigerator
 - groceries/frozen: Freezer (DEFAULT EXPIRY: 6 months → ${frozenExpiry})
 - groceries/snacks: Kitchen (DEFAULT EXPIRY: 3 months → ${snackExpiry})
+- groceries/snacks: Pantry (DEFAULT EXPIRY: 3 months → ${snackExpiry})
 - groceries/beverages: Kitchen
 - groceries/canned: Kitchen
 - groceries/bakery: Kitchen
