@@ -39,6 +39,9 @@ export interface InventoryItem {
   createdAt: string;
   updatedAt: string;
   sharedFromHouse?: string;
+  lentTo: string | null;
+  lentAt: string | null;
+  lentNotes: string | null;
 }
 
 export const QUANTITY_UNITS = [
