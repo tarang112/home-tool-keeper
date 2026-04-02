@@ -56,6 +56,42 @@ export const QUANTITY_UNITS = [
 // Categories that should show expiration date picker
 export const EXPIRABLE_CATEGORIES = ['groceries', 'produce', 'medicine'];
 
+function normalizeLookupName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\bmixrure\b/g, "mixture")
+    .replace(/\bmixure\b/g, "mixture")
+    .replace(/\bjerra\b/g, "jeera")
+    .replace(/\bkhahara\b/g, "khakhra")
+    .replace(/\bkhahara\b/g, "khakhra")
+    .replace(/\bbomnay\b/g, "bombay")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildImageLookupName(name: string) {
+  const normalized = normalizeLookupName(name);
+
+  if (/\bbombay mixture\b/.test(normalized) || /\bmixture\b/.test(normalized)) {
+    return "Bombay mixture snack";
+  }
+
+  if (/\bkhakhra\b/.test(normalized) && /\bjeera\b/.test(normalized)) {
+    return "Jeera khakhra";
+  }
+
+  if (/\bkhakhra\b/.test(normalized)) {
+    return "Khakhra";
+  }
+
+  return normalized || name;
+}
+
+function normalizeInventoryName(name: string) {
+  return normalizeLookupName(name);
+}
+
 function rowToItem(row: any): InventoryItem {
   const rawCat = row.category as string;
   const isCustom = rawCat?.startsWith("custom:");
@@ -298,7 +334,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
     // Auto-generate image for items without a product image (background, non-blocking)
     if (!item.productImage && !item.itemImage) {
       supabase.functions.invoke("generate-item-image", {
-        body: { itemName: item.name, itemId: data.id },
+        body: { itemName: buildImageLookupName(item.name), itemId: data.id },
       }).then(({ data: imgData }) => {
         if (imgData?.imageUrl) {
           setItems((prev) =>
@@ -361,7 +397,22 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
     setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: newQty } : i));
   }, [items]);
 
-  return { items, loading, addItem, updateItem, deleteItem, adjustQuantity };
+  const findExpiredRepurchaseCandidate = useCallback((item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
+    const incomingName = normalizeInventoryName(item.name);
+    const today = new Date().toISOString().split("T")[0];
+
+    return items.find((existingItem) => {
+      if (normalizeInventoryName(existingItem.name) !== incomingName) return false;
+      if (!existingItem.expirationDate || existingItem.expirationDate >= today) return false;
+
+      const isSnack = existingItem.subcategory === "snacks" || item.subcategory === "snacks";
+      const sameHouse = (existingItem.houseId || null) === (item.houseId || null);
+
+      return isSnack && sameHouse;
+    }) || null;
+  }, [items]);
+
+  return { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findExpiredRepurchaseCandidate };
 }
 
 export const MAIN_CATEGORIES: MainCategory[] = [
