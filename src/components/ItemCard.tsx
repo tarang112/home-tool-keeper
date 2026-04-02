@@ -168,7 +168,32 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
 
         {/* Expanded details */}
         {expanded && (
-          <div className="mt-3 pt-3 border-t space-y-2 animate-fade-in">
+          <div className="mt-2 pt-2 border-t space-y-2 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            {/* Action buttons */}
+            <div className="flex items-center gap-1 flex-wrap">
+              {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
+                isLent ? (
+                  <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 text-orange-500" onClick={() => onLend(item.id, null, null)}>
+                    <Undo2 className="h-3 w-3" /> Return
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }}>
+                    <HandHelping className="h-3 w-3" /> Lend
+                  </Button>
+                )
+              )}
+              {onMove && (
+                <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => onMove(item)}>
+                  <ArrowRightLeft className="h-3 w-3" /> Move
+                </Button>
+              )}
+              <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => onEdit(item)}>
+                <Pencil className="h-3 w-3" /> Edit
+              </Button>
+              <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 text-destructive hover:text-destructive" onClick={() => onDelete(item.id)}>
+                <Trash2 className="h-3 w-3" /> Delete
+              </Button>
+            </div>
             {/* Per-batch controls when multiple batches exist */}
             {batchEntries.length > 1 && (
               <div className="space-y-1.5 p-2 rounded-md bg-muted/50 border border-dashed">
