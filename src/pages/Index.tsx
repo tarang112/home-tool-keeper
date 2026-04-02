@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode } from "lucide-react";
+import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useInventory, CATEGORIES, MAIN_CATEGORIES, type ItemCategory, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
 import { useHouses } from "@/hooks/use-houses";
 import { useAuth } from "@/hooks/use-auth";
@@ -70,6 +70,11 @@ const Index = () => {
   const [emailOpen, setEmailOpen] = useState(false);
   const [barcodeMode, setBarcodeMode] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [duplicatePrompt, setDuplicatePrompt] = useState<{
+    existing: InventoryItem;
+    incoming: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">;
+    resolve: (action: "update" | "replace" | "cancel") => void;
+  } | null>(null);
 
   const toggleCategory = useCallback((cat: string) => {
     setCollapsedCategories(prev => {
@@ -118,11 +123,14 @@ const Index = () => {
     const duplicateMatch = findDuplicateCandidate(nextItem);
 
     if (duplicateMatch) {
-      const replaceOldItem = window.confirm(
-        `\"${duplicateMatch.name}\" is already in inventory. Press OK to delete the previous entry and add this one as new, or Cancel to update the existing item quantity.`
-      );
+      const action = await new Promise<"update" | "replace" | "cancel">((resolve) => {
+        setDuplicatePrompt({ existing: duplicateMatch, incoming: nextItem, resolve });
+      });
+      setDuplicatePrompt(null);
 
-      if (replaceOldItem) {
+      if (action === "cancel") return;
+
+      if (action === "replace") {
         await deleteItem(duplicateMatch.id);
         await addItem(nextItem);
       } else {
@@ -152,6 +160,7 @@ const Index = () => {
   };
 
   return (
+    <>
     <div className="min-h-screen pb-24 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[max(6rem,env(safe-area-inset-bottom))]">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] space-y-2">
         <div className="max-w-lg lg:max-w-5xl mx-auto flex items-center justify-between gap-3">
@@ -398,6 +407,54 @@ const Index = () => {
       />
       <InstallBanner />
     </div>
+
+    <Dialog open={!!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Item Already Exists</DialogTitle>
+          <DialogDescription asChild>
+            <div>
+              <span className="font-semibold text-foreground">"{duplicatePrompt?.existing.name}"</span> is already in your inventory
+              {duplicatePrompt?.existing.quantity != null && (
+                <> with <span className="font-semibold text-foreground">{duplicatePrompt.existing.quantity} {duplicatePrompt.existing.quantityUnit}</span></>
+              )}.
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 pt-2">
+          <Button
+            className="w-full gap-2 justify-start h-auto py-3"
+            variant="default"
+            onClick={() => duplicatePrompt?.resolve("update")}
+          >
+            <PlusSquare className="h-5 w-5 shrink-0" />
+            <div className="text-left">
+              <div className="font-medium">Update Quantity</div>
+              <div className="text-xs opacity-80">
+                Add {duplicatePrompt?.incoming.quantity} {duplicatePrompt?.incoming.quantityUnit} to existing ({(duplicatePrompt?.existing.quantity ?? 0) + (duplicatePrompt?.incoming.quantity ?? 0)} total)
+              </div>
+            </div>
+          </Button>
+          <Button
+            className="w-full gap-2 justify-start h-auto py-3"
+            variant="outline"
+            onClick={() => duplicatePrompt?.resolve("replace")}
+          >
+            <RefreshCw className="h-5 w-5 shrink-0" />
+            <div className="text-left">
+              <div className="font-medium">Replace Old Item</div>
+              <div className="text-xs text-muted-foreground">Delete previous entry and add this as new</div>
+            </div>
+          </Button>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" size="sm" onClick={() => duplicatePrompt?.resolve("cancel")}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
