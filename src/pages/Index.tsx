@@ -148,6 +148,20 @@ const Index = () => {
             </Button>
           </div>
         </div>
+        <div className="max-w-lg lg:max-w-5xl mx-auto grid grid-cols-4 gap-2">
+          <Button size="sm" variant="outline" className="gap-1 h-9 text-xs w-full" onClick={() => setDialogOpen(true)}>
+            <PlusCircle className="h-4 w-4" /> Add
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1 h-9 text-xs w-full" onClick={() => { setBarcodeMode(true); setDialogOpen(true); }}>
+            <ScanBarcode className="h-4 w-4" /> Barcode
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1 h-9 text-xs w-full" onClick={() => setScannerOpen(true)}>
+            <ScanLine className="h-4 w-4" /> Receipt
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1 h-9 text-xs w-full" onClick={() => setEmailOpen(true)}>
+            <Mail className="h-4 w-4" /> Email
+          </Button>
+        </div>
       </header>
 
       <main className="max-w-lg lg:max-w-5xl mx-auto px-4 py-4 space-y-4">
