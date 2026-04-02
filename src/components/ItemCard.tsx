@@ -36,9 +36,11 @@ interface ItemCardProps {
   onEdit: (item: InventoryItem) => void;
   onDelete: (id: string) => void;
   onMove?: (item: InventoryItem) => void;
+  /** All raw items for resolving batch entry editing */
+  allItems?: InventoryItem[];
 }
 
-export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardProps) {
+export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, allItems }: ItemCardProps) {
   const allCat = ALL_CATEGORIES.find((c) => c.value === item.category);
   const cat = CATEGORIES.find((c) => c.value === item.category) || (allCat ? { value: allCat.value, label: allCat.label, icon: allCat.icon } : undefined);
   const subLabel = item.subcategory
@@ -151,6 +153,66 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
         {/* Expanded details */}
         {expanded && (
           <div className="mt-3 pt-3 border-t space-y-2 animate-fade-in">
+            {/* Per-batch controls when multiple batches exist */}
+            {batchEntries.length > 1 && (
+              <div className="space-y-1.5 p-2 rounded-md bg-muted/50 border border-dashed">
+                <p className="text-[10px] font-medium text-muted-foreground mb-1">Stock Batches:</p>
+                {batchEntries
+                  .slice()
+                  .sort((a, b) => {
+                    if (!a.expirationDate && !b.expirationDate) return 0;
+                    if (!a.expirationDate) return 1;
+                    if (!b.expirationDate) return -1;
+                    return new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
+                  })
+                  .map((entry) => {
+                    const exp = entry.expirationDate ? new Date(entry.expirationDate) : null;
+                    const diffDays = exp ? Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+                    const isExpired = diffDays != null && diffDays < 0;
+                    const isExpiringSoon = diffDays != null && diffDays >= 0 && diffDays <= 90;
+                    const resolvedItem = allItems?.find((i) => i.id === entry.id);
+                    return (
+                      <div key={entry.id} className="flex items-center justify-between gap-2 py-1 border-b last:border-b-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-0.5">
+                            <Button variant="outline" size="icon" className="h-5 w-5" onClick={() => onAdjust(entry.id, -1)} disabled={entry.quantity <= 0}>
+                              <Minus className="h-2 w-2" />
+                            </Button>
+                            <span className={`font-heading font-bold text-xs text-center min-w-[2ch] ${entry.quantity === 0 ? "text-destructive" : ""}`}>
+                              {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? ` ${entry.quantityUnit}` : ""}
+                            </span>
+                            <Button variant="outline" size="icon" className="h-5 w-5" onClick={() => onAdjust(entry.id, 1)}>
+                              <Plus className="h-2 w-2" />
+                            </Button>
+                          </div>
+                          {exp ? (
+                            <Badge
+                              variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
+                              className={`text-[10px] px-1.5 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                            >
+                              <Clock className="h-2.5 w-2.5" />
+                              {isExpired ? "Expired" : exp.toLocaleDateString()}
+                            </Badge>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">No expiry</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          {resolvedItem && (
+                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(resolvedItem)} title="Edit batch">
+                              <Pencil className="h-2.5 w-2.5" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => onDelete(entry.id)} title="Delete batch">
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
             {item.location && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <MapPin className="h-3 w-3" />

@@ -373,6 +373,7 @@ const Index = () => {
                             onEdit={handleEdit}
                             onDelete={deleteItem}
                             onMove={(item) => setMoveItem(item)}
+                            allItems={items}
                           />
                         ))}
                       </div>
