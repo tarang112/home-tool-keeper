@@ -386,11 +386,62 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
   }, [user, uploadImage]);
 
   const deleteItem = useCallback(async (id: string) => {
-    const { error } = await supabase.from("inventory_items").delete().eq("id", id);
+    const deletedItem = items.find((i) => i.id === id);
+    // Soft delete: set deleted_at timestamp
+    const { error } = await supabase
+      .from("inventory_items")
+      .update({ deleted_at: new Date().toISOString() } as any)
+      .eq("id", id);
     if (error) { toast.error("Failed to delete item"); return; }
     setItems((prev) => prev.filter((i) => i.id !== id));
-    toast.success("Item deleted");
+    
+    // Show undo toast
+    toast.success("Item deleted", {
+      description: deletedItem ? `${deletedItem.name} can be restored within 24 hours` : undefined,
+      action: {
+        label: "Undo",
+        onClick: async () => {
+          const { error: restoreErr } = await supabase
+            .from("inventory_items")
+            .update({ deleted_at: null } as any)
+            .eq("id", id);
+          if (restoreErr) { toast.error("Failed to restore item"); return; }
+          if (deletedItem) {
+            setItems((prev) => [deletedItem, ...prev]);
+            toast.success("Item restored!");
+          } else {
+            fetchItems();
+          }
+        },
+      },
+      duration: 10000,
+    });
+  }, [items, fetchItems]);
+
+  const restoreItem = useCallback(async (id: string) => {
+    const { data, error } = await supabase
+      .from("inventory_items")
+      .update({ deleted_at: null } as any)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) { toast.error("Failed to restore item"); return; }
+    const restored = rowToItem(data);
+    setItems((prev) => [restored, ...prev]);
+    toast.success("Item restored!");
   }, []);
+
+  const fetchDeletedItems = useCallback(async () => {
+    if (!user) return [];
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from("inventory_items")
+      .select("*")
+      .not("deleted_at", "is", null)
+      .gte("deleted_at", cutoff)
+      .order("deleted_at", { ascending: false });
+    return (data || []).map(rowToItem);
+  }, [user]);
 
   const adjustQuantity = useCallback(async (id: string, delta: number) => {
     const item = items.find((i) => i.id === id);
@@ -412,7 +463,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
     }) || null;
   }, [items]);
 
-  return { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findDuplicateCandidate };
+  return { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findDuplicateCandidate, restoreItem, fetchDeletedItems };
 }
 
 export const MAIN_CATEGORIES: MainCategory[] = [
