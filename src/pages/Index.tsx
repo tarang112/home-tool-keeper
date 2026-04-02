@@ -120,6 +120,18 @@ const Index = () => {
     }
 
     const nextItem = { ...item, houseId: houseIdForItem };
+
+    if (scannerOpen) {
+      await addItem(nextItem);
+      await saveDefaults(nextItem.name, {
+        category: nextItem.category,
+        subcategory: nextItem.subcategory,
+        location: nextItem.location,
+        quantityUnit: nextItem.quantityUnit,
+      });
+      return;
+    }
+
     const duplicateMatch = findDuplicateCandidate(nextItem);
 
     if (duplicateMatch) {
@@ -146,14 +158,13 @@ const Index = () => {
       await addItem(nextItem);
     }
 
-    // Save defaults for future voice commands
     await saveDefaults(nextItem.name, {
       category: nextItem.category,
       subcategory: nextItem.subcategory,
       location: nextItem.location,
       quantityUnit: nextItem.quantityUnit,
     });
-  }, [isSpecificHouse, selectedHouseId, isAllPersonal, personalHouseIds, isAllBusiness, businessHouseIds, addItem, deleteItem, findDuplicateCandidate, saveDefaults, updateItem]);
+  }, [isSpecificHouse, selectedHouseId, isAllPersonal, personalHouseIds, isAllBusiness, businessHouseIds, addItem, deleteItem, findDuplicateCandidate, saveDefaults, updateItem, scannerOpen]);
 
   const handleMoveItem = (itemId: string, houseId: string | null) => {
     updateItem(itemId, { houseId });
@@ -411,7 +422,7 @@ const Index = () => {
       <InstallBanner />
     </div>
 
-    <Dialog open={!!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
+    <Dialog open={!scannerOpen && !!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Item Already Exists</DialogTitle>

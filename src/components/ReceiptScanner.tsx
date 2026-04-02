@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Camera, Upload, X, Check, Loader2, Receipt, Trash2, Pencil, MapPin, RefreshCw, PlusSquare, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -23,7 +23,6 @@ interface ExtractedItem {
   totalPrice?: number;
   selected: boolean;
   editing?: boolean;
-  /** Duplicate action: update = merge qty, replace = delete old + add new, add = add as new entry */
   duplicateAction?: "update" | "replace" | "add";
 }
 
@@ -52,7 +51,17 @@ const applyDefaultExpiry = <T extends { category?: string | null; subcategory?: 
 };
 
 function normalizeName(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ").trim();
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\bmixrure\b/g, "mixture")
+    .replace(/\bmixure\b/g, "mixture")
+    .replace(/\bjerra\b/g, "jeera")
+    .replace(/\bkhahara\b/g, "khakhra")
+    .replace(/\bbomnay\b/g, "bombay")
+    .replace(/\s+\d+(\.\d+)?\s*(ct|pcs|pc|pack|pk|oz|gm|g|kg|lb|lbs|ml|l)?$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 interface ReceiptScannerProps {
@@ -79,22 +88,29 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
 
   const allLocations = [...LOCATIONS, ...customLocations];
 
-  // Build a lookup of existing items by normalized name
-  const existingByName = useMemo(() => {
-    const map = new Map<string, InventoryItem>();
-    for (const item of existingItems) {
-      map.set(normalizeName(item.name), item);
-    }
-    return map;
+  const findExisting = useCallback((name: string) => {
+    const normalized = normalizeName(name);
+    if (!normalized) return null;
+
+    const exact = existingItems.find((item) => normalizeName(item.name) === normalized);
+    if (exact) return exact;
+
+    return existingItems.find((item) => {
+      const existingNormalized = normalizeName(item.name);
+      const minLen = Math.min(existingNormalized.length, normalized.length);
+      return minLen >= 8 && (existingNormalized.includes(normalized) || normalized.includes(existingNormalized));
+    }) || null;
   }, [existingItems]);
 
-  const findExisting = useCallback((name: string) => {
-    return existingByName.get(normalizeName(name)) || null;
-  }, [existingByName]);
-
   const handleFile = useCallback((file: File) => {
-    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
-    if (file.size > 10 * 1024 * 1024) { toast.error("Image too large (max 10MB)"); return; }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image too large (max 10MB)");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target?.result as string);
@@ -116,11 +132,21 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
       if (error) {
         const errMsg = typeof error === "object" && error?.context?.status ? undefined : error?.message;
         const status = error?.context?.status;
-        if (status === 402 || /credits exhausted/i.test(errMsg || "")) { toast.error("AI credits exhausted."); return; }
-        if (status === 429 || /rate limit/i.test(errMsg || "")) { toast.error("Too many requests. Please wait."); return; }
+        if (status === 402 || /credits exhausted/i.test(errMsg || "")) {
+          toast.error("AI credits exhausted.");
+          return;
+        }
+        if (status === 429 || /rate limit/i.test(errMsg || "")) {
+          toast.error("Too many requests. Please wait.");
+          return;
+        }
         throw error;
       }
-      if (data?.error) { toast.error(data.error); return; }
+
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
 
       const items: ExtractedItem[] = (data.items || []).map((item: any) => {
         const existing = findExisting(item.name);
@@ -133,7 +159,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
           totalPrice: item.totalPrice ?? null,
           selected: true,
           editing: false,
-          duplicateAction: existing ? "update" : undefined,
+          duplicateAction: existing ? "update" : "add",
         };
       });
 
@@ -141,8 +167,11 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
       setStoreName(data.storeName || "");
       setStoreDetails(data.storeDetails || "");
 
-      if (items.length === 0) { toast.info("No items found. Try a clearer photo."); }
-      else { toast.success(`Found ${items.length} item${items.length > 1 ? "s" : ""}`); }
+      if (items.length === 0) {
+        toast.info("No items found. Try a clearer photo.");
+      } else {
+        toast.success(`Found ${items.length} item${items.length > 1 ? "s" : ""}`);
+      }
     } catch (err: any) {
       console.error("Receipt scan error:", err);
       toast.error("Failed to scan receipt.");
@@ -172,10 +201,17 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
     setExtractedItems((prev) =>
       prev.map((item, i) => {
         if (i !== index) return item;
+
         const updatedItem = { ...item, [field]: value };
+
         if ((field === "category" || field === "subcategory") && !updatedItem.expirationDate) {
           updatedItem.expirationDate = getDefaultExpiryDate(updatedItem.category, updatedItem.subcategory);
         }
+
+        if (field === "name") {
+          updatedItem.duplicateAction = findExisting(String(value)) ? (updatedItem.duplicateAction === "replace" ? "replace" : "update") : "add";
+        }
+
         return updatedItem;
       })
     );
@@ -197,9 +233,11 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
 
   const handleAddSelected = async () => {
     const selected = extractedItems.filter((i) => i.selected);
-    if (selected.length === 0) { toast.error("No items selected"); return; }
+    if (selected.length === 0) {
+      toast.error("No items selected");
+      return;
+    }
 
-    // Upload receipt image
     let receiptUrl = "";
     if (imagePreview) {
       try {
@@ -215,7 +253,9 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
             receiptUrl = urlData?.signedUrl || "";
           }
         }
-      } catch (e) { console.error("Receipt upload failed:", e); }
+      } catch (e) {
+        console.error("Receipt upload failed:", e);
+      }
     }
 
     const notesParts: string[] = [];
@@ -230,9 +270,9 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
 
     for (const item of selected) {
       const existing = findExisting(item.name);
+      const duplicateAction = item.duplicateAction ?? (existing ? "update" : "add");
 
-      if (existing && item.duplicateAction === "update" && onUpdateItem) {
-        // Merge: add qty, preserve both expiry dates in notes
+      if (existing && duplicateAction === "update" && onUpdateItem) {
         const mergedNotes = existing.notes
           ? `${existing.notes}\n---\nNew batch (${new Date().toLocaleDateString()}): ${item.quantity} ${item.quantityUnit}${item.expirationDate ? `, exp ${item.expirationDate}` : ""}`
           : `Previous: ${existing.quantity} ${existing.quantityUnit}${existing.expirationDate ? `, exp ${existing.expirationDate}` : ""}\nNew batch: ${item.quantity} ${item.quantityUnit}${item.expirationDate ? `, exp ${item.expirationDate}` : ""}`;
@@ -246,24 +286,45 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
           notes: mergedNotes,
         });
         updatedCount++;
-      } else if (existing && item.duplicateAction === "replace" && onDeleteItem) {
+      } else if (existing && duplicateAction === "replace" && onDeleteItem) {
         await onDeleteItem(existing.id);
         await onAdd({
-          name: item.name, category: item.category, subcategory: item.subcategory || "",
-          quantity: item.quantity, quantityUnit: item.quantityUnit, location: item.location,
-          locationDetail: "", locationImage: "", productImage: "", itemImage: "",
-          notes: notesText, barcode: "", expirationDate: item.expirationDate || null,
-          houseId: null, unitPrice: item.unitPrice ?? null, totalPrice: item.totalPrice ?? null,
+          name: item.name,
+          category: item.category,
+          subcategory: item.subcategory || "",
+          quantity: item.quantity,
+          quantityUnit: item.quantityUnit,
+          location: item.location,
+          locationDetail: "",
+          locationImage: "",
+          productImage: "",
+          itemImage: "",
+          notes: notesText,
+          barcode: "",
+          expirationDate: item.expirationDate || null,
+          houseId: null,
+          unitPrice: item.unitPrice ?? null,
+          totalPrice: item.totalPrice ?? null,
         });
         replacedCount++;
       } else {
-        // Add as new (no duplicate or user chose "add")
         await onAdd({
-          name: item.name, category: item.category, subcategory: item.subcategory || "",
-          quantity: item.quantity, quantityUnit: item.quantityUnit, location: item.location,
-          locationDetail: "", locationImage: "", productImage: "", itemImage: "",
-          notes: notesText, barcode: "", expirationDate: item.expirationDate || null,
-          houseId: null, unitPrice: item.unitPrice ?? null, totalPrice: item.totalPrice ?? null,
+          name: item.name,
+          category: item.category,
+          subcategory: item.subcategory || "",
+          quantity: item.quantity,
+          quantityUnit: item.quantityUnit,
+          location: item.location,
+          locationDetail: "",
+          locationImage: "",
+          productImage: "",
+          itemImage: "",
+          notes: notesText,
+          barcode: "",
+          expirationDate: item.expirationDate || null,
+          houseId: null,
+          unitPrice: item.unitPrice ?? null,
+          totalPrice: item.totalPrice ?? null,
         });
         addedCount++;
       }
@@ -289,11 +350,15 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
   const duplicateCount = extractedItems.filter((i) => i.selected && findExisting(i.name)).length;
 
   const getCategoryBadge = (category: string, subcategory?: string) => {
-    const cat = MAIN_CATEGORIES.find(c => c.value === category);
+    const cat = MAIN_CATEGORIES.find((c) => c.value === category);
     const label = subcategory
-      ? `${cat?.label || category} › ${cat?.subcategories.find(s => s.value === subcategory)?.label || subcategory}`
+      ? `${cat?.label || category} › ${cat?.subcategories.find((s) => s.value === subcategory)?.label || subcategory}`
       : (cat?.label || category);
-    return <Badge variant="outline" className="text-[10px] px-1 py-0 shrink-0">{label}</Badge>;
+    return (
+      <Badge variant="outline" className="text-[10px] px-1 py-0 shrink-0">
+        {label}
+      </Badge>
+    );
   };
 
   return (
@@ -310,17 +375,23 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" /> Receipt Scanner
             </DialogTitle>
-            <DialogDescription>Upload a receipt or order screenshot to extract items</DialogDescription>
+            <DialogDescription>
+              Upload a receipt or order screenshot to extract items
+            </DialogDescription>
           </DialogHeader>
 
-          {/* Upload area */}
           {!imagePreview && (
             <div className="space-y-3">
               <div
                 className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); const file = e.dataTransfer.files[0]; if (file) handleFile(file); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const file = e.dataTransfer.files[0];
+                  if (file) handleFile(file);
+                }}
               >
                 <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">Drop an image here or click to browse</p>
@@ -338,7 +409,6 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
             </div>
           )}
 
-          {/* Image preview + scan */}
           {imagePreview && extractedItems.length === 0 && (
             <div className="space-y-3">
               <div className="relative">
@@ -348,12 +418,15 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                 </Button>
               </div>
               <Button className="w-full gap-2" onClick={handleScan} disabled={scanning}>
-                {scanning ? <><Loader2 className="h-4 w-4 animate-spin" /> Scanning receipt...</> : <><Receipt className="h-4 w-4" /> Extract Items</>}
+                {scanning ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Scanning receipt...</>
+                ) : (
+                  <><Receipt className="h-4 w-4" /> Extract Items</>
+                )}
               </Button>
             </div>
           )}
 
-          {/* Extracted items list */}
           {extractedItems.length > 0 && (
             <div className="flex flex-col flex-1 min-h-0 space-y-2 overflow-hidden">
               {storeName && (
@@ -371,7 +444,6 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                 </span>
               </div>
 
-              {/* Bulk duplicate actions */}
               {duplicateCount > 0 && (
                 <div className="flex items-center gap-2 px-1">
                   <span className="text-[10px] text-muted-foreground shrink-0">{duplicateCount} duplicate{duplicateCount > 1 ? "s" : ""}:</span>
@@ -388,6 +460,8 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                 <div className="space-y-1">
                   {extractedItems.map((item, i) => {
                     const existing = findExisting(item.name);
+                    const duplicateAction = item.duplicateAction ?? (existing ? "update" : "add");
+
                     return (
                       <div key={i} className={`p-2 rounded-md border text-sm transition-colors ${item.selected ? "bg-primary/5 border-primary/20" : "opacity-50"}`}>
                         <div className="flex items-center gap-2">
@@ -414,7 +488,6 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                               <span className="text-[10px] text-muted-foreground">{item.quantityUnit}</span>
                             </div>
 
-                            {/* Inline duplicate action */}
                             {existing && item.selected && (
                               <div className="mt-1.5 p-1.5 rounded bg-muted/50 border border-dashed">
                                 <p className="text-[10px] text-muted-foreground mb-1">
@@ -424,7 +497,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                                 <div className="flex gap-1 flex-wrap">
                                   <Button
                                     size="sm"
-                                    variant={item.duplicateAction === "update" ? "default" : "outline"}
+                                    variant={duplicateAction === "update" ? "default" : "outline"}
                                     className="h-5 text-[10px] gap-0.5 px-1.5"
                                     onClick={() => setDuplicateAction(i, "update")}
                                   >
@@ -433,7 +506,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                                   </Button>
                                   <Button
                                     size="sm"
-                                    variant={item.duplicateAction === "replace" ? "default" : "outline"}
+                                    variant={duplicateAction === "replace" ? "default" : "outline"}
                                     className="h-5 text-[10px] gap-0.5 px-1.5"
                                     onClick={() => setDuplicateAction(i, "replace")}
                                   >
@@ -442,7 +515,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                                   </Button>
                                   <Button
                                     size="sm"
-                                    variant={item.duplicateAction === "add" ? "default" : "outline"}
+                                    variant={duplicateAction === "add" ? "default" : "outline"}
                                     className="h-5 text-[10px] gap-0.5 px-1.5"
                                     onClick={() => setDuplicateAction(i, "add")}
                                   >
@@ -461,7 +534,6 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                           </Button>
                         </div>
 
-                        {/* Inline edit */}
                         {item.editing && (
                           <div className="mt-2 pt-2 border-t space-y-2">
                             <div className="grid grid-cols-2 gap-2">
@@ -470,7 +542,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                                 <Select value={item.category} onValueChange={(v) => { updateItemField(i, "category", v); updateItemField(i, "subcategory", ""); }}>
                                   <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                                   <SelectContent>
-                                    {MAIN_CATEGORIES.map(c => (
+                                    {MAIN_CATEGORIES.map((c) => (
                                       <SelectItem key={c.value} value={c.value} className="text-xs">{c.icon} {c.label}</SelectItem>
                                     ))}
                                   </SelectContent>
@@ -482,7 +554,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                                   <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="none" className="text-xs">— General —</SelectItem>
-                                    {(MAIN_CATEGORIES.find(c => c.value === item.category)?.subcategories || []).map(s => (
+                                    {(MAIN_CATEGORIES.find((c) => c.value === item.category)?.subcategories || []).map((s) => (
                                       <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
                                     ))}
                                   </SelectContent>
@@ -495,7 +567,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                                 <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="none" className="text-xs">— None —</SelectItem>
-                                  {allLocations.map(l => (
+                                  {allLocations.map((l) => (
                                     <SelectItem key={l} value={l} className="text-xs">{l}</SelectItem>
                                   ))}
                                 </SelectContent>
