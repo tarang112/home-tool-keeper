@@ -124,6 +124,18 @@ export function AddItemDialog({
       setBarcode(editItem.barcode ?? "");
       setExpirationDate(editItem.expirationDate ? new Date(editItem.expirationDate) : undefined);
       setProductUrl("");
+      // Find sibling batch entries (same name, category, location)
+      const siblings = allItems.filter(
+        (i) => i.name === editItem.name && i.category === editItem.category && i.location === editItem.location && i.id !== editItem.id && !i.deletedAt
+      );
+      if (siblings.length > 0) {
+        setBatchEntries([
+          { id: editItem.id, quantity: String(editItem.quantity), quantityUnit: editItem.quantityUnit || "pcs", expirationDate: editItem.expirationDate ? new Date(editItem.expirationDate) : undefined },
+          ...siblings.map((s) => ({ id: s.id, quantity: String(s.quantity), quantityUnit: s.quantityUnit || "pcs", expirationDate: s.expirationDate ? new Date(s.expirationDate) : undefined })),
+        ]);
+      } else {
+        setBatchEntries([]);
+      }
     } else {
       setName("");
       setCategory("hardware-tools");
