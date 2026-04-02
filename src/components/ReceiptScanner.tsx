@@ -476,7 +476,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                 <div className="space-y-1">
                   {extractedItems.map((item, i) => {
                     const existing = findExisting(item.name);
-                    const duplicateAction = item.duplicateAction ?? (existing ? "update" : "add");
+                    const duplicateAction = item.duplicateAction ?? (existing ? "replace" : "add");
 
                     return (
                       <div key={i} className={`p-2 rounded-md border text-sm transition-colors ${item.selected ? "bg-primary/5 border-primary/20" : "opacity-50"}`}>
