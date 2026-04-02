@@ -343,7 +343,7 @@ const Index = () => {
       />
 
       <ReceiptScanner
-        onAdd={handleAddItem}
+        onAdd={addItem}
         onUpdateItem={updateItem}
         onDeleteItem={deleteItem}
         existingItems={items}
