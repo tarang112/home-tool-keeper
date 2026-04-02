@@ -53,13 +53,16 @@ const applyDefaultExpiry = <T extends { category?: string | null; subcategory?: 
 function normalizeName(name: string) {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\bmixrure\b/g, "mixture")
     .replace(/\bmixure\b/g, "mixture")
     .replace(/\bjerra\b/g, "jeera")
     .replace(/\bkhahara\b/g, "khakhra")
     .replace(/\bbomnay\b/g, "bombay")
-    .replace(/\s+\d+(\.\d+)?\s*(ct|pcs|pc|pack|pk|oz|gm|g|kg|lb|lbs|ml|l)?$/g, "")
+    .replace(/\bcilntro\b/g, "cilantro")
+    .replace(/\bcilatro\b/g, "cilantro")
+    .replace(/\bcinlatro\b/g, "cilantro")
+    .replace(/\s+\d+(\.\d+)?\s*(ct|pcs|pc|pack|pk|oz|gm|g|kg|lb|lbs|ml|l|bunch|ea)?$/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -95,11 +98,24 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
     const exact = existingItems.find((item) => normalizeName(item.name) === normalized);
     if (exact) return exact;
 
-    return existingItems.find((item) => {
+    // Substring match for longer names
+    const substringMatch = existingItems.find((item) => {
       const existingNormalized = normalizeName(item.name);
       const minLen = Math.min(existingNormalized.length, normalized.length);
-      return minLen >= 8 && (existingNormalized.includes(normalized) || normalized.includes(existingNormalized));
-    }) || null;
+      return minLen >= 4 && (existingNormalized.includes(normalized) || normalized.includes(existingNormalized));
+    });
+    if (substringMatch) return substringMatch;
+
+    // Word-based fuzzy: if all words of the shorter name appear in the longer
+    const words = normalized.split(" ").filter(w => w.length >= 3);
+    if (words.length >= 1) {
+      return existingItems.find((item) => {
+        const existingNormalized = normalizeName(item.name);
+        return words.every(w => existingNormalized.includes(w));
+      }) || null;
+    }
+
+    return null;
   }, [existingItems]);
 
   const handleFile = useCallback((file: File) => {
@@ -159,7 +175,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
           totalPrice: item.totalPrice ?? null,
           selected: true,
           editing: false,
-          duplicateAction: existing ? "update" : "add",
+          duplicateAction: existing ? "replace" : "add",
         };
       });
 
@@ -270,7 +286,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
 
     for (const item of selected) {
       const existing = findExisting(item.name);
-      const duplicateAction = item.duplicateAction ?? (existing ? "update" : "add");
+      const duplicateAction = item.duplicateAction ?? (existing ? "replace" : "add");
 
       if (existing && duplicateAction === "update" && onUpdateItem) {
         const mergedNotes = existing.notes
@@ -460,7 +476,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                 <div className="space-y-1">
                   {extractedItems.map((item, i) => {
                     const existing = findExisting(item.name);
-                    const duplicateAction = item.duplicateAction ?? (existing ? "update" : "add");
+                    const duplicateAction = item.duplicateAction ?? (existing ? "replace" : "add");
 
                     return (
                       <div key={i} className={`p-2 rounded-md border text-sm transition-colors ${item.selected ? "bg-primary/5 border-primary/20" : "opacity-50"}`}>
