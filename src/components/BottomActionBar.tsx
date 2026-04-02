@@ -1,4 +1,4 @@
-import { ScanBarcode, Camera, Plus, Mail, Mic } from "lucide-react";
+import { Barcode, Camera, Plus, Mail, Mic } from "lucide-react";
 
 interface BottomActionBarProps {
   onAdd: () => void;
