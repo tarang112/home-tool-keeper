@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Camera, Upload, X, Check, Loader2, Receipt, Trash2, Pencil, MapPin } from "lucide-react";
+import { Camera, Upload, X, Check, Loader2, Receipt, Trash2, Pencil, MapPin, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -202,7 +202,36 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
       return;
     }
 
-    const notesText = buildNotesText();
+    // Upload receipt image to storage
+    let receiptUrl = "";
+    if (imagePreview) {
+      try {
+        const res = await fetch(imagePreview);
+        const blob = await res.blob();
+        const ext = blob.type.includes("png") ? "png" : "jpg";
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const path = `${user.id}/receipts/${crypto.randomUUID()}.${ext}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("inventory-images")
+            .upload(path, blob, { contentType: blob.type });
+          if (!uploadErr) {
+            const { data: urlData } = await supabase.storage
+              .from("inventory-images")
+              .createSignedUrl(path, 60 * 60 * 24 * 365);
+            receiptUrl = urlData?.signedUrl || "";
+          }
+        }
+      } catch (e) {
+        console.error("Receipt upload failed:", e);
+      }
+    }
+
+    const notesParts: string[] = [];
+    if (storeName) notesParts.push(`Store: ${storeName}`);
+    if (storeDetails) notesParts.push(storeDetails);
+    if (receiptUrl) notesParts.push(`Receipt: ${receiptUrl}`);
+    const notesText = notesParts.join("\n");
 
     for (const item of selected) {
       await onAdd({
