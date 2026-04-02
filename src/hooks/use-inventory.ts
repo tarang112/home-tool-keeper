@@ -397,22 +397,18 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
     setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: newQty } : i));
   }, [items]);
 
-  const findExpiredRepurchaseCandidate = useCallback((item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
+  const findDuplicateCandidate = useCallback((item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
     const incomingName = normalizeInventoryName(item.name);
-    const today = new Date().toISOString().split("T")[0];
 
     return items.find((existingItem) => {
       if (normalizeInventoryName(existingItem.name) !== incomingName) return false;
-      if (!existingItem.expirationDate || existingItem.expirationDate >= today) return false;
-
-      const isSnack = existingItem.subcategory === "snacks" || item.subcategory === "snacks";
       const sameHouse = (existingItem.houseId || null) === (item.houseId || null);
 
-      return isSnack && sameHouse;
+      return sameHouse;
     }) || null;
   }, [items]);
 
-  return { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findExpiredRepurchaseCandidate };
+  return { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findDuplicateCandidate };
 }
 
 export const MAIN_CATEGORIES: MainCategory[] = [
