@@ -538,6 +538,6 @@ export const CATEGORIES: { value: string; label: string; icon: string }[] =
   MAIN_CATEGORIES.map((c) => ({ value: c.value, label: c.label, icon: c.icon }));
 
 export const LOCATIONS = [
-  "Garage", "Shed", "Basement", "Kitchen", "Bathroom", "Workshop",
+  "Garage", "Shed", "Basement", "Kitchen", "Pantry", "Bathroom", "Workshop",
   "Utility Room", "Closet", "Attic", "Refrigerator", "Freezer", "Other"
 ];
