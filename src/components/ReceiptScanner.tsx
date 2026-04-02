@@ -44,6 +44,16 @@ const getDefaultExpiryDate = (category?: string | null, subcategory?: string | n
   return expiryDate.toISOString().split("T")[0];
 };
 
+const getDefaultLocationByCategory = (category?: string | null, subcategory?: string | null): string => {
+  const cat = normalizeValue(category);
+  const sub = normalizeValue(subcategory);
+  if (cat === "produce" || sub === "fruits" || sub === "vegetables" || sub === "herbs") return "Refrigerator";
+  if (sub === "dairy" || sub === "condiments") return "Refrigerator";
+  if (sub === "frozen") return "Freezer";
+  if (sub === "snacks") return "Pantry";
+  return "";
+};
+
 const applyDefaultExpiry = <T extends { category?: string | null; subcategory?: string | null; expirationDate?: string | null }>(item: T): T => {
   if (item.expirationDate) return item;
   const defaultExpiryDate = getDefaultExpiryDate(item.category, item.subcategory);
