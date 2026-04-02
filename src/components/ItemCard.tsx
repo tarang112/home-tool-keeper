@@ -134,7 +134,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           </div>
         </div>
 
-        {/* Row 2: badges + action icons */}
+        {/* Row 2: category + location + expiry left, actions right */}
         <div className="flex items-center justify-between gap-1">
           <div className="flex items-center gap-1.5 flex-wrap min-w-0">
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 font-medium">
@@ -145,6 +145,16 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                 <MapPin className="h-2.5 w-2.5" />
                 {item.location}
               </span>
+            )}
+            {/* Single-entry expiry inline */}
+            {batchEntries.length <= 1 && expiryTag && (
+              <Badge
+                variant={expiryTag.color === "text-destructive" ? "destructive" : expiryTag.color === "text-amber-500" ? "default" : "outline"}
+                className={`text-[10px] px-1.5 py-0.5 gap-0.5 ${expiryTag.color === "text-amber-500" ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+              >
+                <Clock className="h-2.5 w-2.5" />
+                {expiryTag.label.replace("Exp ", "")}
+              </Badge>
             )}
             {isLent && (
               <Badge variant="default" className="text-[10px] px-1.5 py-0.5 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
@@ -179,8 +189,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           </div>
         </div>
 
-        {/* Batch entries - show each entry's qty + expiry, sorted nearest-expiry first */}
-        {/* Batch entries - each with expiry + actions */}
+        {/* Batch entries - each with expiry + per-entry actions */}
         {batchEntries.length > 1 && (
           <div className="space-y-0.5">
             {batchEntries
@@ -205,12 +214,10 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                 const entryItem = allItems?.find((i) => i.id === entry.id);
                 return (
                   <div key={entry.id} className="flex items-center justify-between gap-1 pl-6">
-                    <div className="flex items-center gap-1.5">
-                      <Badge className={`text-[9px] px-1.5 py-0 gap-0.5 ${expiryColor}`}>
-                        <Clock className="h-2 w-2" />
-                        {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? entry.quantityUnit : ""} · {expiryLabel}
-                      </Badge>
-                    </div>
+                    <Badge className={`text-[9px] px-1.5 py-0 gap-0.5 ${expiryColor}`}>
+                      <Clock className="h-2 w-2" />
+                      {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? entry.quantityUnit : ""} · {expiryLabel}
+                    </Badge>
                     <div className="flex items-center gap-0 shrink-0">
                       {onMove && entryItem && (
                         <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onMove(entryItem)} title="Move">
@@ -229,19 +236,6 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                   </div>
                 );
               })}
-          </div>
-        )}
-
-        {/* Single entry expiry badge */}
-        {batchEntries.length <= 1 && expiryTag && (
-          <div className="flex items-center gap-1.5 pl-6">
-            <Badge
-              variant={expiryTag.color === "text-destructive" ? "destructive" : expiryTag.color === "text-amber-500" ? "default" : "outline"}
-              className={`text-[10px] px-1.5 py-0.5 gap-0.5 ${expiryTag.color === "text-amber-500" ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-            >
-              <Clock className="h-2.5 w-2.5" />
-              {expiryTag.label.replace("Exp ", "")}
-            </Badge>
           </div>
         )}
 
