@@ -184,7 +184,8 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
             {item.notes && (() => {
               const lines = item.notes.split("\n");
               const batchLines = lines.filter(l => /^(Previous|New batch):/i.test(l.trim()));
-              const otherLines = lines.filter(l => !/^(Previous|New batch|---)/i.test(l.trim()));
+              const receiptLines = lines.filter(l => /^Receipt:\s/i.test(l.trim()));
+              const otherLines = lines.filter(l => !/^(Previous|New batch|---|Receipt:)/i.test(l.trim()));
               return (
                 <div className="space-y-1">
                   {batchLines.length > 0 && (
@@ -198,6 +199,14 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
                       ))}
                     </div>
                   )}
+                  {receiptLines.length > 0 && receiptLines.map((line, idx) => {
+                    const url = line.trim().replace(/^Receipt:\s*/i, "");
+                    return (
+                      <a key={`receipt-${idx}`} href={url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary underline flex items-center gap-1">
+                        🧾 View Receipt
+                      </a>
+                    );
+                  })}
                   {otherLines.filter(Boolean).length > 0 && (
                     <p className="text-xs text-muted-foreground line-clamp-2">{otherLines.filter(Boolean).join(" · ")}</p>
                   )}
