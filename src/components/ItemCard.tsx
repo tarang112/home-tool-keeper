@@ -80,63 +80,56 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
         : "border-l-emerald-500";
 
   return (
-    <Card className={`animate-slide-up border-l-[3px] ${borderColor}`}>
-      <CardContent className="px-3 py-2.5 space-y-1.5">
+    <Card className={`animate-slide-up border-l-[3px] ${borderColor} cursor-pointer`} onClick={() => setExpanded((v) => !v)}>
+      <CardContent className="px-3 py-2 space-y-0">
         {/* Main row: thumbnail + info + quantity/price */}
-        <div className="flex gap-3">
+        <div className="flex gap-2.5 items-center">
           {/* Thumbnail */}
-          <div
-            className="shrink-0 cursor-pointer"
-            onClick={() => hasPrimaryImg ? setZoomedImg(fullImg(primaryImage)) : setExpanded((v) => !v)}
-          >
+          <div className="shrink-0" onClick={(e) => { if (hasPrimaryImg) { e.stopPropagation(); setZoomedImg(fullImg(primaryImage)); } }}>
             {hasPrimaryImg ? (
               <img
                 src={proxyImg(primaryImage, 96)}
                 alt={item.name}
                 referrerPolicy="no-referrer"
-                className="h-14 w-14 rounded-lg object-cover bg-muted"
+                className="h-11 w-11 rounded-lg object-cover bg-muted"
               />
             ) : (
-              <div className="h-14 w-14 rounded-lg bg-muted/60 dark:bg-muted/30 flex items-center justify-center text-xl">
+              <div className="h-11 w-11 rounded-lg bg-muted/60 dark:bg-muted/30 flex items-center justify-center text-lg">
                 {categoryIcon}
               </div>
             )}
           </div>
 
-          {/* Info: name, subtitle, badges */}
-          <div className="flex-1 min-w-0 space-y-0.5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
-                <h3 className="font-heading font-semibold text-sm leading-tight truncate">{item.name}</h3>
-                <p className="text-[11px] text-muted-foreground truncate">
-                  {item.location || "No location"}{subLabel ? ` · ${subLabel}` : categoryLabel ? ` · ${categoryLabel}` : ""}
-                </p>
-              </div>
-              {/* Quantity + Price */}
-              <div className="shrink-0 text-right space-y-0.5">
-                <div className="flex items-center gap-0.5">
-                  <Button variant="outline" size="icon" className="h-5 w-5" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
-                    <Minus className="h-2 w-2" />
-                  </Button>
-                  <span className={`font-heading font-bold text-sm text-center min-w-[2.5ch] ${item.quantity === 0 ? "text-destructive" : ""}`}>
-                    x{item.quantity}{item.quantityUnit && item.quantityUnit !== "pcs" ? ` ${item.quantityUnit}` : ""}
-                  </span>
-                  <Button variant="outline" size="icon" className="h-5 w-5" onClick={() => onAdjust(item.id, 1)}>
-                    <Plus className="h-2 w-2" />
-                  </Button>
-                </div>
-                {item.totalPrice != null && (
-                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">${item.totalPrice.toFixed(2)}</span>
-                )}
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-1.5">
+              <h3 className="font-heading font-semibold text-sm leading-tight truncate">{item.name}</h3>
+              <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
+                  <Minus className="h-2.5 w-2.5" />
+                </Button>
+                <span className={`font-heading font-bold text-xs text-center min-w-[2ch] ${item.quantity === 0 ? "text-destructive" : ""}`}>
+                  x{item.quantity}{item.quantityUnit && item.quantityUnit !== "pcs" ? ` ${item.quantityUnit}` : ""}
+                </span>
+                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onAdjust(item.id, 1)}>
+                  <Plus className="h-2.5 w-2.5" />
+                </Button>
               </div>
             </div>
-
-            {/* Inline badges row */}
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-muted-foreground truncate">
+                {item.location || "No location"}{subLabel ? ` · ${subLabel}` : categoryLabel ? ` · ${categoryLabel}` : ""}
+              </p>
+              {item.totalPrice != null && (
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">${item.totalPrice.toFixed(2)}</span>
+              )}
+            </div>
+            {/* Compact badges */}
+            <div className="flex flex-wrap items-center gap-1 mt-0.5">
               {isLent && (
-                <Badge variant="default" className="text-[10px] px-1.5 py-0 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
-                  <HandHelping className="h-2.5 w-2.5" />
-                  Lent to {item.lentTo}
+                <Badge variant="default" className="text-[9px] px-1 py-0 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
+                  <HandHelping className="h-2 w-2" />
+                  Lent: {item.lentTo}
                 </Badge>
               )}
               {batchExpiries.length > 1 ? batchExpiries.map((entry, idx) => {
@@ -148,9 +141,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                   <Badge
                     key={`${entry.id}-${idx}`}
                     variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
-                    className={`text-[10px] px-1.5 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                    className={`text-[9px] px-1 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
                   >
-                    <Clock className="h-2.5 w-2.5" />
+                    <Clock className="h-2 w-2" />
                     {exp.toLocaleDateString()}
                   </Badge>
                 );
@@ -162,44 +155,15 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                 return (
                   <Badge
                     variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
-                    className={`text-[10px] px-1.5 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                    className={`text-[9px] px-1 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
                   >
-                    <Clock className="h-2.5 w-2.5" />
-                    {isExpired ? "Expired" : `${exp.toLocaleDateString()}`}
+                    <Clock className="h-2 w-2" />
+                    {isExpired ? "Expired" : exp.toLocaleDateString()}
                   </Badge>
                 );
               })()}
             </div>
           </div>
-        </div>
-
-        {/* Action buttons row */}
-        <div className="flex items-center justify-end gap-0.5 -mt-0.5">
-          {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
-            isLent ? (
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-orange-500" onClick={() => onLend(item.id, null, null)} title="Mark as returned">
-                <Undo2 className="h-2.5 w-2.5" />
-              </Button>
-            ) : (
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }} title="Lend item">
-                <HandHelping className="h-2.5 w-2.5" />
-              </Button>
-            )
-          )}
-          {onMove && (
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onMove(item)} title="Move">
-              <ArrowRightLeft className="h-2.5 w-2.5" />
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(item)} title="Edit">
-            <Pencil className="h-2.5 w-2.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(item.id)} title="Delete">
-            <Trash2 className="h-2.5 w-2.5" />
-          </Button>
-          <span className="text-muted-foreground cursor-pointer ml-1" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-          </span>
         </div>
 
         {/* Expanded details */}
