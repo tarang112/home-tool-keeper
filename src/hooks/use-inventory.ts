@@ -579,6 +579,19 @@ export const MAIN_CATEGORIES: MainCategory[] = [
     ],
   },
   {
+    value: "building-materials", label: "Building Materials", icon: "🧱",
+    subcategories: [
+      { value: "lumber", label: "Lumber & Wood" },
+      { value: "concrete-masonry", label: "Concrete & Masonry" },
+      { value: "bricks-blocks", label: "Bricks & Blocks" },
+      { value: "drywall-insulation", label: "Drywall & Insulation" },
+      { value: "roofing", label: "Roofing Materials" },
+      { value: "doors-windows", label: "Doors & Windows" },
+      { value: "flooring", label: "Flooring" },
+      { value: "siding", label: "Siding & Cladding" },
+    ],
+  },
+  {
     value: "other", label: "Other", icon: "📦",
     subcategories: [],
   },
