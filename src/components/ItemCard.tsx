@@ -180,9 +180,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
         </div>
 
         {/* Batch entries - show each entry's qty + expiry, sorted nearest-expiry first */}
-        {/* Batch expiry badges - all in one row */}
+        {/* Batch entries - each with expiry + actions */}
         {batchEntries.length > 1 && (
-          <div className="flex items-center gap-1.5 flex-wrap pl-6">
+          <div className="space-y-0.5">
             {batchEntries
               .sort((a, b) => {
                 if (!a.expirationDate && !b.expirationDate) return 0;
@@ -202,11 +202,31 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                 const expiryLabel = exp
                   ? diffDays! < 0 ? "Expired" : exp.toLocaleDateString()
                   : "no expiry";
+                const entryItem = allItems?.find((i) => i.id === entry.id);
                 return (
-                  <Badge key={entry.id} className={`text-[9px] px-1.5 py-0 gap-0.5 ${expiryColor}`}>
-                    <Clock className="h-2 w-2" />
-                    {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? entry.quantityUnit : ""} · {expiryLabel}
-                  </Badge>
+                  <div key={entry.id} className="flex items-center justify-between gap-1 pl-6">
+                    <div className="flex items-center gap-1.5">
+                      <Badge className={`text-[9px] px-1.5 py-0 gap-0.5 ${expiryColor}`}>
+                        <Clock className="h-2 w-2" />
+                        {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? entry.quantityUnit : ""} · {expiryLabel}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-0 shrink-0">
+                      {onMove && entryItem && (
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onMove(entryItem)} title="Move">
+                          <ArrowRightLeft className="h-2.5 w-2.5 text-muted-foreground" />
+                        </Button>
+                      )}
+                      {entryItem && (
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(entryItem)} title="Edit">
+                          <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onDelete(entry.id)} title="Delete">
+                        <Trash2 className="h-2.5 w-2.5 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
                 );
               })}
           </div>
