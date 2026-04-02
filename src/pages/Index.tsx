@@ -522,8 +522,17 @@ const Index = () => {
         onDelete={deleteItem}
         customLocations={customLocations.map((l) => l.name)}
         houseId={effectiveHouseId}
+        externalOpen={voiceOpen}
+        onExternalOpenChange={setVoiceOpen}
       />
       <InstallBanner />
+      <BottomActionBar
+        onAdd={() => setDialogOpen(true)}
+        onBarcode={() => { setBarcodeMode(true); setDialogOpen(true); }}
+        onReceipt={() => setScannerOpen(true)}
+        onEmail={() => setEmailOpen(true)}
+        onVoice={() => setVoiceOpen(true)}
+      />
     </div>
 
     <Dialog open={!scannerOpen && !!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
