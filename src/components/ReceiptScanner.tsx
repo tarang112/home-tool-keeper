@@ -98,11 +98,24 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
     const exact = existingItems.find((item) => normalizeName(item.name) === normalized);
     if (exact) return exact;
 
-    return existingItems.find((item) => {
+    // Substring match for longer names
+    const substringMatch = existingItems.find((item) => {
       const existingNormalized = normalizeName(item.name);
       const minLen = Math.min(existingNormalized.length, normalized.length);
-      return minLen >= 8 && (existingNormalized.includes(normalized) || normalized.includes(existingNormalized));
-    }) || null;
+      return minLen >= 4 && (existingNormalized.includes(normalized) || normalized.includes(existingNormalized));
+    });
+    if (substringMatch) return substringMatch;
+
+    // Word-based fuzzy: if all words of the shorter name appear in the longer
+    const words = normalized.split(" ").filter(w => w.length >= 3);
+    if (words.length >= 1) {
+      return existingItems.find((item) => {
+        const existingNormalized = normalizeName(item.name);
+        return words.every(w => existingNormalized.includes(w));
+      }) || null;
+    }
+
+    return null;
   }, [existingItems]);
 
   const handleFile = useCallback((file: File) => {
