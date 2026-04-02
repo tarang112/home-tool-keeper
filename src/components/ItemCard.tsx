@@ -94,7 +94,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
 
   return (
     <Card className={`animate-slide-up border-l-[3px] ${borderColor}`}>
-      <CardContent className="px-3 py-2.5 space-y-1.5">
+      <CardContent className="px-3 py-2 space-y-0.5">
         {/* Row 1: icon + name + quantity controls */}
         <div className="flex items-center gap-2">
           {/* Small category icon or thumbnail */}
