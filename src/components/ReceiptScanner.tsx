@@ -175,7 +175,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
           totalPrice: item.totalPrice ?? null,
           selected: true,
           editing: false,
-          duplicateAction: existing ? "update" : "add",
+          duplicateAction: existing ? "replace" : "add",
         };
       });
 
