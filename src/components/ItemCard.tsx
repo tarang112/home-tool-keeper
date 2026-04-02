@@ -94,9 +94,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
 
   return (
     <Card className={`animate-slide-up border-l-[3px] ${borderColor}`}>
-      <CardContent className="px-3 py-2 space-y-1">
+      <CardContent className="px-3 py-2.5 space-y-1.5">
         {/* Row 1: icon + name + quantity controls */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {/* Small category icon or thumbnail */}
           <div
             className="shrink-0 cursor-pointer"
@@ -113,12 +113,12 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
               <span className="text-base">{categoryIcon}</span>
             )}
           </div>
-          <h3 className="font-heading font-bold text-sm leading-tight truncate flex-1 min-w-0">
+          <h3 className="font-heading font-bold text-[15px] leading-tight truncate flex-1 min-w-0">
             {item.name}
           </h3>
-          <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           {/* Quantity controls */}
-          <div className="flex items-center gap-0.5 shrink-0 ml-1">
+          <div className="flex items-center gap-1 shrink-0 ml-1">
             <Button variant="outline" size="icon" className="h-6 w-6 rounded-full" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
               <Minus className="h-3 w-3" />
             </Button>
@@ -131,58 +131,59 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           </div>
         </div>
 
-        {/* Row 2: category > subcategory · location · expiry */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">
-            {categoryLabel}{subLabel ? ` › ${subLabel}` : ""}
-          </Badge>
-          {item.location && (
-            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-              <MapPin className="h-2.5 w-2.5" />
-              {item.location}
-            </span>
-          )}
-          {expiryTag && (
-            <Badge
-              variant={expiryTag.color === "text-destructive" ? "destructive" : expiryTag.color === "text-amber-500" ? "default" : "outline"}
-              className={`text-[10px] px-1.5 py-0 gap-0.5 ${expiryTag.color === "text-amber-500" ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-            >
-              <Clock className="h-2.5 w-2.5" />
-              {expiryTag.label.replace("Exp ", "")}
+        {/* Row 2: category/location/expiry on left, action icons on right */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 font-medium">
+              {categoryLabel}{subLabel ? ` › ${subLabel}` : ""}
             </Badge>
-          )}
-          {isLent && (
-            <Badge variant="default" className="text-[10px] px-1.5 py-0 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
-              <HandHelping className="h-2.5 w-2.5" />
-              {item.lentTo}
-            </Badge>
-          )}
-        </div>
-
-        {/* Row 3: action icons always visible */}
-        <div className="flex items-center justify-end gap-0.5">
-          {onMove && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move">
-              <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground" />
+            {item.location && (
+              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                <MapPin className="h-2.5 w-2.5" />
+                {item.location}
+              </span>
+            )}
+            {expiryTag && (
+              <Badge
+                variant={expiryTag.color === "text-destructive" ? "destructive" : expiryTag.color === "text-amber-500" ? "default" : "outline"}
+                className={`text-[10px] px-1.5 py-0.5 gap-0.5 ${expiryTag.color === "text-amber-500" ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+              >
+                <Clock className="h-2.5 w-2.5" />
+                {expiryTag.label.replace("Exp ", "")}
+              </Badge>
+            )}
+            {isLent && (
+              <Badge variant="default" className="text-[10px] px-1.5 py-0.5 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
+                <HandHelping className="h-2.5 w-2.5" />
+                {item.lentTo}
+              </Badge>
+            )}
+          </div>
+          {/* Action icons */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            {onMove && (
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move">
+                <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            )}
+            {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
+              isLent ? (
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-orange-500" onClick={() => onLend(item.id, null, null)} title="Return">
+                  <Undo2 className="h-3.5 w-3.5" />
+                </Button>
+              ) : (
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }} title="Lend">
+                  <HandHelping className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              )
+            )}
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)} title="Edit">
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
-          )}
-          {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
-            isLent ? (
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-orange-500" onClick={() => onLend(item.id, null, null)} title="Return">
-                <Undo2 className="h-3.5 w-3.5" />
-              </Button>
-            ) : (
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }} title="Lend">
-                <HandHelping className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            )
-          )}
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)} title="Edit">
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(item.id)} title="Delete">
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-          </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(item.id)} title="Delete">
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          </div>
         </div>
 
         {/* Lend dialog */}
