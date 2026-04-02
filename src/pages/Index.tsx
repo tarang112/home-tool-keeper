@@ -115,7 +115,11 @@ const Index = () => {
     });
   }, []);
   const filtered = useMemo(() => {
+    const isOutOfStockFilter = search.trim().toLowerCase() === "qty:0";
     return items.filter((item) => {
+      if (isOutOfStockFilter) {
+        return item.quantity === 0 && (activeCategory === "all" || item.category === activeCategory);
+      }
       const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.location.toLowerCase().includes(search.toLowerCase()) ||
         item.notes.toLowerCase().includes(search.toLowerCase()) ||
