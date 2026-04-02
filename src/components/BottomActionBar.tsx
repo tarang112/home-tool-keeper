@@ -22,7 +22,7 @@ export function BottomActionBar({ onAdd, onBarcode, onReceipt, onEmail, onVoice 
     <div className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)]">
       <div className="bg-background/95 dark:bg-card/95 backdrop-blur-xl border-t">
         <div className="max-w-lg lg:max-w-5xl mx-auto flex items-end justify-around px-2 py-1.5">
-          <NavIcon icon={ScanBarcode} label="Scan" onClick={onBarcode} />
+          <NavIcon icon={Barcode} label="Scan" onClick={onBarcode} />
           <NavIcon icon={Camera} label="Receipt" onClick={onReceipt} />
           {/* Raised FAB */}
           <button onClick={onAdd} className="relative -mt-7 flex flex-col items-center gap-0.5">
