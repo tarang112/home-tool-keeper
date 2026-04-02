@@ -11,17 +11,17 @@ interface BottomActionBarProps {
 
 function BarcodeGlyph() {
   return (
-    <div className="flex flex-col items-center justify-center" aria-hidden="true">
-      <div className="flex h-7 items-end gap-[2px]">
-        <span className="h-6 w-[2px] rounded-full bg-foreground/85" />
-        <span className="h-5 w-[1.5px] rounded-full bg-foreground/85" />
-        <span className="h-7 w-[2.5px] rounded-full bg-foreground/85" />
-        <span className="h-4 w-[1.5px] rounded-full bg-foreground/85" />
-        <span className="h-6 w-[2px] rounded-full bg-foreground/85" />
-        <span className="h-5 w-[1.5px] rounded-full bg-foreground/85" />
-        <span className="h-7 w-[2.5px] rounded-full bg-foreground/85" />
+    <div className="flex flex-col items-center justify-center h-6 w-6" aria-hidden="true">
+      <div className="flex h-[18px] items-end gap-[1.5px]">
+        <span className="h-[16px] w-[1.5px] rounded-full bg-foreground/85" />
+        <span className="h-[13px] w-[1px] rounded-full bg-foreground/85" />
+        <span className="h-[18px] w-[2px] rounded-full bg-foreground/85" />
+        <span className="h-[11px] w-[1px] rounded-full bg-foreground/85" />
+        <span className="h-[16px] w-[1.5px] rounded-full bg-foreground/85" />
+        <span className="h-[13px] w-[1px] rounded-full bg-foreground/85" />
+        <span className="h-[18px] w-[2px] rounded-full bg-foreground/85" />
       </div>
-      <span className="mt-0.5 text-[7px] leading-none tracking-[0.14em] text-foreground/70">800949</span>
+      <span className="text-[5px] leading-none tracking-[0.1em] text-foreground/70">800949</span>
     </div>
   );
 }
