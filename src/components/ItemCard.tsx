@@ -101,13 +101,13 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           <div className="shrink-0" onClick={(e) => { if (hasPrimaryImg) { e.stopPropagation(); setZoomedImg(fullImg(primaryImage)); } }}>
             {hasPrimaryImg ? (
               <img
-                src={proxyImg(primaryImage, 160)}
+                src={proxyImg(primaryImage, 112)}
                 alt={item.name}
                 referrerPolicy="no-referrer"
-                className="h-16 w-16 rounded-lg object-cover bg-muted"
+                className="h-12 w-12 rounded-lg object-cover bg-muted"
               />
             ) : (
-              <div className="h-16 w-16 rounded-lg bg-muted/60 dark:bg-muted/30 flex items-center justify-center text-2xl">
+              <div className="h-12 w-12 rounded-lg bg-muted/60 dark:bg-muted/30 flex items-center justify-center text-xl">
                 {categoryIcon}
               </div>
             )}
