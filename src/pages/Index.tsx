@@ -91,11 +91,20 @@ const Index = () => {
   const [emailOpen, setEmailOpen] = useState(false);
   const [barcodeMode, setBarcodeMode] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [deletedItems, setDeletedItems] = useState<InventoryItem[]>([]);
   const [duplicatePrompt, setDuplicatePrompt] = useState<{
     existing: InventoryItem;
     incoming: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">;
     resolve: (action: "update" | "replace" | "cancel") => void;
   } | null>(null);
+
+  // Load deleted items when section is opened
+  useEffect(() => {
+    if (showDeleted) {
+      fetchDeletedItems().then(setDeletedItems);
+    }
+  }, [showDeleted, fetchDeletedItems]);
 
   const toggleCategory = useCallback((cat: string) => {
     setCollapsedCategories(prev => {
