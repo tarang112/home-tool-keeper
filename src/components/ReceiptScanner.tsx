@@ -238,13 +238,19 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
   };
 
   const setBulkDuplicateAction = (action: "update" | "replace") => {
+    let count = 0;
     setExtractedItems((prev) =>
       prev.map((item) => {
-        const existing = findExisting(item.name);
-        if (existing && item.selected) return { ...item, duplicateAction: action };
+        // Use either fresh lookup or existing duplicateAction to identify duplicates
+        const isDuplicate = findExisting(item.name) || (item.duplicateAction && item.duplicateAction !== "add");
+        if (isDuplicate && item.selected) {
+          count++;
+          return { ...item, duplicateAction: action };
+        }
         return item;
       })
     );
+    toast.success(`${action === "update" ? "Update qty" : "Replace"} set for all duplicates`);
   };
 
   const handleAddSelected = async () => {
@@ -363,7 +369,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
-  const duplicateCount = extractedItems.filter((i) => i.selected && findExisting(i.name)).length;
+  const duplicateCount = extractedItems.filter((i) => i.selected && (findExisting(i.name) || (i.duplicateAction && i.duplicateAction !== "add"))).length;
 
   const getCategoryBadge = (category: string, subcategory?: string) => {
     const cat = MAIN_CATEGORIES.find((c) => c.value === category);
