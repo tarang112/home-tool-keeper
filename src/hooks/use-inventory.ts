@@ -119,6 +119,9 @@ function rowToItem(row: any): InventoryItem {
     totalPrice: row.total_price ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    lentTo: row.lent_to || null,
+    lentAt: row.lent_at || null,
+    lentNotes: row.lent_notes || null,
   };
 }
 
