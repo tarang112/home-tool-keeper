@@ -79,13 +79,15 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
         ? "border-l-amber-500"
         : "border-l-emerald-500";
 
-  // Expiry/Lent tags for bottom-right
+  // Expiry/Lent tags for bottom-right — always show expiry if present
   const expiryTag = useMemo(() => {
     if (item.expirationDate) {
       const exp = new Date(item.expirationDate);
       const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
       if (diffDays < 0) return { label: "Expired", color: "text-destructive" };
-      if (diffDays <= 90) return { label: "Expiry", color: "text-amber-500" };
+      if (diffDays <= 7) return { label: `Exp ${exp.toLocaleDateString()}`, color: "text-destructive" };
+      if (diffDays <= 90) return { label: `Exp ${exp.toLocaleDateString()}`, color: "text-amber-500" };
+      return { label: `Exp ${exp.toLocaleDateString()}`, color: "text-muted-foreground" };
     }
     return null;
   }, [item.expirationDate]);
