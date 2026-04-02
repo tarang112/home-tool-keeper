@@ -315,12 +315,11 @@ export function AddItemDialog({
       await onEnsureLocation(customLocation.trim());
     }
 
-    const data = {
+    const baseData = {
       name: name.trim(),
       category,
       subcategory: subcategory || "",
       customCategory: category === "custom" ? customCategory.trim() : undefined,
-      quantity: Math.max(0, parseFloat(quantity) || 0),
       quantityUnit,
       location: finalLocation,
       locationDetail: locationDetail.trim(),
@@ -329,7 +328,6 @@ export function AddItemDialog({
       itemImage,
       notes: notes.trim(),
       barcode: barcode.trim(),
-      expirationDate: expirationDate ? format(expirationDate, 'yyyy-MM-dd') : null,
       houseId: editItem?.houseId || null,
       unitPrice: editItem?.unitPrice ?? null,
       totalPrice: editItem?.totalPrice ?? null,
@@ -338,10 +336,32 @@ export function AddItemDialog({
       lentNotes: editItem?.lentNotes ?? null,
     };
 
-    if (editItem && onUpdate) {
-      onUpdate(editItem.id, data);
+    if (batchEntries.length > 0) {
+      // Handle batch entries
+      for (const entry of batchEntries) {
+        const entryData = {
+          ...baseData,
+          quantity: Math.max(0, parseFloat(entry.quantity) || 0),
+          quantityUnit: entry.quantityUnit,
+          expirationDate: entry.expirationDate ? format(entry.expirationDate, 'yyyy-MM-dd') : null,
+        };
+        if (entry.id && onUpdate) {
+          onUpdate(entry.id, entryData);
+        } else {
+          onAdd(entryData);
+        }
+      }
     } else {
-      onAdd(data);
+      const data = {
+        ...baseData,
+        quantity: Math.max(0, parseFloat(quantity) || 0),
+        expirationDate: expirationDate ? format(expirationDate, 'yyyy-MM-dd') : null,
+      };
+      if (editItem && onUpdate) {
+        onUpdate(editItem.id, data);
+      } else {
+        onAdd(data);
+      }
     }
 
     onOpenChange(false);
