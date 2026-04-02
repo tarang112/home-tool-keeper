@@ -92,6 +92,7 @@ const Index = () => {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [barcodeMode, setBarcodeMode] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [showDeleted, setShowDeleted] = useState(false);
   const [deletedItems, setDeletedItems] = useState<InventoryItem[]>([]);
