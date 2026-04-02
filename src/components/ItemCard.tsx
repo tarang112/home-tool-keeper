@@ -158,9 +158,29 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
                 )}
               </div>
             )}
-            {item.notes && (
-              <p className="text-xs text-muted-foreground line-clamp-2">{item.notes}</p>
-            )}
+            {item.notes && (() => {
+              // Parse batch entries from notes for display
+              const lines = item.notes.split("\n");
+              const batchLines = lines.filter(l => /^(Previous|New batch):/i.test(l.trim()));
+              const otherLines = lines.filter(l => !/^(Previous|New batch|---)/i.test(l.trim()));
+              return (
+                <div className="space-y-1">
+                  {batchLines.length > 0 && (
+                    <div className="space-y-0.5">
+                      {batchLines.map((line, idx) => (
+                        <p key={idx} className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-2.5 w-2.5 shrink-0" />
+                          {line.trim()}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  {otherLines.filter(Boolean).length > 0 && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{otherLines.filter(Boolean).join(" · ")}</p>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Images */}
             {hasAnyImage && (
