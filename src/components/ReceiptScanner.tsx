@@ -170,7 +170,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
         return {
           ...applyDefaultExpiry(item),
           subcategory: item.subcategory || "",
-          location: item.location || "",
+          location: item.location || getDefaultLocationByCategory(item.category, item.subcategory),
           expirationDate: item.expirationDate || getDefaultExpiryDate(item.category, item.subcategory),
           unitPrice: item.unitPrice ?? null,
           totalPrice: item.totalPrice ?? null,
