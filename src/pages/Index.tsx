@@ -25,6 +25,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessCategories } from "@/config/business-categories";
 import { InstallBanner } from "@/components/InstallBanner";
 
+const normalizeGroupedItemName = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const getEarliestExpiry = (dates: Array<string | null | undefined>) => {
+  const validDates = dates.filter(Boolean) as string[];
+  if (validDates.length === 0) return null;
+  return [...validDates].sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0];
+};
+
 const Index = () => {
   const { user, signOut } = useAuth();
   const {
