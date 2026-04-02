@@ -21,18 +21,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { CustomCategory, CustomLocation } from "@/hooks/use-custom-options";
 
+interface BatchEntry {
+  id?: string; // existing entry ID (for edit mode)
+  quantity: string;
+  quantityUnit: string;
+  expirationDate: Date | undefined;
+}
+
 interface AddItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
   editItem?: InventoryItem | null;
   onUpdate?: (id: string, updates: Partial<Omit<InventoryItem, "id" | "createdAt">>) => void;
+  onDelete?: (id: string) => void;
   customCategories?: CustomCategory[];
   customLocations?: CustomLocation[];
   onEnsureCategory?: (name: string, icon?: string) => Promise<void>;
   onEnsureLocation?: (name: string) => Promise<void>;
   businessCategories?: MainCategory[];
   initialBarcodeScan?: boolean;
+  /** All inventory items - used to find sibling batch entries when editing */
+  allItems?: InventoryItem[];
 }
 
 export function AddItemDialog({
