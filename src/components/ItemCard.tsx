@@ -180,8 +180,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
         </div>
 
         {/* Batch entries - show each entry's qty + expiry, sorted nearest-expiry first */}
+        {/* Batch expiry badges - all in one row */}
         {batchEntries.length > 1 && (
-          <div className="space-y-0.5">
+          <div className="flex items-center gap-1.5 flex-wrap pl-6">
             {batchEntries
               .sort((a, b) => {
                 if (!a.expirationDate && !b.expirationDate) return 0;
@@ -193,35 +194,25 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                 const exp = entry.expirationDate ? new Date(entry.expirationDate) : null;
                 const diffDays = exp ? Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
                 const expiryColor = diffDays !== null
-                  ? diffDays < 0 ? "bg-destructive text-destructive-foreground" 
+                  ? diffDays < 0 ? "bg-destructive text-destructive-foreground"
                     : diffDays <= 7 ? "bg-destructive text-destructive-foreground"
                     : diffDays <= 90 ? "bg-amber-500 text-white"
                     : "bg-muted text-muted-foreground"
-                  : "";
+                  : "bg-muted text-muted-foreground";
                 const expiryLabel = exp
                   ? diffDays! < 0 ? "Expired" : exp.toLocaleDateString()
-                  : null;
+                  : "no expiry";
                 return (
-                  <div key={entry.id} className="flex items-center gap-1.5 pl-6 text-[10px]">
-                    <span className="text-muted-foreground font-medium min-w-[3ch] text-right">
-                      {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? ` ${entry.quantityUnit}` : ""}
-                    </span>
-                    {expiryLabel && (
-                      <Badge className={`text-[9px] px-1 py-0 gap-0.5 ${expiryColor}`}>
-                        <Clock className="h-2 w-2" />
-                        {expiryLabel}
-                      </Badge>
-                    )}
-                    {!expiryLabel && (
-                      <span className="text-muted-foreground/60">no expiry</span>
-                    )}
-                  </div>
+                  <Badge key={entry.id} className={`text-[9px] px-1.5 py-0 gap-0.5 ${expiryColor}`}>
+                    <Clock className="h-2 w-2" />
+                    {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? entry.quantityUnit : ""} · {expiryLabel}
+                  </Badge>
                 );
               })}
           </div>
         )}
 
-        {/* Single entry expiry badge (when not batched) */}
+        {/* Single entry expiry badge */}
         {batchEntries.length <= 1 && expiryTag && (
           <div className="flex items-center gap-1.5 pl-6">
             <Badge
