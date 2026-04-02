@@ -177,6 +177,32 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                 {item.lentTo}
               </Badge>
             )}
+          </div>
+          <div className="flex items-center gap-0.5 shrink-0">
+            {onMove && (
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move">
+                <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            )}
+            {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
+              isLent ? (
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-orange-500" onClick={() => onLend(item.id, null, null)} title="Return">
+                  <Undo2 className="h-3.5 w-3.5" />
+                </Button>
+              ) : (
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }} title="Lend">
+                  <HandHelping className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              )
+            )}
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)} title="Edit">
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(item.id)} title="Delete">
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          </div>
+        </div>
 
         {/* Per-entry controls - visible only when expanded */}
         {expanded && batchEntries.length > 1 && (
