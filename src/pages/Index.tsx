@@ -115,7 +115,11 @@ const Index = () => {
     });
   }, []);
   const filtered = useMemo(() => {
+    const isOutOfStockFilter = search.trim().toLowerCase() === "qty:0";
     return items.filter((item) => {
+      if (isOutOfStockFilter) {
+        return item.quantity === 0 && (activeCategory === "all" || item.category === activeCategory);
+      }
       const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.location.toLowerCase().includes(search.toLowerCase()) ||
         item.notes.toLowerCase().includes(search.toLowerCase()) ||
@@ -248,7 +252,7 @@ const Index = () => {
           onManage={() => setManageOpen(true)}
         />
 
-        <StatsBar items={items} />
+        <StatsBar items={items} onOutOfStockClick={() => setSearch("qty:0")} />
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
