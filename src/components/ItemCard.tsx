@@ -110,6 +110,12 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 max-w-[40vw] truncate" title={`${categoryLabel}${subLabel ? ` › ${subLabel}` : ""}`}>
               {categoryLabel}{subLabel ? ` › ${subLabel}` : ""}
             </Badge>
+            {isLent && (
+              <Badge variant="default" className="text-[10px] px-1.5 py-0 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
+                <HandHelping className="h-2.5 w-2.5" />
+                Lent to {item.lentTo}
+              </Badge>
+            )}
             {item.location && (
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 max-w-[30vw] truncate" title={item.location}>
                 <MapPin className="h-2.5 w-2.5 shrink-0" />{item.location}
