@@ -61,9 +61,14 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
   const hasPrimaryImg = !!primaryImage;
   const [zoomedImg, setZoomedImg] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [lendOpen, setLendOpen] = useState(false);
+  const [lendName, setLendName] = useState(item.lentTo || "");
+  const [lendNotes, setLendNotes] = useState(item.lentNotes || "");
   const hasAnyImage = hasPrimaryImg || hasLocationImg;
   const batchEntries = (item.batchEntries || []).filter((entry) => entry.quantity > 0);
   const batchExpiries = batchEntries.filter((entry) => !!entry.expirationDate).sort((a, b) => new Date(a.expirationDate!).getTime() - new Date(b.expirationDate!).getTime());
+  const isLent = !!item.lentTo;
+  const LENDABLE_CATEGORIES = ["hardware-tools", "building-materials", "electrical", "plumbing", "outdoor", "automotive"];
 
   return (
     <Card className="animate-slide-up">
