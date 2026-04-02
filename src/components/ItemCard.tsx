@@ -94,10 +94,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
 
   return (
     <Card className={`animate-slide-up border-l-[3px] ${borderColor}`}>
-      <CardContent className="px-3 py-2 space-y-0.5">
-        {/* Row 1: icon + name + quantity controls */}
+      <CardContent className="px-3 py-2.5 space-y-1">
+        {/* Row 1: icon + name + chevron + −/qty/+ */}
         <div className="flex items-center gap-2">
-          {/* Small category icon or thumbnail */}
           <div
             className="shrink-0 cursor-pointer"
             onClick={() => { if (hasPrimaryImg) setZoomedImg(fullImg(primaryImage)); }}
@@ -116,8 +115,13 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           <h3 className="font-heading font-bold text-[15px] leading-tight truncate flex-1 min-w-0">
             {item.name}
           </h3>
-          {/* Quantity controls */}
-          <div className="flex items-center gap-1 shrink-0 ml-1">
+          <button onClick={() => setExpanded((v) => !v)} className="shrink-0 p-0.5 hover:opacity-70">
+            {expanded
+              ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            }
+          </button>
+          <div className="flex items-center gap-1 shrink-0">
             <Button variant="outline" size="icon" className="h-6 w-6 rounded-full" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
               <Minus className="h-3 w-3" />
             </Button>
@@ -130,8 +134,8 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           </div>
         </div>
 
-        {/* Row 2: category/location/expiry on left, action icons on right */}
-        <div className="flex items-center justify-between gap-2">
+        {/* Row 2: badges left, action icons right */}
+        <div className="flex items-center justify-between gap-1">
           <div className="flex items-center gap-1.5 flex-wrap min-w-0">
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 font-medium">
               {categoryLabel}{subLabel ? ` › ${subLabel}` : ""}
@@ -158,7 +162,6 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
               </Badge>
             )}
           </div>
-          {/* Action icons */}
           <div className="flex items-center gap-0.5 shrink-0">
             {onMove && (
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move">
@@ -184,6 +187,91 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
             </Button>
           </div>
         </div>
+
+        {/* Expanded details */}
+        {expanded && (
+          <div className="mt-1.5 pt-1.5 border-t space-y-1.5 animate-fade-in">
+            {item.location && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {item.location}
+                {item.locationDetail && ` · ${item.locationDetail}`}
+              </span>
+            )}
+            {(item.unitPrice != null || item.totalPrice != null) && (
+              <div className="flex items-center gap-2 text-xs">
+                {item.totalPrice != null && (
+                  <Badge variant="secondary" className="text-xs gap-0.5">
+                    💰 ${item.totalPrice.toFixed(2)}
+                  </Badge>
+                )}
+                {item.unitPrice != null && (
+                  <span className="text-muted-foreground">${item.unitPrice.toFixed(2)}/ea</span>
+                )}
+              </div>
+            )}
+            {item.sharedFromHouse && (
+              <Badge variant="outline" className="text-xs gap-1">
+                <Share2 className="h-3 w-3" />
+                Shared from {item.sharedFromHouse}
+              </Badge>
+            )}
+            {item.barcode && (
+              <p className="text-xs text-muted-foreground font-mono">Barcode: {item.barcode}</p>
+            )}
+            {item.notes && (() => {
+              const lines = item.notes.split("\n");
+              const receiptLines = lines.filter(l => /^Receipt:\s/i.test(l.trim()));
+              const otherLines = lines.filter(l => !/^(Previous|New batch|---|Receipt:)/i.test(l.trim()));
+              return (
+                <div className="space-y-1">
+                  {receiptLines.length > 0 && receiptLines.map((line, idx) => {
+                    const rest = line.trim().replace(/^Receipt:\s*/i, "");
+                    const storeDateMatch = item.notes?.match(/Store:\s*(.+?)(?:\s*·\s*Date:\s*(.+?))?$/m);
+                    return (
+                      <span key={`receipt-${idx}`} className="text-xs text-muted-foreground">
+                        {storeDateMatch?.[1] && `Store: ${storeDateMatch[1]}`}
+                        {storeDateMatch?.[2] && ` · Date: ${storeDateMatch[2]}`}
+                        {storeDateMatch?.[2] && " · "}
+                        <a href={rest} target="_blank" rel="noopener noreferrer" className="text-primary underline">View Receipt</a>
+                      </span>
+                    );
+                  })}
+                  {otherLines.filter(Boolean).length > 0 && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{otherLines.filter(Boolean).join(" · ")}</p>
+                  )}
+                </div>
+              );
+            })()}
+            {/* Images */}
+            {hasAnyImage && (
+              <div className="flex gap-2 flex-wrap">
+                {hasPrimaryImg && (
+                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(fullImg(primaryImage))}>
+                    <p className="text-[10px] text-muted-foreground mb-1">{hasItemImg ? "Item" : "Product"}</p>
+                    <img
+                      src={proxyImg(primaryImage)}
+                      alt={item.name}
+                      referrerPolicy="no-referrer"
+                      className="h-20 max-w-[120px] object-contain rounded-md bg-white border"
+                      onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+                {hasLocationImg && (
+                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(item.locationImage || "")}>
+                    <p className="text-[10px] text-muted-foreground mb-1">Location</p>
+                    <img
+                      src={item.locationImage}
+                      alt="Location"
+                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Lend dialog */}
         <Dialog open={lendOpen} onOpenChange={setLendOpen}>
