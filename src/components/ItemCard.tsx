@@ -23,8 +23,15 @@ function fullImg(url?: string) {
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=800&h=800&fit=contain&bg=white`;
 }
 
+interface ItemCardBatchEntry {
+  id: string;
+  quantity: number;
+  quantityUnit: string;
+  expirationDate: string | null;
+}
+
 interface ItemCardProps {
-  item: InventoryItem;
+  item: InventoryItem & { batchEntries?: ItemCardBatchEntry[] };
   onAdjust: (id: string, delta: number) => void;
   onEdit: (item: InventoryItem) => void;
   onDelete: (id: string) => void;
@@ -42,12 +49,13 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
   const hasItemImg = !!item.itemImage;
   const hasProductImg = !!item.productImage;
   const hasLocationImg = !!item.locationImage;
-  // Prefer item image over product image for display; only show one primary image
   const primaryImage = hasItemImg ? item.itemImage : (hasProductImg ? item.productImage : "");
   const hasPrimaryImg = !!primaryImage;
   const [zoomedImg, setZoomedImg] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const hasAnyImage = hasPrimaryImg || hasLocationImg;
+  const batchEntries = (item.batchEntries || []).filter((entry) => entry.quantity > 0);
+  const batchExpiries = batchEntries.filter((entry) => !!entry.expirationDate);
 
   return (
     <Card className="animate-slide-up">
@@ -94,7 +102,22 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
                 <MapPin className="h-2.5 w-2.5 shrink-0" />{item.location}
               </Badge>
             )}
-            {item.expirationDate && (() => {
+            {batchExpiries.length > 1 ? batchExpiries.map((entry, idx) => {
+              const exp = new Date(entry.expirationDate!);
+              const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+              const isExpired = diffDays < 0;
+              const isExpiringSoon = diffDays >= 0 && diffDays <= 90;
+              return (
+                <Badge
+                  key={`${entry.id}-${idx}`}
+                  variant={isExpired ? "destructive" : isExpiringSoon ? "default" : "outline"}
+                  className={`text-[10px] px-1.5 py-0 gap-0.5 ${isExpiringSoon && !isExpired ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                >
+                  <Clock className="h-2.5 w-2.5" />
+                  {exp.toLocaleDateString()}
+                </Badge>
+              );
+            }) : item.expirationDate && (() => {
               const exp = new Date(item.expirationDate);
               const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
               const isExpired = diffDays < 0;
