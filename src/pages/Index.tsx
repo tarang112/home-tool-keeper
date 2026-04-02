@@ -70,7 +70,7 @@ const Index = () => {
       ? businessHouseIds
       : undefined;
 
-  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findDuplicateCandidate } = useInventory(effectiveHouseId, effectiveHouseIds, isAllPersonal);
+  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findDuplicateCandidate, restoreItem, fetchDeletedItems } = useInventory(effectiveHouseId, effectiveHouseIds, isAllPersonal);
   const {
     customCategories, customLocations,
     addCategory, updateCategory, deleteCategory,
