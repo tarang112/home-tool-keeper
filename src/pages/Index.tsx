@@ -344,6 +344,9 @@ const Index = () => {
 
       <ReceiptScanner
         onAdd={handleAddItem}
+        onUpdateItem={updateItem}
+        onDeleteItem={deleteItem}
+        existingItems={items}
         customLocations={customLocations.map((l) => l.name)}
         externalOpen={scannerOpen}
         onExternalOpenChange={setScannerOpen}
