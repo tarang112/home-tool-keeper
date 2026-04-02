@@ -55,7 +55,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
   const [expanded, setExpanded] = useState(false);
   const hasAnyImage = hasPrimaryImg || hasLocationImg;
   const batchEntries = (item.batchEntries || []).filter((entry) => entry.quantity > 0);
-  const batchExpiries = batchEntries.filter((entry) => !!entry.expirationDate);
+  const batchExpiries = batchEntries.filter((entry) => !!entry.expirationDate).sort((a, b) => new Date(a.expirationDate!).getTime() - new Date(b.expirationDate!).getTime());
 
   return (
     <Card className="animate-slide-up">
