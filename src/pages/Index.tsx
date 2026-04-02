@@ -422,7 +422,7 @@ const Index = () => {
       <InstallBanner />
     </div>
 
-    <Dialog open={!!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
+    <Dialog open={!scannerOpen && !!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Item Already Exists</DialogTitle>
