@@ -142,6 +142,28 @@ export function AddItemDialog({
     paint: "paint",
   };
 
+  const getDefaultExpiryForSubcategory = (value: string) => {
+    const normalized = value.trim().toLowerCase();
+    const nextDate = new Date();
+
+    if (normalized === "snacks") {
+      nextDate.setMonth(nextDate.getMonth() + 3);
+      return nextDate;
+    }
+
+    if (normalized === "frozen") {
+      nextDate.setMonth(nextDate.getMonth() + 6);
+      return nextDate;
+    }
+
+    if (normalized === "dairy") {
+      nextDate.setDate(nextDate.getDate() + 14);
+      return nextDate;
+    }
+
+    return undefined;
+  };
+
   const applyProduct = (p: any) => {
     if (p.name) setName(p.name);
     if (p.category) {
@@ -151,11 +173,9 @@ export function AddItemDialog({
         setCategory(mapped);
         if (p.subcategory && mainMatch.subcategories.some(s => s.value === p.subcategory)) {
           setSubcategory(p.subcategory);
-          // Auto-set 3-month expiry for snacks from barcode/URL lookup
-          if (p.subcategory === "snacks") {
-            const threeMonths = new Date();
-            threeMonths.setMonth(threeMonths.getMonth() + 3);
-            setExpirationDate(threeMonths);
+          const defaultExpiry = getDefaultExpiryForSubcategory(p.subcategory);
+          if (defaultExpiry && !expirationDate) {
+            setExpirationDate(defaultExpiry);
           }
         }
       }
@@ -244,16 +264,9 @@ export function AddItemDialog({
 
   const handleSubcategoryChange = (val: string) => {
     setSubcategory(val);
-    // Auto-set expiry for snacks (3 months) and frozen (6 months)
-    if (val === "snacks" && !expirationDate) {
-      const threeMonths = new Date();
-      threeMonths.setMonth(threeMonths.getMonth() + 3);
-      setExpirationDate(threeMonths);
-    }
-    if (val === "frozen" && !expirationDate) {
-      const sixMonths = new Date();
-      sixMonths.setMonth(sixMonths.getMonth() + 6);
-      setExpirationDate(sixMonths);
+    const defaultExpiry = getDefaultExpiryForSubcategory(val);
+    if (defaultExpiry && !expirationDate) {
+      setExpirationDate(defaultExpiry);
     }
     // Auto-set location for frozen/dairy/produce subcategories
     if (val === "frozen") setLocationMode("Freezer");
