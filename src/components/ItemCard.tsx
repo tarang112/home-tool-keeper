@@ -153,6 +153,17 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
             })()}
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
+            {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
+              isLent ? (
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-orange-500" onClick={() => onLend(item.id, null, null)} title="Mark as returned">
+                  <Undo2 className="h-2.5 w-2.5" />
+                </Button>
+              ) : (
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }} title="Lend item">
+                  <HandHelping className="h-2.5 w-2.5" />
+                </Button>
+              )
+            )}
             {onMove && (
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onMove(item)} title="Move">
                 <ArrowRightLeft className="h-2.5 w-2.5" />
