@@ -408,7 +408,15 @@ const Index = () => {
     </div>
 
     {/* Duplicate item prompt dialog */}
-    <Dialog open={!!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
+    </>;
+  }
+
+  return (
+    <>
+      {renderContent()}
+
+      {/* Duplicate item prompt dialog */}
+      <Dialog open={!!duplicatePrompt} onOpenChange={(o) => { if (!o && duplicatePrompt) duplicatePrompt.resolve("cancel"); }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Item Already Exists</DialogTitle>
