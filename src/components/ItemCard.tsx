@@ -335,6 +335,74 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           </div>
         )}
 
+        {/* Lend dialog */}
+        <Dialog open={lendOpen} onOpenChange={setLendOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <HandHelping className="h-4 w-4" /> Lend "{item.name}"
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Lent to</label>
+                {houseMembers && houseMembers.length > 0 ? (
+                  <div className="space-y-2">
+                    <Select value={lendName} onValueChange={setLendName}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Select member..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {houseMembers.map((m) => (
+                          <SelectItem key={m.user_id} value={m.display_name || m.user_id}>
+                            {m.display_name || "Member"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      placeholder="Or type a name..."
+                      value={lendName}
+                      onChange={(e) => setLendName(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    placeholder="Enter name..."
+                    value={lendName}
+                    onChange={(e) => setLendName(e.target.value)}
+                    className="h-8 text-sm"
+                    autoFocus
+                  />
+                )}
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Notes (optional)</label>
+                <Input
+                  placeholder="e.g. Return by Friday"
+                  value={lendNotes}
+                  onChange={(e) => setLendNotes(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" size="sm" onClick={() => setLendOpen(false)}>Cancel</Button>
+              <Button
+                size="sm"
+                disabled={!lendName.trim()}
+                onClick={() => {
+                  onLend?.(item.id, lendName.trim(), lendNotes.trim() || null);
+                  setLendOpen(false);
+                }}
+              >
+                Mark as Lent
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Full-size image overlay */}
         {zoomedImg && (
           <div
