@@ -369,7 +369,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
-  const duplicateCount = extractedItems.filter((i) => i.selected && findExisting(i.name)).length;
+  const duplicateCount = extractedItems.filter((i) => i.selected && (findExisting(i.name) || (i.duplicateAction && i.duplicateAction !== "add"))).length;
 
   const getCategoryBadge = (category: string, subcategory?: string) => {
     const cat = MAIN_CATEGORIES.find((c) => c.value === category);
