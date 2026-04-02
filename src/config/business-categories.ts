@@ -432,6 +432,97 @@ export const BUSINESS_TYPES: BusinessType[] = [
       },
     ],
   },
+  {
+    value: "construction",
+    label: "Construction / Building",
+    icon: "🏗️",
+    categories: [
+      {
+        value: "building-materials", label: "Building Materials", icon: "🧱",
+        subcategories: [
+          { value: "lumber", label: "Lumber & Wood" },
+          { value: "concrete-masonry", label: "Concrete & Masonry" },
+          { value: "bricks-blocks", label: "Bricks & Blocks" },
+          { value: "steel-metal", label: "Steel & Metal" },
+          { value: "drywall", label: "Drywall & Insulation" },
+          { value: "roofing", label: "Roofing Materials" },
+          { value: "siding", label: "Siding & Cladding" },
+        ],
+      },
+      {
+        value: "plumbing-materials", label: "Plumbing", icon: "🔧",
+        subcategories: [
+          { value: "pipes-fittings", label: "Pipes & Fittings" },
+          { value: "valves-connectors", label: "Valves & Connectors" },
+          { value: "fixtures-sinks", label: "Fixtures & Sinks" },
+          { value: "water-heaters", label: "Water Heaters & Tanks" },
+        ],
+      },
+      {
+        value: "electrical-materials", label: "Electrical", icon: "⚡",
+        subcategories: [
+          { value: "wiring-cables", label: "Wiring & Cables" },
+          { value: "panels-breakers", label: "Panels & Breakers" },
+          { value: "switches-outlets", label: "Switches & Outlets" },
+          { value: "lighting-fixtures", label: "Lighting Fixtures" },
+          { value: "conduit", label: "Conduit & Raceways" },
+        ],
+      },
+      {
+        value: "flooring", label: "Flooring", icon: "🪵",
+        subcategories: [
+          { value: "tile", label: "Tile & Stone" },
+          { value: "hardwood", label: "Hardwood & Laminate" },
+          { value: "carpet", label: "Carpet & Vinyl" },
+          { value: "underlayment", label: "Underlayment & Adhesives" },
+        ],
+      },
+      {
+        value: "paint-finishing", label: "Paint & Finishing", icon: "🎨",
+        subcategories: [
+          { value: "interior-paint", label: "Interior Paint" },
+          { value: "exterior-paint", label: "Exterior Paint" },
+          { value: "primers-sealers", label: "Primers & Sealers" },
+          { value: "stain-varnish", label: "Stain & Varnish" },
+          { value: "brushes-rollers", label: "Brushes & Rollers" },
+        ],
+      },
+      {
+        value: "tools-equipment", label: "Tools & Equipment", icon: "🛠️",
+        subcategories: [
+          { value: "power-tools", label: "Power Tools" },
+          { value: "hand-tools", label: "Hand Tools" },
+          { value: "measuring-layout", label: "Measuring & Layout" },
+          { value: "safety-gear", label: "Safety Gear & PPE" },
+          { value: "ladders-scaffolding", label: "Ladders & Scaffolding" },
+        ],
+      },
+      {
+        value: "fasteners-hardware", label: "Fasteners & Hardware", icon: "🔩",
+        subcategories: [
+          { value: "screws-nails", label: "Screws & Nails" },
+          { value: "bolts-nuts", label: "Bolts & Nuts" },
+          { value: "anchors", label: "Anchors & Hangers" },
+          { value: "hinges-locks", label: "Hinges & Locks" },
+          { value: "adhesives-sealants", label: "Adhesives & Sealants" },
+        ],
+      },
+      {
+        value: "doors-windows", label: "Doors & Windows", icon: "🚪",
+        subcategories: [
+          { value: "interior-doors", label: "Interior Doors" },
+          { value: "exterior-doors", label: "Exterior Doors" },
+          { value: "windows", label: "Windows & Frames" },
+          { value: "glass", label: "Glass & Glazing" },
+          { value: "hardware-trim", label: "Hardware & Trim" },
+        ],
+      },
+      {
+        value: "construction-other", label: "Other", icon: "📦",
+        subcategories: [],
+      },
+    ],
+  },
 ];
 
 export function getBusinessCategories(businessType: string): MainCategory[] {
