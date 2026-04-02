@@ -224,6 +224,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
       const { data: ownedItems, error: ownedErr } = await supabase
         .from("inventory_items")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
 
       if (ownedErr) {
