@@ -177,6 +177,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
           .from("inventory_items")
           .select("*")
           .eq("house_id", houseId)
+          .is("deleted_at", null)
           .order("created_at", { ascending: false }),
         supabase
           .from("item_shares")
