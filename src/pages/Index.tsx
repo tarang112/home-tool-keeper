@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
-import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +70,7 @@ const Index = () => {
       ? businessHouseIds
       : undefined;
 
-  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findDuplicateCandidate } = useInventory(effectiveHouseId, effectiveHouseIds, isAllPersonal);
+  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findDuplicateCandidate, restoreItem, fetchDeletedItems } = useInventory(effectiveHouseId, effectiveHouseIds, isAllPersonal);
   const {
     customCategories, customLocations,
     addCategory, updateCategory, deleteCategory,
@@ -91,11 +91,20 @@ const Index = () => {
   const [emailOpen, setEmailOpen] = useState(false);
   const [barcodeMode, setBarcodeMode] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [deletedItems, setDeletedItems] = useState<InventoryItem[]>([]);
   const [duplicatePrompt, setDuplicatePrompt] = useState<{
     existing: InventoryItem;
     incoming: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">;
     resolve: (action: "update" | "replace" | "cancel") => void;
   } | null>(null);
+
+  // Load deleted items when section is opened
+  useEffect(() => {
+    if (showDeleted) {
+      fetchDeletedItems().then(setDeletedItems);
+    }
+  }, [showDeleted, fetchDeletedItems]);
 
   const toggleCategory = useCallback((cat: string) => {
     setCollapsedCategories(prev => {
@@ -384,6 +393,47 @@ const Index = () => {
             </div>
           );
         })()}
+
+        {/* Recently Deleted Section */}
+        <div className="mt-6 border-t pt-4">
+          <button
+            className="flex items-center gap-1.5 px-1 w-full text-left hover:opacity-80 transition-opacity"
+            onClick={() => setShowDeleted((v) => !v)}
+          >
+            {showDeleted ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+            <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+            <h2 className="text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wide">Recently Deleted</h2>
+            <span className="text-[10px] text-muted-foreground ml-1">(24h)</span>
+          </button>
+          {showDeleted && (
+            <div className="mt-2 space-y-2">
+              {deletedItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground px-1">No recently deleted items</p>
+              ) : (
+                deletedItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-md border bg-muted/30 opacity-70">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{item.name}</p>
+                      <p className="text-[10px] text-muted-foreground">Qty: {item.quantity} · {item.location || "No location"}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 shrink-0"
+                      onClick={async () => {
+                        await restoreItem(item.id);
+                        setDeletedItems((prev) => prev.filter((d) => d.id !== item.id));
+                      }}
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Restore
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </main>
 
       <AddItemDialog
