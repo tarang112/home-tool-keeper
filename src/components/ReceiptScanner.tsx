@@ -53,7 +53,7 @@ const applyDefaultExpiry = <T extends { category?: string | null; subcategory?: 
 };
 
 interface ReceiptScannerProps {
-  onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
+  onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => Promise<void> | void;
   customLocations: string[];
   externalOpen?: boolean;
   onExternalOpenChange?: (open: boolean) => void;
@@ -195,7 +195,7 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
     return parts.join("\n");
   };
 
-  const handleAddSelected = () => {
+  const handleAddSelected = async () => {
     const selected = extractedItems.filter((i) => i.selected);
     if (selected.length === 0) {
       toast.error("No items selected");
@@ -205,7 +205,7 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
     const notesText = buildNotesText();
 
     for (const item of selected) {
-      onAdd({
+      await onAdd({
         name: item.name,
         category: item.category,
         subcategory: item.subcategory || "",
@@ -265,7 +265,7 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
       )}
 
       <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else setOpen(true); }}>
-        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" /> Receipt Scanner
@@ -344,7 +344,7 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
                 </span>
               </div>
 
-              <div className="flex-1 min-h-0 max-h-[52vh] overflow-y-auto overscroll-contain pr-2 [scrollbar-color:hsl(var(--border))_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/80 [&::-webkit-scrollbar-track]:bg-transparent">
+              <div className="flex-1 min-h-0 max-h-[calc(90vh-13rem)] overflow-y-scroll overscroll-contain pr-2 [scrollbar-color:hsl(var(--border))_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/80 [&::-webkit-scrollbar-track]:bg-transparent">
                 <div className="space-y-1">
                   {extractedItems.map((item, i) => (
                     <div key={i} className={`p-2 rounded-md border text-sm transition-colors ${item.selected ? "bg-primary/5 border-primary/20" : "opacity-50"}`}>

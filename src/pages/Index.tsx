@@ -49,7 +49,7 @@ const Index = () => {
       ? businessHouseIds
       : undefined;
 
-  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity } = useInventory(effectiveHouseId, effectiveHouseIds, isAllPersonal);
+  const { items, loading, addItem, updateItem, deleteItem, adjustQuantity, findExpiredRepurchaseCandidate } = useInventory(effectiveHouseId, effectiveHouseIds, isAllPersonal);
   const {
     customCategories, customLocations,
     addCategory, updateCategory, deleteCategory,
@@ -100,7 +100,7 @@ const Index = () => {
     if (!open) { setEditItem(null); setBarcodeMode(false); }
   };
 
-  const handleAddItem = useCallback((item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
+  const handleAddItem = useCallback(async (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => {
     let houseIdForItem: string | null = null;
     if (isSpecificHouse) {
       houseIdForItem = selectedHouseId;
@@ -113,15 +113,36 @@ const Index = () => {
     } else if (isAllBusiness && businessHouseIds.length > 1) {
       houseIdForItem = businessHouseIds[0];
     }
-    addItem({ ...item, houseId: houseIdForItem });
+
+    const nextItem = { ...item, houseId: houseIdForItem };
+    const expiredMatch = findExpiredRepurchaseCandidate(nextItem);
+
+    if (expiredMatch) {
+      const replaceOldItem = window.confirm(
+        `An expired \"${expiredMatch.name}\" is already in inventory. Press OK to delete the old entry and add this fresh purchase, or Cancel to add the new quantity to the existing item.`
+      );
+
+      if (replaceOldItem) {
+        await deleteItem(expiredMatch.id);
+        await addItem(nextItem);
+      } else {
+        await updateItem(expiredMatch.id, {
+          quantity: expiredMatch.quantity + nextItem.quantity,
+          expirationDate: nextItem.expirationDate,
+        });
+      }
+    } else {
+      await addItem(nextItem);
+    }
+
     // Save defaults for future voice commands
-    saveDefaults(item.name, {
-      category: item.category,
-      subcategory: item.subcategory,
-      location: item.location,
-      quantityUnit: item.quantityUnit,
+    await saveDefaults(nextItem.name, {
+      category: nextItem.category,
+      subcategory: nextItem.subcategory,
+      location: nextItem.location,
+      quantityUnit: nextItem.quantityUnit,
     });
-  }, [isSpecificHouse, selectedHouseId, isAllPersonal, personalHouseIds, isAllBusiness, businessHouseIds, addItem, saveDefaults]);
+  }, [isSpecificHouse, selectedHouseId, isAllPersonal, personalHouseIds, isAllBusiness, businessHouseIds, addItem, deleteItem, findExpiredRepurchaseCandidate, saveDefaults, updateItem]);
 
   const handleMoveItem = (itemId: string, houseId: string | null) => {
     updateItem(itemId, { houseId });
