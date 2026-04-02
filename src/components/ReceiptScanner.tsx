@@ -325,7 +325,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
           notes: notesText,
           barcode: "",
           expirationDate: item.expirationDate || null,
-          houseId: null,
+          houseId: houseId ?? null,
           unitPrice: item.unitPrice ?? null,
           totalPrice: item.totalPrice ?? null,
         });
