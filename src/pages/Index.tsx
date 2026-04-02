@@ -56,6 +56,14 @@ const Index = () => {
   const businessHouseIds = useMemo(() => houses.filter(h => h.propertyType === "business").map(h => h.id), [houses]);
 
   const effectiveHouseId = isSpecificHouse ? selectedHouseId : null;
+
+  // Resolve house ID for imports (receipt scanner, email import)
+  const resolvedHouseIdForImport = useMemo(() => {
+    if (isSpecificHouse) return selectedHouseId;
+    if (isAllPersonal && personalHouseIds.length >= 1) return personalHouseIds[0];
+    if (isAllBusiness && businessHouseIds.length >= 1) return businessHouseIds[0];
+    return null;
+  }, [isSpecificHouse, selectedHouseId, isAllPersonal, personalHouseIds, isAllBusiness, businessHouseIds]);
   const effectiveHouseIds = isAllPersonal
     ? personalHouseIds
     : isAllBusiness
@@ -403,6 +411,7 @@ const Index = () => {
         customLocations={customLocations.map((l) => l.name)}
         externalOpen={scannerOpen}
         onExternalOpenChange={setScannerOpen}
+        houseId={resolvedHouseIdForImport}
       />
 
       <EmailImport
