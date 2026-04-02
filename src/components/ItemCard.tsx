@@ -39,11 +39,14 @@ interface ItemCardProps {
   onEdit: (item: InventoryItem) => void;
   onDelete: (id: string) => void;
   onMove?: (item: InventoryItem) => void;
+  onLend?: (id: string, lentTo: string | null, lentNotes: string | null) => void;
   /** All raw items for resolving batch entry editing */
   allItems?: InventoryItem[];
+  /** House members for lend-to selection */
+  houseMembers?: { user_id: string; display_name: string }[];
 }
 
-export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, allItems }: ItemCardProps) {
+export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, allItems, houseMembers }: ItemCardProps) {
   const allCat = ALL_CATEGORIES.find((c) => c.value === item.category);
   const cat = CATEGORIES.find((c) => c.value === item.category) || (allCat ? { value: allCat.value, label: allCat.label, icon: allCat.icon } : undefined);
   const subLabel = item.subcategory
