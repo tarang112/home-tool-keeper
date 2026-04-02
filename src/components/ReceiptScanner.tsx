@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,12 +18,39 @@ interface ExtractedItem {
   quantity: number;
   quantityUnit: string;
   location: string;
-  expirationDate?: string;
+  expirationDate?: string | null;
   unitPrice?: number;
   totalPrice?: number;
   selected: boolean;
   editing?: boolean;
 }
+
+const DEFAULT_EXPIRY_DAYS: Record<string, number> = {
+  snack: 90,
+  snacks: 90,
+  dairy: 14,
+  frozen: 180,
+};
+
+const normalizeValue = (value?: string | null) => (value ?? "").trim().toLowerCase();
+
+const getDefaultExpiryDate = (category?: string | null, subcategory?: string | null) => {
+  const key = normalizeValue(subcategory) || normalizeValue(category);
+  const days = DEFAULT_EXPIRY_DAYS[key];
+
+  if (!days) return null;
+
+  const expiryDate = new Date();
+  expiryDate.setDate(expiryDate.getDate() + days);
+  return expiryDate.toISOString().split("T")[0];
+};
+
+const applyDefaultExpiry = <T extends { category?: string | null; subcategory?: string | null; expirationDate?: string | null }>(item: T): T => {
+  if (item.expirationDate) return item;
+
+  const defaultExpiryDate = getDefaultExpiryDate(item.category, item.subcategory);
+  return defaultExpiryDate ? { ...item, expirationDate: defaultExpiryDate } : item;
+};
 
 interface ReceiptScannerProps {
   onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
@@ -98,10 +124,10 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
       }
 
       const items: ExtractedItem[] = (data.items || []).map((item: any) => ({
-        ...item,
+        ...applyDefaultExpiry(item),
         subcategory: item.subcategory || "",
         location: item.location || "",
-        expirationDate: item.expirationDate || null,
+        expirationDate: item.expirationDate || getDefaultExpiryDate(item.category, item.subcategory),
         unitPrice: item.unitPrice ?? null,
         totalPrice: item.totalPrice ?? null,
         selected: true,
@@ -148,7 +174,17 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
 
   const updateItemField = (index: number, field: keyof ExtractedItem, value: any) => {
     setExtractedItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+      prev.map((item, i) => {
+        if (i !== index) return item;
+
+        const updatedItem = { ...item, [field]: value };
+
+        if ((field === "category" || field === "subcategory") && !updatedItem.expirationDate) {
+          updatedItem.expirationDate = getDefaultExpiryDate(updatedItem.category, updatedItem.subcategory);
+        }
+
+        return updatedItem;
+      })
     );
   };
 
@@ -308,8 +344,8 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
                 </span>
               </div>
 
-              <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: "50vh" }}>
-                <div className="space-y-1 pr-2">
+              <div className="flex-1 min-h-0 max-h-[52vh] overflow-y-auto overscroll-contain pr-2 [scrollbar-color:hsl(var(--border))_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/80 [&::-webkit-scrollbar-track]:bg-transparent">
+                <div className="space-y-1">
                   {extractedItems.map((item, i) => (
                     <div key={i} className={`p-2 rounded-md border text-sm transition-colors ${item.selected ? "bg-primary/5 border-primary/20" : "opacity-50"}`}>
                       <div className="flex items-center gap-2">
@@ -388,7 +424,7 @@ export function ReceiptScanner({ onAdd, customLocations, externalOpen, onExterna
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
 
               <div className="flex gap-2 pt-2">
                 <Button variant="outline" className="flex-1" onClick={() => { setImagePreview(null); setExtractedItems([]); setStoreName(""); setStoreDetails(""); }}>
