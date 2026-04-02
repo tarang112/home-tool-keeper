@@ -62,6 +62,9 @@ serve(async (req) => {
 
     const today = new Date().toISOString().split("T")[0];
     const produceExpiry = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
+    const snackExpiry = new Date(Date.now() + 90 * 86400000).toISOString().split("T")[0];
+    const frozenExpiry = new Date(Date.now() + 180 * 86400000).toISOString().split("T")[0];
+    const dairyExpiry = new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0];
     const medicineExpiry = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
 
     const systemPrompt = `You are an AI assistant for an inventory management app called HomeStock.
@@ -69,7 +72,7 @@ Analyze the receipt or order screenshot image and extract ALL purchasable items 
 
 Available categories with their subcategories:
 - groceries: dairy, snacks, beverages, canned, frozen, bakery, condiments
-- produce: fruits, vegetables, herbs (DEFAULT EXPIRY: 7 days → ${produceExpiry})
+- produce: fruits, vegetables, herbs (DEFAULT EXPIRY: 7 days → ${produceExpiry}, DEFAULT LOCATION: Refrigerator)
 - household: cleaning, kitchen, bathroom, laundry, storage
 - hardware-tools: hand-tools, power-tools, fasteners, measuring, safety
 - electrical: wiring, lighting, switches, batteries
@@ -82,25 +85,38 @@ Available categories with their subcategories:
 - office-supply: desk-accessories, filing, printer-supplies, tech-accessories
 - other: (no subcategories)
 
-Available locations: ${(locations || []).join(", ")}
+DEFAULT LOCATIONS BY CATEGORY/SUBCATEGORY:
+- produce (all): Refrigerator
+- groceries/dairy: Refrigerator
+- groceries/frozen: Freezer (DEFAULT EXPIRY: 6 months → ${frozenExpiry})
+- groceries/snacks: Kitchen (DEFAULT EXPIRY: 3 months → ${snackExpiry})
+- groceries/beverages: Kitchen
+- groceries/canned: Kitchen
+- groceries/bakery: Kitchen
+- groceries/condiments: Refrigerator
+- household: Kitchen
+- medicine: Bathroom
 
-Known item defaults from past usage:
+Available custom locations: ${(locations || []).join(", ")}
+
+Known item defaults from past usage (THESE OVERRIDE the above defaults):
 ${defaultsContext || "None yet"}
 
 Today's date: ${today}
 
 Rules:
-- Extract EVERY purchasable line item from the receipt/screenshot. Skip taxes, totals, subtotals, discounts, payment info.
-- For each item, determine: name, category, subcategory, quantity, quantityUnit, and a suggested location.
-- ALWAYS assign the most appropriate subcategory.
-- Use clean, readable names (e.g. "Strawberries" not "STRWBRY 1LB ORG").
+- Extract EVERY purchasable line item. Skip taxes, totals, subtotals, discounts, payment info.
+- For each item: name, category, subcategory, quantity, quantityUnit, location, expirationDate.
+- ALWAYS pick the MOST SPECIFIC subcategory. Chips, cookies, crackers, candy → snacks. Frozen meals, frozen vegetables → frozen. Fresh fruits/vegetables → produce.
+- Use clean, readable names (e.g. "Ruffles Original Chips" not "RUFFLES ORG 10OZ").
 - If quantity is listed, use it. Otherwise default to 1.
 - Detect units from the receipt (lb, oz, kg, etc). Default to "pcs" if unclear.
-- For produce items: set expirationDate to ${produceExpiry}.
-- For medicine items: set expirationDate to ${medicineExpiry}.
-- If an item was in past defaults, use those defaults for category/location/unit unless the receipt says otherwise.
-- Extract the price per unit (unitPrice) and total line price (totalPrice) for each item as numbers (e.g. 3.99 not "$3.99"). If quantity > 1, unitPrice = totalPrice / quantity.
-- Also extract the store name if visible.`;
+- Assign default locations based on the category rules above.
+- Assign default expiration dates based on the category rules above.
+- If an item was in past defaults, use those defaults for category/location/unit/expiry.
+- Extract unitPrice and totalPrice as numbers. If quantity > 1, unitPrice = totalPrice / quantity.
+- Extract the store name if visible.
+- Extract store details: address, phone, fax, email, website, order number, date. Format as structured text.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -143,6 +159,7 @@ Rules:
                   type: "object",
                   properties: {
                     storeName: { type: "string", description: "Name of the store if visible" },
+                    storeDetails: { type: "string", description: "Formatted store details: address, phone, fax, email, website, order number, receipt date. Each on a new line with label prefix like 'Address: ...', 'Phone: ...', 'Order #: ...', 'Date: ...'" },
                     items: {
                       type: "array",
                       items: {
@@ -177,19 +194,16 @@ Rules:
       console.error("AI gateway error:", aiResponse.status, errText);
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limited, please try again in a moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (aiResponse.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       return new Response(JSON.stringify({ error: "AI processing failed" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

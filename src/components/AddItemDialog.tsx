@@ -244,12 +244,21 @@ export function AddItemDialog({
 
   const handleSubcategoryChange = (val: string) => {
     setSubcategory(val);
-    // Auto-set 3-month expiry for snacks
+    // Auto-set expiry for snacks (3 months) and frozen (6 months)
     if (val === "snacks" && !expirationDate) {
       const threeMonths = new Date();
       threeMonths.setMonth(threeMonths.getMonth() + 3);
       setExpirationDate(threeMonths);
     }
+    if (val === "frozen" && !expirationDate) {
+      const sixMonths = new Date();
+      sixMonths.setMonth(sixMonths.getMonth() + 6);
+      setExpirationDate(sixMonths);
+    }
+    // Auto-set location for frozen/dairy/produce subcategories
+    if (val === "frozen") setLocationMode("Freezer");
+    if (val === "dairy" || val === "condiments") setLocationMode("Refrigerator");
+    if (val === "fruits" || val === "vegetables" || val === "herbs") setLocationMode("Refrigerator");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

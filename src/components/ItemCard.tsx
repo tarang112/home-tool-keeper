@@ -86,9 +86,14 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove }: ItemCardP
         {/* Row 2: badges + actions */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 max-w-[50vw] truncate" title={`${categoryLabel}${subLabel ? ` › ${subLabel}` : ""}`}>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 max-w-[40vw] truncate" title={`${categoryLabel}${subLabel ? ` › ${subLabel}` : ""}`}>
               {categoryLabel}{subLabel ? ` › ${subLabel}` : ""}
             </Badge>
+            {item.location && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 max-w-[30vw] truncate" title={item.location}>
+                <MapPin className="h-2.5 w-2.5 shrink-0" />{item.location}
+              </Badge>
+            )}
             {item.expirationDate && (() => {
               const exp = new Date(item.expirationDate);
               const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
