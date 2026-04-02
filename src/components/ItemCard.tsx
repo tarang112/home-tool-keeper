@@ -134,7 +134,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           </div>
         </div>
 
-        {/* Row 2: badges left, action icons right */}
+        {/* Row 2: badges + action icons */}
         <div className="flex items-center justify-between gap-1">
           <div className="flex items-center gap-1.5 flex-wrap min-w-0">
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 font-medium">
@@ -145,15 +145,6 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                 <MapPin className="h-2.5 w-2.5" />
                 {item.location}
               </span>
-            )}
-            {expiryTag && (
-              <Badge
-                variant={expiryTag.color === "text-destructive" ? "destructive" : expiryTag.color === "text-amber-500" ? "default" : "outline"}
-                className={`text-[10px] px-1.5 py-0.5 gap-0.5 ${expiryTag.color === "text-amber-500" ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-              >
-                <Clock className="h-2.5 w-2.5" />
-                {expiryTag.label.replace("Exp ", "")}
-              </Badge>
             )}
             {isLent && (
               <Badge variant="default" className="text-[10px] px-1.5 py-0.5 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
@@ -187,6 +178,61 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
             </Button>
           </div>
         </div>
+
+        {/* Batch entries - show each entry's qty + expiry, sorted nearest-expiry first */}
+        {batchEntries.length > 1 && (
+          <div className="space-y-0.5">
+            {batchEntries
+              .sort((a, b) => {
+                if (!a.expirationDate && !b.expirationDate) return 0;
+                if (!a.expirationDate) return 1;
+                if (!b.expirationDate) return -1;
+                return new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
+              })
+              .map((entry) => {
+                const exp = entry.expirationDate ? new Date(entry.expirationDate) : null;
+                const diffDays = exp ? Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+                const expiryColor = diffDays !== null
+                  ? diffDays < 0 ? "bg-destructive text-destructive-foreground" 
+                    : diffDays <= 7 ? "bg-destructive text-destructive-foreground"
+                    : diffDays <= 90 ? "bg-amber-500 text-white"
+                    : "bg-muted text-muted-foreground"
+                  : "";
+                const expiryLabel = exp
+                  ? diffDays! < 0 ? "Expired" : exp.toLocaleDateString()
+                  : null;
+                return (
+                  <div key={entry.id} className="flex items-center gap-1.5 pl-6 text-[10px]">
+                    <span className="text-muted-foreground font-medium min-w-[3ch] text-right">
+                      {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? ` ${entry.quantityUnit}` : ""}
+                    </span>
+                    {expiryLabel && (
+                      <Badge className={`text-[9px] px-1 py-0 gap-0.5 ${expiryColor}`}>
+                        <Clock className="h-2 w-2" />
+                        {expiryLabel}
+                      </Badge>
+                    )}
+                    {!expiryLabel && (
+                      <span className="text-muted-foreground/60">no expiry</span>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        )}
+
+        {/* Single entry expiry badge (when not batched) */}
+        {batchEntries.length <= 1 && expiryTag && (
+          <div className="flex items-center gap-1.5 pl-6">
+            <Badge
+              variant={expiryTag.color === "text-destructive" ? "destructive" : expiryTag.color === "text-amber-500" ? "default" : "outline"}
+              className={`text-[10px] px-1.5 py-0.5 gap-0.5 ${expiryTag.color === "text-amber-500" ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+            >
+              <Clock className="h-2.5 w-2.5" />
+              {expiryTag.label.replace("Exp ", "")}
+            </Badge>
+          </div>
+        )}
 
         {/* Expanded details */}
         {expanded && (
