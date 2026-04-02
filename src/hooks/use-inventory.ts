@@ -385,6 +385,9 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
       }
     }
     if (updates.houseId !== undefined) dbUpdates.house_id = updates.houseId || null;
+    if (updates.lentTo !== undefined) dbUpdates.lent_to = updates.lentTo || null;
+    if (updates.lentAt !== undefined) dbUpdates.lent_at = updates.lentAt || null;
+    if (updates.lentNotes !== undefined) dbUpdates.lent_notes = updates.lentNotes || null;
     if (updates.locationImage !== undefined) {
       if (updates.locationImage && !updates.locationImage.startsWith("http")) {
         dbUpdates.location_image_url = await uploadImage(updates.locationImage);
