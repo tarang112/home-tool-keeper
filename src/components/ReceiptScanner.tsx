@@ -286,7 +286,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
 
     for (const item of selected) {
       const existing = findExisting(item.name);
-      const duplicateAction = item.duplicateAction ?? (existing ? "update" : "add");
+      const duplicateAction = item.duplicateAction ?? (existing ? "replace" : "add");
 
       if (existing && duplicateAction === "update" && onUpdateItem) {
         const mergedNotes = existing.notes
