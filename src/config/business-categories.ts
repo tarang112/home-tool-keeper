@@ -81,6 +81,19 @@ export const BUSINESS_TYPES: BusinessType[] = [
         ],
       },
       {
+        value: "building-materials", label: "Building Materials", icon: "🧱",
+        subcategories: [
+          { value: "lumber", label: "Lumber & Wood" },
+          { value: "concrete-masonry", label: "Concrete & Masonry" },
+          { value: "drywall-insulation", label: "Drywall & Insulation" },
+          { value: "roofing", label: "Roofing Materials" },
+          { value: "flooring", label: "Flooring" },
+          { value: "doors-windows", label: "Doors & Windows" },
+          { value: "paint-supplies", label: "Paint & Supplies" },
+          { value: "fasteners-hardware", label: "Fasteners & Hardware" },
+        ],
+      },
+      {
         value: "hotel-other", label: "Other", icon: "📦",
         subcategories: [],
       },
