@@ -226,7 +226,7 @@ export function VoiceAssistant({
     <>
       {/* Listening / Processing / Confirming overlay */}
       {state !== "idle" && (
-        <div className="fixed inset-x-0 bottom-0 z-50 bg-background border-t shadow-2xl rounded-t-2xl p-4 animate-in slide-in-from-bottom">
+        <div className="fixed inset-x-0 bottom-20 z-50 bg-background border-t shadow-2xl rounded-t-2xl p-4 animate-in slide-in-from-bottom">
           <div className="max-w-lg mx-auto space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
