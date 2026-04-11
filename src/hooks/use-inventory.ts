@@ -205,6 +205,7 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
           .from("inventory_items")
           .select("*")
           .in("id", sharedIds)
+          .is("deleted_at", null)
           .order("created_at", { ascending: false });
         if (sharedItems) {
           const existingIds = new Set(allItems.map(i => i.id));
@@ -257,7 +258,8 @@ export function useInventory(houseId?: string | null, houseIds?: string[], inclu
             const { data: sharedItems } = await supabase
               .from("inventory_items")
               .select("*")
-              .in("id", missingIds);
+              .in("id", missingIds)
+              .is("deleted_at", null);
             if (sharedItems) {
               allItems = [...allItems, ...sharedItems.map(rowToItem)];
             }
