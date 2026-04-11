@@ -111,6 +111,7 @@ Rules:
 - Extract EVERY purchasable line item. Skip taxes, totals, subtotals, discounts, payment info.
 - For each item: name, category, subcategory, quantity, quantityUnit, location, expirationDate.
 - ALWAYS pick the MOST SPECIFIC subcategory. Chips, cookies, crackers, candy → snacks. Frozen meals, frozen vegetables → frozen. Fresh fruits/vegetables (bell pepper, tomato, onion, etc.) → produce/vegetables with location Refrigerator.
+- For electronics (TVs, phones, laptops, tablets, speakers, headphones, cameras, gaming consoles, smart home devices, chargers, cables, etc.): category MUST be "electronics" with appropriate subcategory. Set expirationDate to WARRANTY expiry (default 1 year: ${warrantyExpiry}).
 - Use clean, readable names (e.g. "Ruffles Original Chips" not "RUFFLES ORG 10OZ").
 - If quantity is listed, use it. Otherwise default to 1.
 - Detect units from the receipt (lb, oz, kg, etc). Default to "pcs" if unclear.
