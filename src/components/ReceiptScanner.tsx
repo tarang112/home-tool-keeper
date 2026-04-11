@@ -443,7 +443,7 @@ export function ReceiptScanner({ onAdd, onUpdateItem, onDeleteItem, existingItem
                   <Camera className="h-4 w-4" /> Take Photo
                 </Button>
               </div>
-              <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/heic,.png,.jpg,.jpeg,.webp,.heic" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFile(file); e.target.value = ""; }} />
+              <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFile(file); e.target.value = ""; }} />
               <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFile(file); e.target.value = ""; }} />
             </div>
           )}
