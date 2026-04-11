@@ -66,6 +66,7 @@ serve(async (req) => {
     const frozenExpiry = new Date(Date.now() + 180 * 86400000).toISOString().split("T")[0];
     const dairyExpiry = new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0];
     const medicineExpiry = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
+    const warrantyExpiry = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
 
     const systemPrompt = `You are an AI assistant for an inventory management app called HomeStock.
 Analyze the receipt or order screenshot image and extract ALL purchasable items from it.

@@ -63,6 +63,7 @@ serve(async (req) => {
     const today = new Date().toISOString().split("T")[0];
     const produceExpiry = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
     const medicineExpiry = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
+    const warrantyExpiry = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
 
     const systemPrompt = `You are an AI assistant for HomeStock inventory app.
 Parse the order confirmation email and extract ALL purchased items.
@@ -81,6 +82,7 @@ Available categories with subcategories:
 - outdoor: garden-tools, seeds-plants, fertilizer, outdoor-furniture
 - automotive: fluids, parts, car-care
 - medicine: prescription, otc, vitamins, first-aid, medical-devices (DEFAULT EXPIRY: ${medicineExpiry})
+- electronics: phones-tablets, computers, tv-monitors, audio, cameras, smart-home, gaming, wearables, accessories (DEFAULT WARRANTY EXPIRY: 1 year → ${warrantyExpiry}. For electronics, expirationDate = warranty expiration date)
 - stationery: pens-pencils, notebooks, paper, art-supplies
 - office-supply: desk-accessories, filing, printer-supplies, tech-accessories
 - other: (no subcategories)
@@ -96,6 +98,7 @@ Rules:
 - Extract EVERY purchased item. Skip shipping, taxes, totals, payment info, promo codes, tracking info.
 - Use clean readable names (e.g. "LED Light Bulb 60W" not "GE-LED60W-SW-2PK").
 - ALWAYS assign the most appropriate category AND subcategory.
+- For electronics (TVs, phones, laptops, tablets, speakers, headphones, cameras, gaming consoles, smart home devices, chargers, cables, etc.): category MUST be "electronics" with appropriate subcategory. Set expirationDate to WARRANTY expiry (default 1 year: ${warrantyExpiry}).
 - Detect quantity from the order. Default 1 if unclear.
 - Detect units (lb, oz, kg, pcs etc). Default "pcs".
 - For produce: set expirationDate to ${produceExpiry}.
