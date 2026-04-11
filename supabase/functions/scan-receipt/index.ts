@@ -82,6 +82,7 @@ Available categories with their subcategories:
 - outdoor: garden-tools, seeds-plants, fertilizer, outdoor-furniture
 - automotive: fluids, parts, car-care
 - medicine: prescription, otc, vitamins, first-aid, medical-devices (DEFAULT EXPIRY: 365 days → ${medicineExpiry})
+- electronics: phones-tablets, computers, tv-monitors, audio, cameras, smart-home, gaming, wearables, accessories (DEFAULT WARRANTY EXPIRY: 1 year → ${warrantyExpiry}. For electronics, expirationDate = warranty expiration date)
 - stationery: pens-pencils, notebooks, paper, art-supplies
 - office-supply: desk-accessories, filing, printer-supplies, tech-accessories
 - building-materials: lumber, concrete-masonry, bricks-blocks, drywall-insulation, roofing, flooring, doors-windows, siding, paint-supplies, fasteners-hardware (items like drywall, cement, lumber, plywood, shingles, tile, tiles, ceramic tile, porcelain tile, slate tile, floor tile, wall tile, backsplash tile, grout, thinset, mortar, underlayment, laminate, vinyl plank, hardwood, bricks, insulation, screws, nails, bolts, caulk, sealant, sandpaper, PVC pipe, etc.; ANY tile product including Daltile → building-materials/flooring)
