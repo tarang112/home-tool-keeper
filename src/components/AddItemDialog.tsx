@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, X, ScanBarcode, Loader2, Link, CalendarIcon } from "lucide-react";
-import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, QUANTITY_UNITS, type InventoryItem, type ItemCategory, type MainCategory } from "@/hooks/use-inventory";
+import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, WARRANTY_CATEGORIES, QUANTITY_UNITS, type InventoryItem, type ItemCategory, type MainCategory } from "@/hooks/use-inventory";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -605,10 +605,10 @@ export function AddItemDialog({
                   </div>
                 </div>
 
-                {/* Expiration Date - only for food/medicine categories */}
+                {/* Expiration Date / Warranty Date - for food/medicine/electronics */}
                 {EXPIRABLE_CATEGORIES.includes(category) && (
                   <div className="space-y-2">
-                    <Label>Expiration Date</Label>
+                    <Label>{WARRANTY_CATEGORIES.includes(category) ? "Warranty Expiry" : "Expiration Date"}</Label>
                     <div className="flex gap-2 items-center">
                       <Select
                         value={expirationDate ? String(expirationDate.getMonth()) : ""}
