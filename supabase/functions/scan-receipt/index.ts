@@ -66,6 +66,7 @@ serve(async (req) => {
     const frozenExpiry = new Date(Date.now() + 180 * 86400000).toISOString().split("T")[0];
     const dairyExpiry = new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0];
     const medicineExpiry = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
+    const warrantyExpiry = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
 
     const systemPrompt = `You are an AI assistant for an inventory management app called HomeStock.
 Analyze the receipt or order screenshot image and extract ALL purchasable items from it.
@@ -81,6 +82,7 @@ Available categories with their subcategories:
 - outdoor: garden-tools, seeds-plants, fertilizer, outdoor-furniture
 - automotive: fluids, parts, car-care
 - medicine: prescription, otc, vitamins, first-aid, medical-devices (DEFAULT EXPIRY: 365 days → ${medicineExpiry})
+- electronics: phones-tablets, computers, tv-monitors, audio, cameras, smart-home, gaming, wearables, accessories (DEFAULT WARRANTY EXPIRY: 1 year → ${warrantyExpiry}. For electronics, expirationDate = warranty expiration date)
 - stationery: pens-pencils, notebooks, paper, art-supplies
 - office-supply: desk-accessories, filing, printer-supplies, tech-accessories
 - building-materials: lumber, concrete-masonry, bricks-blocks, drywall-insulation, roofing, flooring, doors-windows, siding, paint-supplies, fasteners-hardware (items like drywall, cement, lumber, plywood, shingles, tile, tiles, ceramic tile, porcelain tile, slate tile, floor tile, wall tile, backsplash tile, grout, thinset, mortar, underlayment, laminate, vinyl plank, hardwood, bricks, insulation, screws, nails, bolts, caulk, sealant, sandpaper, PVC pipe, etc.; ANY tile product including Daltile → building-materials/flooring)
@@ -109,6 +111,7 @@ Rules:
 - Extract EVERY purchasable line item. Skip taxes, totals, subtotals, discounts, payment info.
 - For each item: name, category, subcategory, quantity, quantityUnit, location, expirationDate.
 - ALWAYS pick the MOST SPECIFIC subcategory. Chips, cookies, crackers, candy → snacks. Frozen meals, frozen vegetables → frozen. Fresh fruits/vegetables (bell pepper, tomato, onion, etc.) → produce/vegetables with location Refrigerator.
+- For electronics (TVs, phones, laptops, tablets, speakers, headphones, cameras, gaming consoles, smart home devices, chargers, cables, etc.): category MUST be "electronics" with appropriate subcategory. Set expirationDate to WARRANTY expiry (default 1 year: ${warrantyExpiry}).
 - Use clean, readable names (e.g. "Ruffles Original Chips" not "RUFFLES ORG 10OZ").
 - If quantity is listed, use it. Otherwise default to 1.
 - Detect units from the receipt (lb, oz, kg, etc). Default to "pcs" if unclear.

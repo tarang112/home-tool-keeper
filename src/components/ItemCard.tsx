@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2, Clock, ChevronDown, ChevronUp, HandHelping, Undo2 } from "lucide-react";
-import { CATEGORIES, MAIN_CATEGORIES, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
+import { CATEGORIES, MAIN_CATEGORIES, WARRANTY_CATEGORIES, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
 import { BUSINESS_TYPES } from "@/config/business-categories";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -80,17 +80,19 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
         : "border-l-emerald-500";
 
   // Expiry/Lent tags for bottom-right — always show expiry if present
+  const isWarrantyItem = WARRANTY_CATEGORIES.includes(item.category);
   const expiryTag = useMemo(() => {
     if (item.expirationDate) {
       const exp = new Date(item.expirationDate);
       const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      if (diffDays < 0) return { label: "Expired", color: "text-destructive" };
-      if (diffDays <= 7) return { label: `Exp ${exp.toLocaleDateString()}`, color: "text-destructive" };
-      if (diffDays <= 90) return { label: `Exp ${exp.toLocaleDateString()}`, color: "text-amber-500" };
-      return { label: `Exp ${exp.toLocaleDateString()}`, color: "text-muted-foreground" };
+      const prefix = isWarrantyItem ? "Warranty" : "Exp";
+      if (diffDays < 0) return { label: isWarrantyItem ? "Warranty Expired" : "Expired", color: "text-destructive" };
+      if (diffDays <= 7) return { label: `${prefix} ${exp.toLocaleDateString()}`, color: "text-destructive" };
+      if (diffDays <= 90) return { label: `${prefix} ${exp.toLocaleDateString()}`, color: "text-amber-500" };
+      return { label: `${prefix} ${exp.toLocaleDateString()}`, color: "text-muted-foreground" };
     }
     return null;
-  }, [item.expirationDate]);
+  }, [item.expirationDate, isWarrantyItem]);
 
   return (
     <Card className={`animate-slide-up border-l-[3px] ${borderColor}`}>

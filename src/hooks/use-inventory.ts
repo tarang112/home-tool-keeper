@@ -57,7 +57,10 @@ export const QUANTITY_UNITS = [
 ];
 
 // Categories that should show expiration date picker
-export const EXPIRABLE_CATEGORIES = ['groceries', 'produce', 'medicine'];
+export const EXPIRABLE_CATEGORIES = ['groceries', 'produce', 'medicine', 'electronics'];
+
+// Categories where expiration means warranty expiration
+export const WARRANTY_CATEGORIES = ['electronics'];
 
 function normalizeLookupName(name: string) {
   return name
@@ -606,6 +609,20 @@ export const MAIN_CATEGORIES: MainCategory[] = [
       { value: "doors-windows", label: "Doors & Windows" },
       { value: "flooring", label: "Flooring" },
       { value: "siding", label: "Siding & Cladding" },
+    ],
+  },
+  {
+    value: "electronics", label: "Electronics", icon: "📱",
+    subcategories: [
+      { value: "phones-tablets", label: "Phones & Tablets" },
+      { value: "computers", label: "Computers & Laptops" },
+      { value: "tv-monitors", label: "TVs & Monitors" },
+      { value: "audio", label: "Audio & Speakers" },
+      { value: "cameras", label: "Cameras" },
+      { value: "smart-home", label: "Smart Home" },
+      { value: "gaming", label: "Gaming" },
+      { value: "wearables", label: "Wearables" },
+      { value: "accessories", label: "Accessories & Cables" },
     ],
   },
   {
