@@ -131,6 +131,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       orderDate && `Date: ${orderDate}`,
     ].filter(Boolean).join(" | ");
 
+    // Save email content and subject as receipt for later reference
+    const receiptParts: string[] = [];
+    if (orderInfo) receiptParts.push(orderInfo);
+    if (subject.trim()) receiptParts.push(`Subject: ${subject.trim()}`);
+    if (emailContent.trim()) receiptParts.push(`--- Email Receipt ---\n${emailContent.trim().slice(0, 2000)}`);
+    const fullNotes = receiptParts.join("\n");
+
     for (const item of selected) {
       onAdd({
         name: item.name,
@@ -143,7 +150,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
         locationImage: "",
         productImage: "",
         itemImage: "",
-        notes: orderInfo,
+        notes: fullNotes,
         barcode: "",
         expirationDate: item.expirationDate || null,
         houseId: null,
