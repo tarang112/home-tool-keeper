@@ -462,15 +462,39 @@ export function AddItemDialog({
                     placeholder="Enter custom subcategory (optional)..."
                   />
                 ) : (
-                  <Select value={subcategory || "none"} onValueChange={(v) => handleSubcategoryChange(v === "none" ? "" : v)}>
-                    <SelectTrigger><SelectValue placeholder="Select subcategory..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">— General —</SelectItem>
-                      {subcategories.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <>
+                    <Select
+                      value={
+                        subcategory && !subcategories.some((s) => s.value === subcategory)
+                          ? "__custom__"
+                          : (subcategory || "none")
+                      }
+                      onValueChange={(v) => {
+                        if (v === "__custom__") {
+                          setSubcategory(" "); // sentinel to show input; user will type
+                          return;
+                        }
+                        handleSubcategoryChange(v === "none" ? "" : v);
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select subcategory..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— General —</SelectItem>
+                        {subcategories.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                        <SelectItem value="__custom__">✏️ Other (custom)…</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {subcategory && !subcategories.some((s) => s.value === subcategory) && (
+                      <Input
+                        value={subcategory.trim()}
+                        onChange={(e) => setSubcategory(e.target.value)}
+                        placeholder="Enter custom subcategory..."
+                        className="mt-2"
+                      />
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -695,7 +719,7 @@ export function AddItemDialog({
 
             <div className="space-y-2">
               <Label>Location Photo</Label>
-              <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageChange} />
+              <input ref={fileInputRef} type="file" className="hidden" onChange={handleImageChange} />
               {locationImage ? (
                 <div className="relative rounded-lg overflow-hidden border">
                   <img src={locationImage} alt="Location" className="w-full h-32 object-cover" />
@@ -713,7 +737,7 @@ export function AddItemDialog({
             {/* Item Photo */}
             <div className="space-y-2">
               <Label>Item Photo</Label>
-              <input ref={itemFileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleItemImageChange} />
+              <input ref={itemFileInputRef} type="file" className="hidden" onChange={handleItemImageChange} />
               {itemImage ? (
                 <div className="relative rounded-lg overflow-hidden border">
                   <img src={itemImage} alt="Item" className="w-full h-32 object-cover" />
