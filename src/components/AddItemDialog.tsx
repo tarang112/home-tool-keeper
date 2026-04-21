@@ -462,15 +462,39 @@ export function AddItemDialog({
                     placeholder="Enter custom subcategory (optional)..."
                   />
                 ) : (
-                  <Select value={subcategory || "none"} onValueChange={(v) => handleSubcategoryChange(v === "none" ? "" : v)}>
-                    <SelectTrigger><SelectValue placeholder="Select subcategory..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">— General —</SelectItem>
-                      {subcategories.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <>
+                    <Select
+                      value={
+                        subcategory && !subcategories.some((s) => s.value === subcategory)
+                          ? "__custom__"
+                          : (subcategory || "none")
+                      }
+                      onValueChange={(v) => {
+                        if (v === "__custom__") {
+                          setSubcategory(" "); // sentinel to show input; user will type
+                          return;
+                        }
+                        handleSubcategoryChange(v === "none" ? "" : v);
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select subcategory..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— General —</SelectItem>
+                        {subcategories.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                        <SelectItem value="__custom__">✏️ Other (custom)…</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {subcategory && !subcategories.some((s) => s.value === subcategory) && (
+                      <Input
+                        value={subcategory.trim()}
+                        onChange={(e) => setSubcategory(e.target.value)}
+                        placeholder="Enter custom subcategory..."
+                        className="mt-2"
+                      />
+                    )}
+                  </>
                 )}
               </div>
             )}
