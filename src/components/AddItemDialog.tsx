@@ -713,7 +713,7 @@ export function AddItemDialog({
             {/* Item Photo */}
             <div className="space-y-2">
               <Label>Item Photo</Label>
-              <input ref={itemFileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleItemImageChange} />
+              <input ref={itemFileInputRef} type="file" className="hidden" onChange={handleItemImageChange} />
               {itemImage ? (
                 <div className="relative rounded-lg overflow-hidden border">
                   <img src={itemImage} alt="Item" className="w-full h-32 object-cover" />
