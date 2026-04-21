@@ -695,7 +695,7 @@ export function AddItemDialog({
 
             <div className="space-y-2">
               <Label>Location Photo</Label>
-              <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageChange} />
+              <input ref={fileInputRef} type="file" className="hidden" onChange={handleImageChange} />
               {locationImage ? (
                 <div className="relative rounded-lg overflow-hidden border">
                   <img src={locationImage} alt="Location" className="w-full h-32 object-cover" />
