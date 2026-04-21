@@ -545,48 +545,42 @@ export function AddItemDialog({
                     </div>
                     {EXPIRABLE_CATEGORIES.includes(category) && (
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Expiration</Label>
+                        <Label className="text-[10px] text-muted-foreground">
+                          {WARRANTY_CATEGORIES.includes(category) ? "Warranty Expiry" : "Expiration"}
+                        </Label>
                         <div className="flex gap-1.5 items-center">
-                          <Select
-                            value={entry.expirationDate ? String(entry.expirationDate.getMonth()) : ""}
-                            onValueChange={(v) => {
-                              const month = parseInt(v);
-                              const current = entry.expirationDate || new Date();
-                              const newDate = new Date(current.getFullYear(), month, Math.min(current.getDate(), new Date(current.getFullYear(), month + 1, 0).getDate()));
-                              const updated = [...batchEntries];
-                              updated[idx] = { ...updated[idx], expirationDate: newDate };
-                              setBatchEntries(updated);
-                            }}
-                          >
-                            <SelectTrigger className="flex-1 h-8"><SelectValue placeholder="Month" /></SelectTrigger>
-                            <SelectContent>
-                              {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
-                                <SelectItem key={i} value={String(i)}>{m}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input type="number" min={1} max={31} placeholder="Day" className="w-16 h-8"
-                            value={entry.expirationDate ? entry.expirationDate.getDate() : ""}
-                            onChange={(e) => {
-                              const day = parseInt(e.target.value) || 1;
-                              const current = entry.expirationDate || new Date();
-                              const maxDay = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
-                              const updated = [...batchEntries];
-                              updated[idx] = { ...updated[idx], expirationDate: new Date(current.getFullYear(), current.getMonth(), Math.min(day, maxDay)) };
-                              setBatchEntries(updated);
-                            }}
-                          />
-                          <Input type="number" min={2020} max={2099} placeholder="Year" className="w-20 h-8"
-                            value={entry.expirationDate ? entry.expirationDate.getFullYear() : ""}
-                            onChange={(e) => {
-                              const year = parseInt(e.target.value) || new Date().getFullYear();
-                              const current = entry.expirationDate || new Date();
-                              const maxDay = new Date(year, current.getMonth() + 1, 0).getDate();
-                              const updated = [...batchEntries];
-                              updated[idx] = { ...updated[idx], expirationDate: new Date(year, current.getMonth(), Math.min(current.getDate(), maxDay)) };
-                              setBatchEntries(updated);
-                            }}
-                          />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "flex-1 h-8 justify-start text-left font-normal text-xs",
+                                  !entry.expirationDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-3 w-3" />
+                                {entry.expirationDate ? format(entry.expirationDate, "PP") : <span>Pick a date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={entry.expirationDate}
+                                onSelect={(date) => {
+                                  const updated = [...batchEntries];
+                                  updated[idx] = { ...updated[idx], expirationDate: date };
+                                  setBatchEntries(updated);
+                                }}
+                                initialFocus
+                                captionLayout="dropdown-buttons"
+                                fromYear={new Date().getFullYear() - 5}
+                                toYear={new Date().getFullYear() + 25}
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                            </PopoverContent>
+                          </Popover>
                           {entry.expirationDate && (
                             <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => {
                               const updated = [...batchEntries];
