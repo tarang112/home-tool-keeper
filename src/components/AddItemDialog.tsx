@@ -623,10 +623,18 @@ export function AddItemDialog({
                   </div>
                 </div>
 
-                {/* Expiration Date / Warranty Date - for food/medicine/electronics */}
-                {EXPIRABLE_CATEGORIES.includes(category) && (
+                {/* Expiration / Warranty Date - shown for all items (optional) */}
+                {(() => {
+                  const isWarranty = WARRANTY_CATEGORIES.includes(category);
+                  const isExpirable = EXPIRABLE_CATEGORIES.includes(category);
+                  const dateLabel = isWarranty
+                    ? "Warranty Expiry"
+                    : isExpirable
+                      ? "Expiration Date"
+                      : "Warranty / Expiry Date (optional)";
+                  return (
                   <div className="space-y-2">
-                    <Label>{WARRANTY_CATEGORIES.includes(category) ? "Warranty Expiry" : "Expiration Date"}</Label>
+                    <Label>{dateLabel}</Label>
                     <div className="flex gap-2 items-center">
                       <Popover>
                         <PopoverTrigger asChild>
