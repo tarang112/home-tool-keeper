@@ -669,13 +669,14 @@ export function AddItemDialog({
                         </Button>
                       )}
                     </div>
-                    {WARRANTY_CATEGORIES.includes(category) && (
+                    {isWarranty && (
                       <p className="text-[11px] text-muted-foreground">
                         Defaults to 1 year. Adjust for extended warranties.
                       </p>
                     )}
                   </div>
-                )}
+                  );
+                })()}
               </>
             )}
 
