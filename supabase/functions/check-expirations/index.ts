@@ -124,6 +124,64 @@ Deno.serve(async (req) => {
       if (!insertError) snackNotifications++;
     }
 
+    // === Warranty reminder alerts: notify before warranty expires for electronics ===
+    // Reminders sent at 30, 14, 7, 3, and 1 days before warranty expiry, plus on expiry day
+    const WARRANTY_REMINDER_DAYS = [30, 14, 7, 3, 1, 0];
+    const maxReminder = Math.max(...WARRANTY_REMINDER_DAYS);
+    const warrantyHorizon = new Date(today);
+    warrantyHorizon.setDate(warrantyHorizon.getDate() + maxReminder);
+    const warrantyHorizonStr = warrantyHorizon.toISOString().split('T')[0];
+
+    const { data: warrantyItems } = await supabase
+      .from('inventory_items')
+      .select('id, name, user_id, expiration_date, category')
+      .eq('category', 'electronics')
+      .not('expiration_date', 'is', null)
+      .gte('expiration_date', todayStr)
+      .lte('expiration_date', warrantyHorizonStr);
+
+    let warrantyNotifications = 0;
+    for (const item of warrantyItems || []) {
+      const expDate = new Date(item.expiration_date);
+      const diffMs = expDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      // Only fire on exact reminder thresholds
+      if (!WARRANTY_REMINDER_DAYS.includes(diffDays)) continue;
+
+      const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
+      const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
+
+      // Dedup: skip if any notification already exists today for this item
+      const { data: existing } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('item_id', item.id)
+        .eq('user_id', item.user_id)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd)
+        .limit(1);
+
+      if (existing && existing.length > 0) continue;
+
+      let title: string;
+      let message: string;
+      if (diffDays === 0) {
+        title = `🛡️ ${item.name} warranty expires today!`;
+        message = `The warranty on this item ends today (${expDate.toLocaleDateString()}). Register any claims before it lapses.`;
+      } else {
+        title = `🛡️ ${item.name} warranty expires in ${diffDays} day${diffDays === 1 ? '' : 's'}`;
+        message = `Warranty ends ${expDate.toLocaleDateString()}. Review coverage or extend it while you still can.`;
+      }
+
+      const { error: insertError } = await supabase
+        .from('notifications')
+        .insert({ user_id: item.user_id, item_id: item.id, title, message });
+
+      if (!insertError) warrantyNotifications++;
+      else console.error('Error creating warranty notification:', insertError);
+    }
+
     // === Produce auto-delete prompt: notify for produce items older than 10 days ===
     const tenDaysAgo = new Date(today);
     tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
