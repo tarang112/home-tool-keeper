@@ -10,12 +10,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, X, ScanBarcode, Loader2, Link, CalendarIcon } from "lucide-react";
+import { Camera, X, ScanBarcode, Loader2, Link } from "lucide-react";
 import { MAIN_CATEGORIES, LOCATIONS, EXPIRABLE_CATEGORIES, WARRANTY_CATEGORIES, QUANTITY_UNITS, type InventoryItem, type ItemCategory, type MainCategory } from "@/hooks/use-inventory";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -187,6 +185,14 @@ export function AddItemDialog({
     }
 
     return undefined;
+  };
+
+  const formatDateInputValue = (date?: Date) => (date ? format(date, "yyyy-MM-dd") : "");
+
+  const parseDateInputValue = (value: string) => {
+    if (!value) return undefined;
+    const parsed = new Date(`${value}T12:00:00`);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
   };
 
   const applyProduct = (p: any) => {
@@ -546,41 +552,22 @@ export function AddItemDialog({
                     {EXPIRABLE_CATEGORIES.includes(category) && (
                       <div>
                         <Label className="text-[10px] text-muted-foreground">
-                          {WARRANTY_CATEGORIES.includes(category) ? "Warranty Expiry" : "Expiration"}
+                          {WARRANTY_CATEGORIES.includes(category) ? "Warranty Expiry" : "Expiration Date"}
                         </Label>
                         <div className="flex gap-1.5 items-center">
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className={cn(
-                                  "flex-1 h-8 justify-start text-left font-normal text-xs",
-                                  !entry.expirationDate && "text-muted-foreground"
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-3 w-3" />
-                                {entry.expirationDate ? format(entry.expirationDate, "PP") : <span>Pick a date</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={entry.expirationDate}
-                                onSelect={(date) => {
-                                  const updated = [...batchEntries];
-                                  updated[idx] = { ...updated[idx], expirationDate: date };
-                                  setBatchEntries(updated);
-                                }}
-                                initialFocus
-                                captionLayout="dropdown-buttons"
-                                fromYear={new Date().getFullYear() - 5}
-                                toYear={new Date().getFullYear() + 25}
-                                className={cn("p-3 pointer-events-auto")}
-                              />
-                            </PopoverContent>
-                          </Popover>
+                          <Input
+                            type="date"
+                            value={formatDateInputValue(entry.expirationDate)}
+                            onChange={(e) => {
+                              const updated = [...batchEntries];
+                              updated[idx] = {
+                                ...updated[idx],
+                                expirationDate: parseDateInputValue(e.target.value),
+                              };
+                              setBatchEntries(updated);
+                            }}
+                            className="h-8 flex-1"
+                          />
                           {entry.expirationDate && (
                             <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => {
                               const updated = [...batchEntries];
@@ -636,33 +623,12 @@ export function AddItemDialog({
                   <div className="space-y-2">
                     <Label>{dateLabel}</Label>
                     <div className="flex gap-2 items-center">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className={cn(
-                              "flex-1 justify-start text-left font-normal",
-                              !expirationDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {expirationDate ? format(expirationDate, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={expirationDate}
-                            onSelect={setExpirationDate}
-                            initialFocus
-                            captionLayout="dropdown-buttons"
-                            fromYear={new Date().getFullYear() - 5}
-                            toYear={new Date().getFullYear() + 25}
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <Input
+                        type="date"
+                        value={formatDateInputValue(expirationDate)}
+                        onChange={(e) => setExpirationDate(parseDateInputValue(e.target.value))}
+                        className="flex-1"
+                      />
                       {expirationDate && (
                         <Button type="button" variant="ghost" size="icon" onClick={() => setExpirationDate(undefined)}>
                           <X className="h-4 w-4" />
