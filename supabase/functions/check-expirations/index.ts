@@ -41,6 +41,9 @@ Deno.serve(async (req) => {
     let notificationsCreated = 0;
 
     for (const item of expiringItems || []) {
+      // Electronics warranty reminders are handled separately below
+      if (item.category === 'electronics') continue;
+
       const expDate = new Date(item.expiration_date);
       const diffMs = expDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
