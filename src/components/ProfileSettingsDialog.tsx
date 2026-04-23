@@ -203,6 +203,42 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               </div>
               <Switch id="warranty-push" checked={warrantyPush} onCheckedChange={setWarrantyPush} />
             </div>
+
+            <div className="space-y-2 pt-2 border-t">
+              <div className="flex items-center justify-between gap-3">
+                <Label className="cursor-pointer">Send reminders</Label>
+                <Switch
+                  checked={remindersEnabled}
+                  onCheckedChange={(on) => setReminderDays(on ? DEFAULT_REMINDER_DAYS : [])}
+                />
+              </div>
+              {remindersEnabled ? (
+                <div className="space-y-2 pt-1">
+                  <p className="text-xs text-muted-foreground">When to remind you:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {REMINDER_DAY_OPTIONS.map((d) => {
+                      const checked = reminderDays.includes(d);
+                      return (
+                        <label
+                          key={d}
+                          htmlFor={`reminder-day-${d}`}
+                          className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 cursor-pointer hover:bg-accent transition-colors"
+                        >
+                          <Checkbox
+                            id={`reminder-day-${d}`}
+                            checked={checked}
+                            onCheckedChange={(c) => toggleDay(d, !!c)}
+                          />
+                          <span className="text-sm">{dayLabel(d)}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Warranty reminders are turned off.</p>
+              )}
+            </div>
           </div>
 
           <Button onClick={handleSave} disabled={loading} className="w-full gap-2">
