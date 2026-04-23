@@ -128,9 +128,9 @@ Deno.serve(async (req) => {
     }
 
     // === Warranty reminder alerts: notify before warranty expires for electronics ===
-    // Reminders sent at 30, 14, 7, 3, and 1 days before warranty expiry, plus on expiry day
-    const WARRANTY_REMINDER_DAYS = [30, 14, 7, 3, 1, 0];
-    const maxReminder = Math.max(...WARRANTY_REMINDER_DAYS);
+    // Per-user reminder day thresholds (default: 30, 14, 7, 3, 1, 0). Empty array disables.
+    const DEFAULT_WARRANTY_REMINDER_DAYS = [30, 14, 7, 3, 1, 0];
+    const maxReminder = Math.max(...DEFAULT_WARRANTY_REMINDER_DAYS);
     const warrantyHorizon = new Date(today);
     warrantyHorizon.setDate(warrantyHorizon.getDate() + maxReminder);
     const warrantyHorizonStr = warrantyHorizon.toISOString().split('T')[0];
