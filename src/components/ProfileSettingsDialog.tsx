@@ -100,6 +100,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           warranty_email: warrantyEmail,
           warranty_push: warrantyPush,
           warranty_reminder_days: reminderDays,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
         },
         { onConflict: "user_id" }
       );
