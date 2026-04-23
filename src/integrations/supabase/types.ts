@@ -344,6 +344,36 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          warranty_email: boolean
+          warranty_in_app: boolean
+          warranty_push: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          warranty_email?: boolean
+          warranty_in_app?: boolean
+          warranty_push?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          warranty_email?: boolean
+          warranty_in_app?: boolean
+          warranty_push?: boolean
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
