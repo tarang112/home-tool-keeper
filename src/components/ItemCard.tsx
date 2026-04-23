@@ -269,6 +269,9 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
         {/* Expanded details */}
         {expanded && (
           <div className="mt-1.5 pt-1.5 border-t space-y-1.5 animate-fade-in">
+            {item.category === "electronics" && item.expirationDate && (
+              <WarrantyReminders itemId={item.id} expirationDate={item.expirationDate} />
+            )}
             {item.location && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
