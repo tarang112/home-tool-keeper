@@ -99,6 +99,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           warranty_in_app: warrantyInApp,
           warranty_email: warrantyEmail,
           warranty_push: warrantyPush,
+          warranty_reminder_days: reminderDays,
         },
         { onConflict: "user_id" }
       );
