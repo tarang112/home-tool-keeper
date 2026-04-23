@@ -348,29 +348,35 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          timezone: string
           updated_at: string
           user_id: string
           warranty_email: boolean
           warranty_in_app: boolean
           warranty_push: boolean
+          warranty_reminder_days: number[]
         }
         Insert: {
           created_at?: string
           id?: string
+          timezone?: string
           updated_at?: string
           user_id: string
           warranty_email?: boolean
           warranty_in_app?: boolean
           warranty_push?: boolean
+          warranty_reminder_days?: number[]
         }
         Update: {
           created_at?: string
           id?: string
+          timezone?: string
           updated_at?: string
           user_id?: string
           warranty_email?: boolean
           warranty_in_app?: boolean
           warranty_push?: boolean
+          warranty_reminder_days?: number[]
         }
         Relationships: []
       }
