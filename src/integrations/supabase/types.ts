@@ -353,6 +353,7 @@ export type Database = {
           warranty_email: boolean
           warranty_in_app: boolean
           warranty_push: boolean
+          warranty_reminder_days: number[]
         }
         Insert: {
           created_at?: string
@@ -362,6 +363,7 @@ export type Database = {
           warranty_email?: boolean
           warranty_in_app?: boolean
           warranty_push?: boolean
+          warranty_reminder_days?: number[]
         }
         Update: {
           created_at?: string
@@ -371,6 +373,7 @@ export type Database = {
           warranty_email?: boolean
           warranty_in_app?: boolean
           warranty_push?: boolean
+          warranty_reminder_days?: number[]
         }
         Relationships: []
       }
