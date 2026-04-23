@@ -111,7 +111,7 @@ export function WarrantyReminders({ itemId, expirationDate }: WarrantyRemindersP
           </Badge>
         ) : nextReminder ? (
           nextScheduled ? (
-            <Badge className="text-[9px] gap-0.5 bg-emerald-500 hover:bg-emerald-600 text-white">
+            <Badge className="text-[9px] gap-0.5 bg-primary hover:bg-primary/90 text-primary-foreground">
               <CheckCircle2 className="h-2.5 w-2.5" /> Next scheduled
             </Badge>
           ) : (
