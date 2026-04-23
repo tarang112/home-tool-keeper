@@ -35,6 +35,12 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [warrantyInApp, setWarrantyInApp] = useState(true);
   const [warrantyEmail, setWarrantyEmail] = useState(false);
   const [warrantyPush, setWarrantyPush] = useState(false);
+  const [reminderDays, setReminderDays] = useState<number[]>(DEFAULT_REMINDER_DAYS);
+
+  const remindersEnabled = reminderDays.length > 0;
+  const toggleDay = (d: number, checked: boolean) => {
+    setReminderDays((prev) => (checked ? [...new Set([...prev, d])] : prev.filter((x) => x !== d)));
+  };
 
   useEffect(() => {
     if (open && user) {
