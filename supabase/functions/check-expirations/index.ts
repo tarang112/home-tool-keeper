@@ -5,6 +5,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Returns the local-day boundaries (as UTC ISO strings) for a given moment in a timezone.
+// E.g., for tz=America/New_York at 2024-01-15T03:00:00Z, returns the UTC instants
+// corresponding to 2024-01-15T00:00:00 and 23:59:59.999 in New York.
+function localDayBoundsUtc(now: Date, tz: string): { startUtc: string; endUtc: string; localDateStr: string } {
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    }).formatToParts(now);
+  } catch {
+    // Invalid timezone — fall back to UTC
+    return localDayBoundsUtc(now, 'UTC');
+  }
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '00';
+  const y = get('year'), m = get('month'), d = get('day');
+  const hh = get('hour'), mm = get('minute'), ss = get('second');
+  // Local wall-clock seconds elapsed since local midnight
+  const elapsedMs =
+    (parseInt(hh, 10) * 3600 + parseInt(mm, 10) * 60 + parseInt(ss, 10)) * 1000;
+  const startUtc = new Date(now.getTime() - elapsedMs);
+  const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000 - 1);
+  return {
+    startUtc: startUtc.toISOString(),
+    endUtc: endUtc.toISOString(),
+    localDateStr: `${y}-${m}-${d}`,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
