@@ -144,28 +144,36 @@ Deno.serve(async (req) => {
       .lte('expiration_date', warrantyHorizonStr);
 
     let warrantyNotifications = 0;
+    // Cache prefs per user_id
+    const prefCache = new Map<string, { in_app: boolean; email: boolean; push: boolean }>();
+    const getPrefs = async (uid: string) => {
+      if (prefCache.has(uid)) return prefCache.get(uid)!;
+      const { data } = await supabase
+        .from('notification_preferences')
+        .select('warranty_in_app, warranty_email, warranty_push')
+        .eq('user_id', uid)
+        .maybeSingle();
+      const prefs = {
+        in_app: data ? !!data.warranty_in_app : true,
+        email: data ? !!data.warranty_email : false,
+        push: data ? !!data.warranty_push : false,
+      };
+      prefCache.set(uid, prefs);
+      return prefs;
+    };
+
     for (const item of warrantyItems || []) {
       const expDate = new Date(item.expiration_date);
       const diffMs = expDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-      // Only fire on exact reminder thresholds
       if (!WARRANTY_REMINDER_DAYS.includes(diffDays)) continue;
+
+      const prefs = await getPrefs(item.user_id);
+      if (!prefs.in_app && !prefs.email && !prefs.push) continue;
 
       const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
       const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
-
-      // Dedup: skip if any notification already exists today for this item
-      const { data: existing } = await supabase
-        .from('notifications')
-        .select('id')
-        .eq('item_id', item.id)
-        .eq('user_id', item.user_id)
-        .gte('created_at', todayStart)
-        .lte('created_at', todayEnd)
-        .limit(1);
-
-      if (existing && existing.length > 0) continue;
 
       let title: string;
       let message: string;
@@ -177,12 +185,33 @@ Deno.serve(async (req) => {
         message = `Warranty ends ${expDate.toLocaleDateString()}. Review coverage or extend it while you still can.`;
       }
 
-      const { error: insertError } = await supabase
-        .from('notifications')
-        .insert({ user_id: item.user_id, item_id: item.id, title, message });
+      if (prefs.in_app) {
+        const { data: existing } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('item_id', item.id)
+          .eq('user_id', item.user_id)
+          .gte('created_at', todayStart)
+          .lte('created_at', todayEnd)
+          .limit(1);
 
-      if (!insertError) warrantyNotifications++;
-      else console.error('Error creating warranty notification:', insertError);
+        if (!existing || existing.length === 0) {
+          const { error: insertError } = await supabase
+            .from('notifications')
+            .insert({ user_id: item.user_id, item_id: item.id, title, message });
+
+          if (!insertError) warrantyNotifications++;
+          else console.error('Error creating warranty notification:', insertError);
+        }
+      }
+
+      // Email & push channels: log intent for now (delivery infra hookup pending)
+      if (prefs.email) {
+        console.log(`[warranty-email] would email user ${item.user_id}: ${title}`);
+      }
+      if (prefs.push) {
+        console.log(`[warranty-push] would push user ${item.user_id}: ${title}`);
+      }
     }
 
     // === Produce auto-delete prompt: notify for produce items older than 10 days ===
