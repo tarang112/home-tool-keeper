@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { Trash2, Save, Loader2 } from "lucide-react";
+import { Trash2, Save, Loader2, Bell, Mail, Smartphone } from "lucide-react";
 import type { House } from "@/hooks/use-houses";
 
 interface ProfileSettingsDialogProps {
@@ -25,6 +26,9 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedDefault, setSelectedDefault] = useState<string>("none");
+  const [warrantyInApp, setWarrantyInApp] = useState(true);
+  const [warrantyEmail, setWarrantyEmail] = useState(false);
+  const [warrantyPush, setWarrantyPush] = useState(false);
 
   useEffect(() => {
     if (open && user) {
@@ -37,6 +41,20 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           if (data?.display_name) setDisplayName(data.display_name);
           else setDisplayName(user.email ?? "");
         });
+
+      supabase
+        .from("notification_preferences" as any)
+        .select("warranty_in_app, warranty_email, warranty_push")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }: any) => {
+          if (data) {
+            setWarrantyInApp(!!data.warranty_in_app);
+            setWarrantyEmail(!!data.warranty_email);
+            setWarrantyPush(!!data.warranty_push);
+          }
+        });
+
       setSelectedDefault(defaultHouseId ?? "none");
     }
   }, [open, user, defaultHouseId]);
@@ -55,6 +73,24 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
     if (error) {
       setLoading(false);
       toast.error("Failed to update profile");
+      return;
+    }
+
+    const { error: prefError } = await supabase
+      .from("notification_preferences" as any)
+      .upsert(
+        {
+          user_id: user.id,
+          warranty_in_app: warrantyInApp,
+          warranty_email: warrantyEmail,
+          warranty_push: warrantyPush,
+        },
+        { onConflict: "user_id" }
+      );
+
+    if (prefError) {
+      setLoading(false);
+      toast.error("Failed to save notification preferences");
       return;
     }
 
@@ -123,6 +159,34 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">This location will be selected automatically when you sign in.</p>
+          </div>
+
+          <div className="space-y-3 border-t pt-4">
+            <div>
+              <Label className="text-base">Warranty Reminders</Label>
+              <p className="text-xs text-muted-foreground mt-1">Choose how you want to be alerted before warranties expire.</p>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="warranty-in-app" className="cursor-pointer">In-app notifications</Label>
+              </div>
+              <Switch id="warranty-in-app" checked={warrantyInApp} onCheckedChange={setWarrantyInApp} />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="warranty-email" className="cursor-pointer">Email</Label>
+              </div>
+              <Switch id="warranty-email" checked={warrantyEmail} onCheckedChange={setWarrantyEmail} />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Smartphone className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="warranty-push" className="cursor-pointer">Push notifications</Label>
+              </div>
+              <Switch id="warranty-push" checked={warrantyPush} onCheckedChange={setWarrantyPush} />
+            </div>
           </div>
 
           <Button onClick={handleSave} disabled={loading} className="w-full gap-2">
