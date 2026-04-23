@@ -161,6 +161,34 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
             <p className="text-xs text-muted-foreground">This location will be selected automatically when you sign in.</p>
           </div>
 
+          <div className="space-y-3 border-t pt-4">
+            <div>
+              <Label className="text-base">Warranty Reminders</Label>
+              <p className="text-xs text-muted-foreground mt-1">Choose how you want to be alerted before warranties expire.</p>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="warranty-in-app" className="cursor-pointer">In-app notifications</Label>
+              </div>
+              <Switch id="warranty-in-app" checked={warrantyInApp} onCheckedChange={setWarrantyInApp} />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="warranty-email" className="cursor-pointer">Email</Label>
+              </div>
+              <Switch id="warranty-email" checked={warrantyEmail} onCheckedChange={setWarrantyEmail} />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Smartphone className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="warranty-push" className="cursor-pointer">Push notifications</Label>
+              </div>
+              <Switch id="warranty-push" checked={warrantyPush} onCheckedChange={setWarrantyPush} />
+            </div>
+          </div>
+
           <Button onClick={handleSave} disabled={loading} className="w-full gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save Changes
