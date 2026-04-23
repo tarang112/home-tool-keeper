@@ -26,6 +26,9 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedDefault, setSelectedDefault] = useState<string>("none");
+  const [warrantyInApp, setWarrantyInApp] = useState(true);
+  const [warrantyEmail, setWarrantyEmail] = useState(false);
+  const [warrantyPush, setWarrantyPush] = useState(false);
 
   useEffect(() => {
     if (open && user) {
@@ -38,6 +41,20 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           if (data?.display_name) setDisplayName(data.display_name);
           else setDisplayName(user.email ?? "");
         });
+
+      supabase
+        .from("notification_preferences" as any)
+        .select("warranty_in_app, warranty_email, warranty_push")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }: any) => {
+          if (data) {
+            setWarrantyInApp(!!data.warranty_in_app);
+            setWarrantyEmail(!!data.warranty_email);
+            setWarrantyPush(!!data.warranty_push);
+          }
+        });
+
       setSelectedDefault(defaultHouseId ?? "none");
     }
   }, [open, user, defaultHouseId]);
@@ -56,6 +73,24 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
     if (error) {
       setLoading(false);
       toast.error("Failed to update profile");
+      return;
+    }
+
+    const { error: prefError } = await supabase
+      .from("notification_preferences" as any)
+      .upsert(
+        {
+          user_id: user.id,
+          warranty_in_app: warrantyInApp,
+          warranty_email: warrantyEmail,
+          warranty_push: warrantyPush,
+        },
+        { onConflict: "user_id" }
+      );
+
+    if (prefError) {
+      setLoading(false);
+      toast.error("Failed to save notification preferences");
       return;
     }
 
