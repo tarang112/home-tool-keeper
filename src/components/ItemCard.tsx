@@ -8,6 +8,7 @@ import { BUSINESS_TYPES } from "@/config/business-categories";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { WarrantyReminders } from "@/components/WarrantyReminders";
 
 const ALL_CATEGORIES: MainCategory[] = [
   ...MAIN_CATEGORIES,
