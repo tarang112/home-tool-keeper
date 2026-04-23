@@ -5,6 +5,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Returns the local-day boundaries (as UTC ISO strings) for a given moment in a timezone.
+// E.g., for tz=America/New_York at 2024-01-15T03:00:00Z, returns the UTC instants
+// corresponding to 2024-01-15T00:00:00 and 23:59:59.999 in New York.
+function localDayBoundsUtc(now: Date, tz: string): { startUtc: string; endUtc: string; localDateStr: string } {
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    }).formatToParts(now);
+  } catch {
+    // Invalid timezone — fall back to UTC
+    return localDayBoundsUtc(now, 'UTC');
+  }
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '00';
+  const y = get('year'), m = get('month'), d = get('day');
+  const hh = get('hour'), mm = get('minute'), ss = get('second');
+  // Local wall-clock seconds elapsed since local midnight
+  const elapsedMs =
+    (parseInt(hh, 10) * 3600 + parseInt(mm, 10) * 60 + parseInt(ss, 10)) * 1000;
+  const startUtc = new Date(now.getTime() - elapsedMs);
+  const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000 - 1);
+  return {
+    startUtc: startUtc.toISOString(),
+    endUtc: endUtc.toISOString(),
+    localDateStr: `${y}-${m}-${d}`,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -145,12 +176,12 @@ Deno.serve(async (req) => {
 
     let warrantyNotifications = 0;
     // Cache prefs per user_id
-    const prefCache = new Map<string, { in_app: boolean; email: boolean; push: boolean; days: number[] }>();
+    const prefCache = new Map<string, { in_app: boolean; email: boolean; push: boolean; days: number[]; tz: string }>();
     const getPrefs = async (uid: string) => {
       if (prefCache.has(uid)) return prefCache.get(uid)!;
       const { data } = await supabase
         .from('notification_preferences')
-        .select('warranty_in_app, warranty_email, warranty_push, warranty_reminder_days')
+        .select('warranty_in_app, warranty_email, warranty_push, warranty_reminder_days, timezone')
         .eq('user_id', uid)
         .maybeSingle();
       const prefs = {
@@ -160,27 +191,35 @@ Deno.serve(async (req) => {
         days: Array.isArray(data?.warranty_reminder_days)
           ? (data!.warranty_reminder_days as number[])
           : DEFAULT_WARRANTY_REMINDER_DAYS,
+        tz: (data && typeof data.timezone === 'string' && data.timezone) ? data.timezone : 'UTC',
       };
       prefCache.set(uid, prefs);
       return prefs;
     };
 
     for (const item of warrantyItems || []) {
-      const expDate = new Date(item.expiration_date);
-      const diffMs = expDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
       const prefs = await getPrefs(item.user_id);
 
-      // Reminders disabled or this threshold not selected by the user
+      // Reminders disabled
       if (!prefs.days || prefs.days.length === 0) continue;
-      if (!prefs.days.includes(diffDays)) continue;
-
       if (!prefs.in_app && !prefs.email && !prefs.push) continue;
 
-      const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
-      const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
+      // Compute diffDays based on the USER'S local day, not the server's UTC day.
+      const userDay = localDayBoundsUtc(today, prefs.tz);
+      const userTodayLocalMidnightUtc = new Date(userDay.startUtc);
+      // expiration_date is a calendar date (YYYY-MM-DD); treat it as local midnight in user's tz
+      const expLocalMidnightUtc = new Date(localDayBoundsUtc(new Date(`${item.expiration_date}T12:00:00Z`), prefs.tz).startUtc);
+      const diffDays = Math.round(
+        (expLocalMidnightUtc.getTime() - userTodayLocalMidnightUtc.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
+      if (!prefs.days.includes(diffDays)) continue;
+
+      // Dedup window = user's local day, expressed in UTC
+      const todayStart = userDay.startUtc;
+      const todayEnd = userDay.endUtc;
+
+      const expDate = new Date(item.expiration_date);
       let title: string;
       let message: string;
       if (diffDays === 0) {
@@ -213,10 +252,10 @@ Deno.serve(async (req) => {
 
       // Email & push channels: log intent for now (delivery infra hookup pending)
       if (prefs.email) {
-        console.log(`[warranty-email] would email user ${item.user_id}: ${title}`);
+        console.log(`[warranty-email] would email user ${item.user_id} (${prefs.tz}): ${title}`);
       }
       if (prefs.push) {
-        console.log(`[warranty-push] would push user ${item.user_id}: ${title}`);
+        console.log(`[warranty-push] would push user ${item.user_id} (${prefs.tz}): ${title}`);
       }
     }
 

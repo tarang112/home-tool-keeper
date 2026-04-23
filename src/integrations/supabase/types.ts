@@ -348,6 +348,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          timezone: string
           updated_at: string
           user_id: string
           warranty_email: boolean
@@ -358,6 +359,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          timezone?: string
           updated_at?: string
           user_id: string
           warranty_email?: boolean
@@ -368,6 +370,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          timezone?: string
           updated_at?: string
           user_id?: string
           warranty_email?: boolean
