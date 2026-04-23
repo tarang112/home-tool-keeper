@@ -128,9 +128,9 @@ Deno.serve(async (req) => {
     }
 
     // === Warranty reminder alerts: notify before warranty expires for electronics ===
-    // Reminders sent at 30, 14, 7, 3, and 1 days before warranty expiry, plus on expiry day
-    const WARRANTY_REMINDER_DAYS = [30, 14, 7, 3, 1, 0];
-    const maxReminder = Math.max(...WARRANTY_REMINDER_DAYS);
+    // Per-user reminder day thresholds (default: 30, 14, 7, 3, 1, 0). Empty array disables.
+    const DEFAULT_WARRANTY_REMINDER_DAYS = [30, 14, 7, 3, 1, 0];
+    const maxReminder = Math.max(...DEFAULT_WARRANTY_REMINDER_DAYS);
     const warrantyHorizon = new Date(today);
     warrantyHorizon.setDate(warrantyHorizon.getDate() + maxReminder);
     const warrantyHorizonStr = warrantyHorizon.toISOString().split('T')[0];
@@ -145,18 +145,21 @@ Deno.serve(async (req) => {
 
     let warrantyNotifications = 0;
     // Cache prefs per user_id
-    const prefCache = new Map<string, { in_app: boolean; email: boolean; push: boolean }>();
+    const prefCache = new Map<string, { in_app: boolean; email: boolean; push: boolean; days: number[] }>();
     const getPrefs = async (uid: string) => {
       if (prefCache.has(uid)) return prefCache.get(uid)!;
       const { data } = await supabase
         .from('notification_preferences')
-        .select('warranty_in_app, warranty_email, warranty_push')
+        .select('warranty_in_app, warranty_email, warranty_push, warranty_reminder_days')
         .eq('user_id', uid)
         .maybeSingle();
       const prefs = {
         in_app: data ? !!data.warranty_in_app : true,
         email: data ? !!data.warranty_email : false,
         push: data ? !!data.warranty_push : false,
+        days: Array.isArray(data?.warranty_reminder_days)
+          ? (data!.warranty_reminder_days as number[])
+          : DEFAULT_WARRANTY_REMINDER_DAYS,
       };
       prefCache.set(uid, prefs);
       return prefs;
@@ -167,9 +170,12 @@ Deno.serve(async (req) => {
       const diffMs = expDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-      if (!WARRANTY_REMINDER_DAYS.includes(diffDays)) continue;
-
       const prefs = await getPrefs(item.user_id);
+
+      // Reminders disabled or this threshold not selected by the user
+      if (!prefs.days || prefs.days.length === 0) continue;
+      if (!prefs.days.includes(diffDays)) continue;
+
       if (!prefs.in_app && !prefs.email && !prefs.push) continue;
 
       const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();

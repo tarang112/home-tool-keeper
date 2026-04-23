@@ -10,7 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Trash2, Save, Loader2, Bell, Mail, Smartphone } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { House } from "@/hooks/use-houses";
+
+const REMINDER_DAY_OPTIONS = [30, 14, 7, 3, 1, 0] as const;
+const DEFAULT_REMINDER_DAYS: number[] = [30, 14, 7, 3, 1, 0];
+
+const dayLabel = (d: number) => (d === 0 ? "On expiry day" : `${d} day${d === 1 ? "" : "s"} before`);
 
 interface ProfileSettingsDialogProps {
   open: boolean;
@@ -29,6 +35,12 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [warrantyInApp, setWarrantyInApp] = useState(true);
   const [warrantyEmail, setWarrantyEmail] = useState(false);
   const [warrantyPush, setWarrantyPush] = useState(false);
+  const [reminderDays, setReminderDays] = useState<number[]>(DEFAULT_REMINDER_DAYS);
+
+  const remindersEnabled = reminderDays.length > 0;
+  const toggleDay = (d: number, checked: boolean) => {
+    setReminderDays((prev) => (checked ? [...new Set([...prev, d])] : prev.filter((x) => x !== d)));
+  };
 
   useEffect(() => {
     if (open && user) {
@@ -44,7 +56,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
 
       supabase
         .from("notification_preferences" as any)
-        .select("warranty_in_app, warranty_email, warranty_push")
+        .select("warranty_in_app, warranty_email, warranty_push, warranty_reminder_days")
         .eq("user_id", user.id)
         .maybeSingle()
         .then(({ data }: any) => {
@@ -52,6 +64,9 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
             setWarrantyInApp(!!data.warranty_in_app);
             setWarrantyEmail(!!data.warranty_email);
             setWarrantyPush(!!data.warranty_push);
+            if (Array.isArray(data.warranty_reminder_days)) {
+              setReminderDays(data.warranty_reminder_days as number[]);
+            }
           }
         });
 
@@ -84,6 +99,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           warranty_in_app: warrantyInApp,
           warranty_email: warrantyEmail,
           warranty_push: warrantyPush,
+          warranty_reminder_days: reminderDays,
         },
         { onConflict: "user_id" }
       );
@@ -186,6 +202,42 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
                 <Label htmlFor="warranty-push" className="cursor-pointer">Push notifications</Label>
               </div>
               <Switch id="warranty-push" checked={warrantyPush} onCheckedChange={setWarrantyPush} />
+            </div>
+
+            <div className="space-y-2 pt-2 border-t">
+              <div className="flex items-center justify-between gap-3">
+                <Label className="cursor-pointer">Send reminders</Label>
+                <Switch
+                  checked={remindersEnabled}
+                  onCheckedChange={(on) => setReminderDays(on ? DEFAULT_REMINDER_DAYS : [])}
+                />
+              </div>
+              {remindersEnabled ? (
+                <div className="space-y-2 pt-1">
+                  <p className="text-xs text-muted-foreground">When to remind you:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {REMINDER_DAY_OPTIONS.map((d) => {
+                      const checked = reminderDays.includes(d);
+                      return (
+                        <label
+                          key={d}
+                          htmlFor={`reminder-day-${d}`}
+                          className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 cursor-pointer hover:bg-accent transition-colors"
+                        >
+                          <Checkbox
+                            id={`reminder-day-${d}`}
+                            checked={checked}
+                            onCheckedChange={(c) => toggleDay(d, !!c)}
+                          />
+                          <span className="text-sm">{dayLabel(d)}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Warranty reminders are turned off.</p>
+              )}
             </div>
           </div>
 
