@@ -5,10 +5,23 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Package } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+
+const PLAN_PRICES = {
+  starter: { monthly: 0, yearly: 0 },
+  household: { monthly: 600, yearly: 6000 },
+  business: { monthly: 1400, yearly: 14000 },
+} as const;
 
 export default function AuthPage() {
   const { signIn, signUp } = useAuth();
+  const [searchParams] = useSearchParams();
+  const plan = PLAN_PRICES[searchParams.get("plan") as keyof typeof PLAN_PRICES] ? searchParams.get("plan") as keyof typeof PLAN_PRICES : "starter";
+  const billingCycle = searchParams.get("billing") === "yearly" ? "yearly" : "monthly";
+  const locationCount = Math.max(1, Number(searchParams.get("locations")) || 1);
+  const unitAmountCents = PLAN_PRICES[plan][billingCycle];
+  const totalAmountCents = unitAmountCents * locationCount;
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +33,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (isSignUp) {
-        await signUp(email, password, displayName);
+        await signUp(email, password, displayName, { plan, billingCycle, locationCount, unitAmountCents, totalAmountCents });
         toast.success("Account created! Check your email to confirm.");
       } else {
         await signIn(email, password);
@@ -44,6 +57,10 @@ export default function AuthPage() {
           <CardDescription>
             {isSignUp ? "Create an account to track your inventory" : "Sign in to your inventory"}
           </CardDescription>
+          <div className="mt-3 rounded-lg border bg-muted/40 p-3 text-sm">
+            <p className="font-medium capitalize">{plan} · {billingCycle}</p>
+            <p className="text-muted-foreground">{locationCount} location/property · ${(totalAmountCents / 100).toLocaleString()}/{billingCycle === "monthly" ? "mo" : "yr"}</p>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
