@@ -6,9 +6,17 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName?: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName?: string, billingSelection?: BillingSelection) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+}
+
+export interface BillingSelection {
+  plan: "starter" | "household" | "business";
+  billingCycle: "monthly" | "yearly";
+  locationCount: number;
+  unitAmountCents: number;
+  totalAmountCents: number;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,13 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, displayName?: string) => {
+  const signUp = async (email: string, password: string, displayName?: string, billingSelection?: BillingSelection) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/app`,
-        data: { display_name: displayName },
+        emailRedirectTo: `${window.location.origin}/app?checkout=pending`,
+        data: { display_name: displayName, billing_selection: billingSelection },
       },
     });
     if (error) throw error;
