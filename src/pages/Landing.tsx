@@ -287,23 +287,23 @@ export default function Landing() {
             </div>
           </div>
         </div>
-        <div className="mt-10 overflow-hidden rounded-lg border bg-card">
-          <div className="hidden grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium md:grid">
-            <span>Feature</span><span>Starter</span><span>Household</span><span>Business</span>
+        <div className="mt-10 overflow-hidden rounded-lg border bg-card" role="table" aria-label="Pricing feature comparison by plan">
+          <div className="hidden grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium md:grid" role="row">
+            <span role="columnheader" scope="col">Feature</span><span role="columnheader" scope="col">Starter</span><span role="columnheader" scope="col">Household</span><span role="columnheader" scope="col">Business</span>
           </div>
-          <div className="sticky top-0 z-10 grid grid-cols-3 gap-2 border-b bg-card/95 px-4 py-3 text-xs font-medium shadow-sm backdrop-blur md:hidden">
+          <div className="sticky top-0 z-10 grid grid-cols-3 gap-2 border-b bg-card/95 px-4 py-3 text-xs font-medium shadow-sm backdrop-blur md:hidden" aria-hidden="true">
             <span className="rounded-md bg-muted px-2 py-1 text-center">Starter</span>
             <span className="rounded-md bg-primary px-2 py-1 text-center text-primary-foreground">Household</span>
             <span className="rounded-md bg-muted px-2 py-1 text-center">Business</span>
           </div>
-          <div className="divide-y">
+          <div className="divide-y" role="rowgroup">
             {comparisonRows.map(([feature, starter, household, business]) => (
-              <div key={feature} className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.2fr_repeat(3,1fr)] md:py-3">
-                <span className="font-medium">{feature}</span>
+              <div key={feature} className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.2fr_repeat(3,1fr)] md:py-3" role="row">
+                <span className="font-medium" role="rowheader">{feature}</span>
                 <div className="grid grid-cols-3 items-stretch gap-2 md:contents">
                   {[["Starter", starter], ["Household", household], ["Business", business]].map(([planName, value]) => (
-                    <span key={planName} className="flex min-h-20 flex-col rounded-md border bg-background p-2 text-muted-foreground md:block md:min-h-0 md:border-0 md:bg-transparent md:p-0">
-                      <span className="mb-1 block text-xs font-medium text-foreground md:hidden">{planName}</span>
+                    <span key={planName} className="flex min-h-20 flex-col rounded-md border bg-background p-2 text-muted-foreground md:block md:min-h-0 md:border-0 md:bg-transparent md:p-0" role="cell" aria-label={`${feature}, ${planName}: ${value}`}>
+                      <span className="mb-1 block text-xs font-medium text-foreground md:hidden" aria-hidden="true">{planName}</span>
                       <span className="break-words text-xs leading-5 md:text-sm md:leading-normal">{value}</span>
                     </span>
                   ))}
