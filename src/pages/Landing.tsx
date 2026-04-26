@@ -1,6 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Bell, Boxes, Mail, ScanBarcode, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowRight, Bell, Boxes, Check, ChevronLeft, ChevronRight, Mail, ScanBarcode, ShieldCheck, Smartphone, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const highlights = [
   { icon: ScanBarcode, label: "Scan", text: "Add items from barcodes, receipts, and order emails." },
@@ -15,23 +21,65 @@ const shelves = [
   ["Passport", "1 item", "Safe"],
 ];
 
+const testimonials = [
+  { quote: "HomeStock finally made our pantry and garage searchable. We stopped buying duplicates within a week.", name: "Maya R.", role: "Busy parent" },
+  { quote: "The warranty reminders paid for themselves the first time an appliance failed before coverage ended.", name: "Jon B.", role: "Homeowner" },
+  { quote: "Receipt import is the difference between good intentions and actually keeping inventory current.", name: "Priya S.", role: "Small business owner" },
+];
+
+const faqs = [
+  ["Can I use HomeStock with my family?", "Yes. You can share household inventory, invite members, and choose who can edit or view shared spaces."],
+  ["Does it work on mobile?", "HomeStock is built as a mobile-ready web app and can be installed on supported phones for quick access."],
+  ["Can I track warranties and expiry dates?", "Yes. Add expiry or warranty dates and receive reminders before food, supplies, or coverage runs out."],
+  ["Is my inventory private?", "Your inventory is tied to your account and protected by sign-in. Shared homes only show items to invited members."],
+];
+
+const plans = [
+  { name: "Starter", price: "$0", text: "For organizing one personal inventory.", features: ["Unlimited manual items", "Categories and locations", "Mobile install"] },
+  { name: "Household", price: "$6", text: "For families who share supplies and reminders.", features: ["Shared homes", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
+  { name: "Business", price: "$14", text: "For small teams tracking stock across workspaces.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
+];
+
 export default function Landing() {
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [lead, setLead] = useState({ name: "", email: "", householdType: "", message: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const testimonial = testimonials[testimonialIndex];
+
+  const submitLead = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSubmitting(true);
+
+    const { error } = await supabase.from("landing_leads" as any).insert({
+      name: lead.name.trim() || null,
+      email: lead.email.trim(),
+      household_type: lead.householdType.trim() || null,
+      message: lead.message.trim() || null,
+    } as any);
+
+    setSubmitting(false);
+
+    if (error) {
+      toast.error("Could not save your request");
+      return;
+    }
+
+    toast.success("Thanks — we’ll be in touch soon");
+    setLead({ name: "", email: "", householdType: "", message: "" });
+  };
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-        <Link to="/" className="flex items-center gap-2 font-heading text-xl font-semibold">
+        <Link to="/" className="flex items-center gap-2 font-heading text-xl font-semibold" aria-label="HomeStock home">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Boxes className="h-5 w-5" />
           </span>
           HomeStock
         </Link>
-        <nav className="flex items-center gap-2">
-          <Button asChild variant="ghost">
-            <Link to="/auth">Sign in</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/auth">Start free</Link>
-          </Button>
+        <nav className="flex items-center gap-2" aria-label="Main navigation">
+          <Button asChild variant="ghost"><Link to="/auth">Sign in</Link></Button>
+          <Button asChild><Link to="/auth">Start free</Link></Button>
         </nav>
       </header>
 
@@ -41,46 +89,29 @@ export default function Landing() {
             <ShieldCheck className="h-4 w-4 text-primary" /> Private home inventory, ready on mobile
           </div>
           <div className="space-y-5">
-            <h1 className="font-heading text-5xl font-bold leading-tight md:text-7xl">
-              Know exactly what you own, where it is, and when it expires.
-            </h1>
+            <h1 className="font-heading text-5xl font-bold leading-tight md:text-7xl">Home inventory app for every cabinet, receipt, and reminder.</h1>
             <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
               HomeStock turns scattered cabinets, receipts, warranties, and shared household supplies into one fast inventory your family can actually keep current.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="gap-2">
-              <Link to="/auth">Create your inventory <ArrowRight className="h-4 w-4" /></Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="gap-2">
-              <Link to="/install"><Smartphone className="h-4 w-4" /> Install app</Link>
-            </Button>
+            <Button asChild size="lg" className="gap-2"><Link to="/auth">Create your inventory <ArrowRight className="h-4 w-4" /></Link></Button>
+            <Button asChild size="lg" variant="outline" className="gap-2"><Link to="/install"><Smartphone className="h-4 w-4" /> Install app</Link></Button>
           </div>
         </div>
 
-        <div className="relative min-h-[520px] overflow-hidden rounded-2xl border bg-card p-4 shadow-xl">
+        <div className="relative min-h-[520px] overflow-hidden rounded-2xl border bg-card p-4 shadow-xl" aria-label="HomeStock inventory app preview">
           <div className="absolute inset-x-0 top-0 h-20 bg-primary/10" />
           <div className="relative mx-auto h-full max-w-sm rounded-[2rem] border bg-background p-4 shadow-2xl">
             <div className="mb-5 flex items-center justify-between border-b pb-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Today at home</p>
-                <p className="font-heading text-2xl font-semibold">142 items</p>
-              </div>
+              <div><p className="text-sm text-muted-foreground">Today at home</p><p className="font-heading text-2xl font-semibold">142 items</p></div>
               <span className="rounded-full bg-accent px-3 py-1 text-sm text-accent-foreground">Synced</span>
             </div>
             <div className="space-y-3">
               {shelves.map(([name, qty, place]) => (
                 <div key={name} className="grid grid-cols-[auto_1fr] gap-3 rounded-lg border bg-card p-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <Boxes className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium">{name}</p>
-                      <span className="text-xs text-muted-foreground">{qty}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{place}</p>
-                  </div>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary"><Boxes className="h-5 w-5" /></div>
+                  <div><div className="flex items-center justify-between gap-2"><p className="font-medium">{name}</p><span className="text-xs text-muted-foreground">{qty}</span></div><p className="text-sm text-muted-foreground">{place}</p></div>
                 </div>
               ))}
             </div>
@@ -102,6 +133,54 @@ export default function Landing() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section id="pricing" className="mx-auto max-w-6xl px-5 py-16">
+        <div className="mb-8 max-w-2xl"><h2 className="font-heading text-4xl font-bold">Simple pricing for every kind of stash.</h2><p className="mt-3 text-muted-foreground">Start small, then add shared homes, reminders, and business tracking when you need them.</p></div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {plans.map((plan) => (
+            <article key={plan.name} className={`rounded-lg border p-6 ${plan.featured ? "bg-primary text-primary-foreground shadow-xl" : "bg-card"}`}>
+              <h3 className="font-heading text-2xl font-semibold">{plan.name}</h3>
+              <p className={`mt-2 text-sm ${plan.featured ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{plan.text}</p>
+              <div className="mt-5 flex items-end gap-1"><span className="font-heading text-4xl font-bold">{plan.price}</span><span className={plan.featured ? "text-primary-foreground/75" : "text-muted-foreground"}>/mo</span></div>
+              <ul className="mt-6 space-y-3 text-sm">
+                {plan.features.map((feature) => <li key={feature} className="flex gap-2"><Check className="h-4 w-4 shrink-0" /> {feature}</li>)}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-y bg-card/50 px-5 py-16">
+        <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[0.8fr_1.2fr] md:items-center">
+          <div><h2 className="font-heading text-4xl font-bold">Loved by organized households.</h2><p className="mt-3 text-muted-foreground">Real workflows for the things people actually forget: filters, food, documents, and warranties.</p></div>
+          <article className="rounded-lg border bg-background p-6 shadow-sm">
+            <div className="mb-4 flex gap-1 text-primary">{Array.from({ length: 5 }).map((_, index) => <Star key={index} className="h-4 w-4 fill-current" />)}</div>
+            <blockquote className="text-xl leading-8">“{testimonial.quote}”</blockquote>
+            <div className="mt-6 flex items-center justify-between gap-4">
+              <div><p className="font-semibold">{testimonial.name}</p><p className="text-sm text-muted-foreground">{testimonial.role}</p></div>
+              <div className="flex gap-2">
+                <Button size="icon" variant="outline" onClick={() => setTestimonialIndex((testimonialIndex + testimonials.length - 1) % testimonials.length)} aria-label="Previous testimonial"><ChevronLeft className="h-4 w-4" /></Button>
+                <Button size="icon" variant="outline" onClick={() => setTestimonialIndex((testimonialIndex + 1) % testimonials.length)} aria-label="Next testimonial"><ChevronRight className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-[1fr_0.9fr]">
+        <div><h2 className="font-heading text-4xl font-bold">Questions before you start?</h2><div className="mt-6 space-y-4">{faqs.map(([question, answer]) => <article key={question} className="rounded-lg border bg-card p-5"><h3 className="font-semibold">{question}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{answer}</p></article>)}</div></div>
+        <form onSubmit={submitLead} className="rounded-lg border bg-card p-6 shadow-sm">
+          <h2 className="font-heading text-3xl font-bold">Get HomeStock updates</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Tell us what you want to organize and we’ll help you get started.</p>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2"><Label htmlFor="lead-name">Name</Label><Input id="lead-name" value={lead.name} onChange={(event) => setLead({ ...lead, name: event.target.value })} placeholder="Your name" /></div>
+            <div className="space-y-2"><Label htmlFor="lead-email">Email</Label><Input id="lead-email" type="email" required value={lead.email} onChange={(event) => setLead({ ...lead, email: event.target.value })} placeholder="you@example.com" /></div>
+            <div className="space-y-2"><Label htmlFor="lead-type">Inventory type</Label><Input id="lead-type" value={lead.householdType} onChange={(event) => setLead({ ...lead, householdType: event.target.value })} placeholder="Home, rental, small business..." /></div>
+            <div className="space-y-2"><Label htmlFor="lead-message">What do you want to track?</Label><Textarea id="lead-message" value={lead.message} onChange={(event) => setLead({ ...lead, message: event.target.value })} placeholder="Pantry, warranties, supplies, equipment..." /></div>
+            <Button type="submit" className="w-full" disabled={submitting}>{submitting ? "Saving..." : "Join the list"}</Button>
+          </div>
+        </form>
       </section>
     </main>
   );
