@@ -35,9 +35,18 @@ const faqs = [
 ];
 
 const plans = [
-  { name: "Starter", price: "$0", text: "For organizing one personal inventory.", features: ["Unlimited manual items", "Categories and locations", "Mobile install"] },
-  { name: "Household", price: "$6", text: "For families who share supplies and reminders.", features: ["Shared homes", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
-  { name: "Business", price: "$14", text: "For small teams tracking stock across workspaces.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
+  { name: "Starter", monthly: "$0", yearly: "$0", text: "For organizing one personal inventory.", features: ["Unlimited manual items", "Categories and locations", "Mobile install"] },
+  { name: "Household", monthly: "$6", yearly: "$60", text: "For families who share supplies and reminders.", features: ["Shared homes", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
+  { name: "Business", monthly: "$14", yearly: "$140", text: "For small teams tracking stock across workspaces.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
+];
+
+const comparisonRows = [
+  ["Manual inventory items", "Unlimited", "Unlimited", "Unlimited"],
+  ["Shared homes", "—", "3 homes", "10 workspaces"],
+  ["Barcode and receipt capture", "—", "Included", "Included"],
+  ["Expiry and warranty reminders", "Basic", "Advanced", "Advanced"],
+  ["Business locations", "—", "—", "Included"],
+  ["Exports and visitor history", "—", "—", "Included"],
 ];
 
 const getDevice = () => {
@@ -63,6 +72,7 @@ const getAttribution = () => {
 
 export default function Landing() {
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [lead, setLead] = useState({ name: "", email: "", householdType: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const testimonial = testimonials[testimonialIndex];
@@ -191,18 +201,36 @@ export default function Landing() {
       </section>
 
       <section id="pricing" className="mx-auto max-w-6xl px-5 py-16">
-        <div className="mb-8 max-w-2xl"><h2 className="font-heading text-4xl font-bold">Simple pricing for every kind of stash.</h2><p className="mt-3 text-muted-foreground">Start small, then add shared homes, reminders, and business tracking when you need them.</p></div>
+        <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl"><h2 className="font-heading text-4xl font-bold">Simple pricing for every kind of stash.</h2><p className="mt-3 text-muted-foreground">Start small, then add shared homes, reminders, and business tracking when you need them.</p></div>
+          <div className="inline-flex rounded-lg border bg-card p-1" aria-label="Billing cycle">
+            <Button type="button" variant={billingCycle === "monthly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("monthly")}>Monthly</Button>
+            <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly</Button>
+          </div>
+        </div>
         <div className="grid gap-4 md:grid-cols-3">
           {plans.map((plan) => (
             <article key={plan.name} className={`rounded-lg border p-6 ${plan.featured ? "bg-primary text-primary-foreground shadow-xl" : "bg-card"}`}>
               <h3 className="font-heading text-2xl font-semibold">{plan.name}</h3>
               <p className={`mt-2 text-sm ${plan.featured ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{plan.text}</p>
-              <div className="mt-5 flex items-end gap-1"><span className="font-heading text-4xl font-bold">{plan.price}</span><span className={plan.featured ? "text-primary-foreground/75" : "text-muted-foreground"}>/mo</span></div>
+              <div className="mt-5 flex items-end gap-1"><span className="font-heading text-4xl font-bold">{plan[billingCycle]}</span><span className={plan.featured ? "text-primary-foreground/75" : "text-muted-foreground"}>/{billingCycle === "monthly" ? "mo" : "yr"}</span></div>
               <ul className="mt-6 space-y-3 text-sm">
                 {plan.features.map((feature) => <li key={feature} className="flex gap-2"><Check className="h-4 w-4 shrink-0" /> {feature}</li>)}
               </ul>
             </article>
           ))}
+        </div>
+        <div className="mt-10 overflow-hidden rounded-lg border bg-card">
+          <div className="grid grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium">
+            <span>Feature</span><span>Starter</span><span>Household</span><span>Business</span>
+          </div>
+          <div className="divide-y">
+            {comparisonRows.map(([feature, starter, household, business]) => (
+              <div key={feature} className="grid grid-cols-[1.2fr_repeat(3,1fr)] gap-3 px-4 py-3 text-sm">
+                <span className="font-medium">{feature}</span><span className="text-muted-foreground">{starter}</span><span className="text-muted-foreground">{household}</span><span className="text-muted-foreground">{business}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
