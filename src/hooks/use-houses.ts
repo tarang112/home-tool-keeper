@@ -33,7 +33,7 @@ export interface PendingInvite {
   shareMode?: string;
   status: string;
   createdAt: string;
-  inviteToken: string;
+  inviteToken?: string;
 }
 
 export const PERSONAL_RELATIONSHIPS = [
@@ -169,11 +169,9 @@ export function useHouses() {
       displayName: profileMap[m.user_id] || undefined,
     })));
 
-    const { data: invites } = await supabase
-      .from("house_invites")
-      .select("*")
-      .eq("house_id", houseId)
-      .eq("status", "pending");
+    const { data: invites } = await supabaseRpc("get_pending_house_invites", {
+      _house_id: houseId,
+    });
 
     setPendingInvites((invites || []).map((inv: any) => ({
       id: inv.id,
@@ -184,7 +182,6 @@ export function useHouses() {
       shareMode: inv.share_mode,
       status: inv.status,
       createdAt: inv.created_at,
-      inviteToken: inv.invite_token,
     })));
   }, []);
 
@@ -382,18 +379,12 @@ export function useHouses() {
   ): Promise<string | null> => {
     if (!user) return null;
 
-    const { data, error } = await supabase
-      .from("house_invites")
-      .insert({
-        house_id: houseId,
-        email: `link-invite-${Date.now()}@invite.local`,
-        role,
-        relationship,
-        share_mode: shareMode,
-        invited_by: user.id,
-      } as any)
-      .select("invite_token")
-      .single();
+    const { data, error } = await supabaseRpc("create_house_invite_link", {
+      _house_id: houseId,
+      _role: role,
+      _relationship: relationship,
+      _share_mode: shareMode,
+    });
 
     if (error) {
       toast.error("Failed to create invite link");
@@ -401,7 +392,7 @@ export function useHouses() {
     }
 
     fetchMembers(houseId);
-    return `${window.location.origin}/accept-invite?token=${data.invite_token}`;
+    return `${window.location.origin}/accept-invite?token=${data}`;
   }, [user, fetchMembers]);
 
   const removeMember = useCallback(async (memberId: string, houseId: string) => {

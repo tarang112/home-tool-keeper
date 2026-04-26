@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -30,6 +32,21 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+    }
+
     const body = await req.json();
     const { barcode, url } = body;
 
@@ -37,9 +54,9 @@ Deno.serve(async (req) => {
       return await handleUrlLookup(url);
     }
 
-    if (!barcode || typeof barcode !== 'string') {
+    if (!barcode || typeof barcode !== 'string' || !/^\d{6,18}$/.test(barcode.trim())) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Barcode or URL is required' }),
+        JSON.stringify({ success: false, error: 'A valid barcode or URL is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -130,7 +147,7 @@ async function webSearchBarcode(barcode: string) {
     // Fetch up to 3 top results and try to extract JSON-LD / og data
     for (const pageUrl of linkMatches.slice(0, 3)) {
       try {
-        const pageRes = await fetch(pageUrl, { headers: BROWSER_HEADERS, redirect: 'follow' });
+        const pageRes = await fetchPublicUrl(pageUrl);
         if (!pageRes.ok) continue;
         const html = await pageRes.text();
         const extracted = extractProductFromHtml(html, pageUrl);
@@ -234,8 +251,8 @@ function extractProductFromHtml(html: string, pageUrl: string) {
 
 async function handleUrlLookup(rawUrl: string): Promise<Response> {
   try {
-    const url = rawUrl.match(/^https?:\/\//i) ? rawUrl : `https://${rawUrl}`;
-    const pageRes = await fetch(url, { redirect: 'follow', headers: BROWSER_HEADERS });
+    const url = await validatePublicHttpUrl(rawUrl);
+    const pageRes = await fetchPublicUrl(url);
     if (!pageRes.ok) {
       console.error('URL fetch failed:', pageRes.status, pageRes.statusText);
       return jsonResponse({ success: false, error: 'Could not fetch URL' }, 400);
@@ -268,8 +285,65 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     return jsonResponse({ success: false, error: 'Could not extract product details' }, 404);
   } catch (error) {
     console.error('URL lookup error:', error);
-    return jsonResponse({ success: false, error: 'URL lookup failed' }, 500);
+    const message = error instanceof Error && /URL|protocol|host|redirect/i.test(error.message)
+      ? error.message
+      : 'URL lookup failed';
+    return jsonResponse({ success: false, error: message }, message === 'URL lookup failed' ? 500 : 400);
   }
+}
+
+async function validatePublicHttpUrl(rawUrl: string): Promise<string> {
+  if (rawUrl.length > 2048) throw new Error('URL too long');
+  const withProtocol = rawUrl.match(/^https?:\/\//i) ? rawUrl : `https://${rawUrl}`;
+  const parsed = new URL(withProtocol);
+  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Invalid protocol');
+
+  const hostname = parsed.hostname.toLowerCase().replace(/\.$/, '');
+  const blockedHosts = new Set([
+    'localhost',
+    'metadata.google.internal',
+    'metadata.azure.com',
+    '169.254.169.254',
+  ]);
+  const privateIpv4 = /^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/;
+  const privateIpv6 = /^(::1$|fc|fd|fe80:)/i;
+  if (
+    blockedHosts.has(hostname) ||
+    hostname.endsWith('.local') ||
+    privateIpv4.test(hostname) ||
+    privateIpv6.test(hostname)
+  ) {
+    throw new Error('Forbidden host');
+  }
+  await assertHostnameResolvesPublic(hostname);
+  return parsed.toString();
+}
+
+async function assertHostnameResolvesPublic(hostname: string): Promise<void> {
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname) || hostname.includes(':')) return;
+  const records = await Promise.allSettled([
+    Deno.resolveDns(hostname, 'A'),
+    Deno.resolveDns(hostname, 'AAAA'),
+  ]);
+  const addresses = records.flatMap((record) => record.status === 'fulfilled' ? record.value : []);
+  if (addresses.some((address) => isPrivateAddress(address))) throw new Error('Forbidden host');
+}
+
+function isPrivateAddress(address: string): boolean {
+  return /^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(address)
+    || /^(::1$|fc|fd|fe80:)/i.test(address);
+}
+
+async function fetchPublicUrl(url: string): Promise<Response> {
+  let currentUrl = await validatePublicHttpUrl(url);
+  for (let i = 0; i < 4; i++) {
+    const response = await fetch(currentUrl, { headers: BROWSER_HEADERS, redirect: 'manual' });
+    if (![301, 302, 303, 307, 308].includes(response.status)) return response;
+    const location = response.headers.get('location');
+    if (!location) return response;
+    currentUrl = await validatePublicHttpUrl(new URL(location, currentUrl).toString());
+  }
+  throw new Error('Too many redirects');
 }
 
 /** Use AI ONLY to parse already-fetched real text content — not to hallucinate */
