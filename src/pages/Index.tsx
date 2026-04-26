@@ -120,19 +120,63 @@ const Index = () => {
     });
   }, []);
   const filtered = useMemo(() => {
-    const isOutOfStockFilter = search.trim().toLowerCase() === "qty:0";
+    const normalizedSearch = search.trim().toLowerCase();
+    const isOutOfStockFilter = normalizedSearch === "qty:0";
+    const isLowStockFilter = normalizedSearch === "low" || normalizedSearch === "low-stock";
+    const expiringMatch = normalizedSearch.match(/^exp(?:iring)?:?(\d+)?$/);
     return items.filter((item) => {
       if (isOutOfStockFilter) {
         return item.quantity === 0 && (activeCategory === "all" || item.category === activeCategory);
       }
-      const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.location.toLowerCase().includes(search.toLowerCase()) ||
-        item.notes.toLowerCase().includes(search.toLowerCase()) ||
-        (item.customCategory?.toLowerCase().includes(search.toLowerCase()));
+      if (isLowStockFilter && item.quantity > 1) return false;
+      if (expiringMatch) {
+        if (!item.expirationDate) return false;
+        const days = Number(expiringMatch[1] || 7);
+        const diff = Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        if (diff < 0 || diff > days) return false;
+      }
+      const matchesSearch = !normalizedSearch || isLowStockFilter || !!expiringMatch || item.name.toLowerCase().includes(normalizedSearch) ||
+        item.location.toLowerCase().includes(normalizedSearch) ||
+        item.notes.toLowerCase().includes(normalizedSearch) ||
+        item.quantityUnit.toLowerCase().includes(normalizedSearch) ||
+        (item.subcategory?.toLowerCase().includes(normalizedSearch)) ||
+        (item.customCategory?.toLowerCase().includes(normalizedSearch));
       const matchesCategory = activeCategory === "all" || item.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
   }, [items, search, activeCategory]);
+
+  const exportRows = useCallback((format: "csv" | "excel" | "pdf") => {
+    const rows = filtered.map((item) => ({
+      Name: item.name,
+      Category: item.customCategory || item.category,
+      Quantity: item.quantity,
+      Unit: item.quantityUnit,
+      Location: item.location,
+      Expiration: item.expirationDate || "",
+      Notes: item.notes || "",
+    }));
+
+    if (format === "pdf") {
+      const html = `<!doctype html><html><head><title>Inventory Export</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}th{background:#f4f4f5}h1{font-size:20px}</style></head><body><h1>HomeStock Inventory</h1><table><thead><tr>${Object.keys(rows[0] || { Name: "", Category: "", Quantity: "", Unit: "", Location: "", Expiration: "", Notes: "" }).map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${Object.values(row).map((value) => `<td>${String(value).replace(/</g, "&lt;")}</td>`).join("")}</tr>`).join("")}</tbody></table></body></html>`;
+      const win = window.open("", "_blank");
+      if (win) {
+        win.document.write(html);
+        win.document.close();
+        win.print();
+      }
+      return;
+    }
+
+    const csv = [Object.keys(rows[0] || { Name: "", Category: "", Quantity: "", Unit: "", Location: "", Expiration: "", Notes: "" }).join(","), ...rows.map((row) => Object.values(row).map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: format === "excel" ? "application/vnd.ms-excel" : "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `homestock-inventory.${format === "excel" ? "xls" : "csv"}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [filtered]);
 
   const handleEdit = (item: InventoryItem) => {
     setEditItem(item);
