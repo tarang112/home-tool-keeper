@@ -35,9 +35,18 @@ const faqs = [
 ];
 
 const plans = [
-  { name: "Starter", price: "$0", text: "For organizing one personal inventory.", features: ["Unlimited manual items", "Categories and locations", "Mobile install"] },
-  { name: "Household", price: "$6", text: "For families who share supplies and reminders.", features: ["Shared homes", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
-  { name: "Business", price: "$14", text: "For small teams tracking stock across workspaces.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
+  { name: "Starter", monthly: "$0", yearly: "$0", text: "For organizing one personal inventory.", features: ["Unlimited manual items", "Categories and locations", "Mobile install"] },
+  { name: "Household", monthly: "$6", yearly: "$60", text: "For families who share supplies and reminders.", features: ["Shared homes", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
+  { name: "Business", monthly: "$14", yearly: "$140", text: "For small teams tracking stock across workspaces.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
+];
+
+const comparisonRows = [
+  ["Manual inventory items", "Unlimited", "Unlimited", "Unlimited"],
+  ["Shared homes", "—", "3 homes", "10 workspaces"],
+  ["Barcode and receipt capture", "—", "Included", "Included"],
+  ["Expiry and warranty reminders", "Basic", "Advanced", "Advanced"],
+  ["Business locations", "—", "—", "Included"],
+  ["Exports and visitor history", "—", "—", "Included"],
 ];
 
 const getDevice = () => {
@@ -63,6 +72,7 @@ const getAttribution = () => {
 
 export default function Landing() {
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [lead, setLead] = useState({ name: "", email: "", householdType: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const testimonial = testimonials[testimonialIndex];
