@@ -133,12 +133,12 @@ export default function AcceptInvite() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           )}
           {(status === "accepted" || status === "already_member") && (
-            <Button onClick={() => navigate("/")} className="w-full">
+            <Button onClick={() => navigate("/app")} className="w-full">
               Go to Inventory
             </Button>
           )}
           {(status === "not_found" || status === "error") && (
-            <Button variant="outline" onClick={() => navigate("/")} className="w-full">
+            <Button variant="outline" onClick={() => navigate("/app")} className="w-full">
               Go Home
             </Button>
           )}

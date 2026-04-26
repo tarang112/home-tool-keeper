@@ -37,7 +37,7 @@ export default function NotificationHistory() {
       <main className="mx-auto max-w-3xl space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="ghost" size="sm" className="gap-2">
-            <Link to="/"><ArrowLeft className="h-4 w-4" /> Back</Link>
+            <Link to="/app"><ArrowLeft className="h-4 w-4" /> Back</Link>
           </Button>
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" className="gap-2" onClick={markAllRead}>

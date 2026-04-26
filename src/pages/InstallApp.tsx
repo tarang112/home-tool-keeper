@@ -44,7 +44,7 @@ export default function InstallApp() {
             <CardDescription>You're already using the app in standalone mode.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/")} className="w-full">
+            <Button onClick={() => navigate("/app")} className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" /> Go to App
             </Button>
           </CardContent>
@@ -100,7 +100,7 @@ export default function InstallApp() {
             </div>
           )}
 
-          <Button variant="outline" onClick={() => navigate("/")} className="w-full">
+          <Button variant="outline" onClick={() => navigate("/app")} className="w-full">
             <ArrowLeft className="mr-2 h-4 w-4" /> Continue in Browser
           </Button>
         </CardContent>
