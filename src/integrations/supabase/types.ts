@@ -347,7 +347,14 @@ export type Database = {
       notification_preferences: {
         Row: {
           created_at: string
+          expiration_email: boolean
+          expiration_in_app: boolean
+          expiration_push: boolean
+          expiration_reminder_days: number[]
           id: string
+          restock_email: boolean
+          restock_in_app: boolean
+          restock_push: boolean
           timezone: string
           updated_at: string
           user_id: string
@@ -358,7 +365,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          expiration_email?: boolean
+          expiration_in_app?: boolean
+          expiration_push?: boolean
+          expiration_reminder_days?: number[]
           id?: string
+          restock_email?: boolean
+          restock_in_app?: boolean
+          restock_push?: boolean
           timezone?: string
           updated_at?: string
           user_id: string
@@ -369,7 +383,14 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          expiration_email?: boolean
+          expiration_in_app?: boolean
+          expiration_push?: boolean
+          expiration_reminder_days?: number[]
           id?: string
+          restock_email?: boolean
+          restock_in_app?: boolean
+          restock_push?: boolean
           timezone?: string
           updated_at?: string
           user_id?: string
