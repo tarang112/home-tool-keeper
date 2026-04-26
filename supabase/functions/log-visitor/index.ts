@@ -17,16 +17,25 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader.startsWith("Bearer ")) throw new Error("Unauthorized");
-    const token = authHeader.replace("Bearer ", "");
+    if (!authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ ok: false, error: "UNAUTHORIZED" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    const authClient = createClient(supabaseUrl, serviceKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) throw new Error("Unauthorized");
+    const { data: userData, error: userError } = await authClient.auth.getUser();
+    if (userError || !userData?.user?.id) {
+      return new Response(JSON.stringify({ ok: false, error: "UNAUTHORIZED" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
@@ -39,20 +48,27 @@ Deno.serve(async (req) => {
     const ip = (req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip") ?? "").split(",")[0].trim();
 
     const { error } = await supabase.from("visitor_logs").insert({
-      user_id: claimsData.claims.sub,
+      user_id: userData.user.id,
       page,
       device,
       referrer,
       user_agent: userAgent,
       session_id: sessionId,
-      ip_hash: await hashIp(ip, claimsData.claims.sub),
+      ip_hash: await hashIp(ip, userData.user.id),
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Visitor log insert failed", error);
+      return new Response(JSON.stringify({ ok: false, error: "LOG_INSERT_FAILED", fallback: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Failed to log visit" }), {
-      status: 401,
+    console.error("Unexpected visitor log failure", error);
+    return new Response(JSON.stringify({ ok: false, error: "VISITOR_LOG_FAILED", fallback: true }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
