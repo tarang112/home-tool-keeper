@@ -16,6 +16,7 @@ export function useNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const seenNotificationIds = useRef<Set<string>>(new Set());
 
   const fetchNotifications = useCallback(async () => {
     if (!user) { setNotifications([]); setLoading(false); return; }
