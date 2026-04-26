@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare, Trash2, RotateCcw, Download, FileText, Table2, AlertTriangle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,8 @@ import { getBusinessCategories } from "@/config/business-categories";
 import { InstallBanner } from "@/components/InstallBanner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomActionBar } from "@/components/BottomActionBar";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const normalizeGroupedItemName = (name: string) =>
   name
@@ -43,6 +45,7 @@ const getEarliestExpiry = (dates: Array<string | null | undefined>) => {
 
 const Index = () => {
   const { user, signOut } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     houses, selectedHouseId, selectedHouse, setSelectedHouseId,
     members, pendingInvites, isOwner, loading: housesLoading,
@@ -102,6 +105,25 @@ const Index = () => {
     incoming: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">;
     resolve: (action: "update" | "replace" | "cancel") => void;
   } | null>(null);
+
+  useEffect(() => {
+    if (!user || searchParams.get("checkout") !== "pending") return;
+    const selection = user.user_metadata?.billing_selection;
+    if (!selection?.plan || !selection?.billingCycle) return;
+
+    void supabase.from("billing_preferences" as any).upsert({
+      user_id: user.id,
+      plan: selection.plan,
+      billing_cycle: selection.billingCycle,
+      location_count: selection.locationCount || 1,
+      unit_amount_cents: selection.unitAmountCents || 0,
+      total_amount_cents: selection.totalAmountCents || 0,
+      status: "checkout_started",
+    } as any, { onConflict: "user_id" }).then(({ error }) => {
+      if (!error) toast.success(`Checkout ready: ${selection.plan} ${selection.billingCycle}`);
+      setSearchParams({}, { replace: true });
+    });
+  }, [searchParams, setSearchParams, user]);
 
   // Load deleted items when section is opened
   useEffect(() => {
