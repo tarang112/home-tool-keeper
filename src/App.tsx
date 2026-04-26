@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { VisitorTracker } from "@/components/VisitorTracker";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
+import AuthCallback from "./pages/AuthCallback.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
 import AcceptInvite from "./pages/AcceptInvite.tsx";
 import InstallApp from "./pages/InstallApp.tsx";
 import NotificationHistory from "./pages/NotificationHistory.tsx";
@@ -48,6 +50,8 @@ const App = () => (
             <Route path="/visitors" element={<ProtectedRoute><VisitorLog /></ProtectedRoute>} />
             <Route path="/visitors/:sessionId" element={<ProtectedRoute><VisitorDetails /></ProtectedRoute>} />
             <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/accept-invite" element={<AcceptInvite />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/install" element={<ProtectedRoute><InstallApp /></ProtectedRoute>} />
