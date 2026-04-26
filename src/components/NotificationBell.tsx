@@ -80,11 +80,16 @@ export function NotificationBell() {
       <PopoverContent className="w-96 p-0" align="end">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h3 className="font-heading font-semibold text-sm">Notifications</h3>
-          {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="text-xs h-7 gap-1" onClick={markAllRead}>
-              <Check className="h-3 w-3" /> Mark all read
+          <div className="flex items-center gap-1">
+            <Button asChild variant="ghost" size="sm" className="text-xs h-7 gap-1">
+              <Link to="/notifications"><History className="h-3 w-3" /> History</Link>
             </Button>
-          )}
+            {unreadCount > 0 && (
+              <Button variant="ghost" size="sm" className="text-xs h-7 gap-1" onClick={markAllRead}>
+                <Check className="h-3 w-3" /> Mark all read
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
