@@ -433,28 +433,91 @@ export type Database = {
       }
       landing_leads: {
         Row: {
+          campaign: string | null
           created_at: string
           email: string
           household_type: string | null
           id: string
+          landing_page: string | null
+          medium: string | null
           message: string | null
           name: string | null
+          referrer: string | null
+          session_id: string | null
+          source: string | null
         }
         Insert: {
+          campaign?: string | null
           created_at?: string
           email: string
           household_type?: string | null
           id?: string
+          landing_page?: string | null
+          medium?: string | null
           message?: string | null
           name?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          source?: string | null
         }
         Update: {
+          campaign?: string | null
           created_at?: string
           email?: string
           household_type?: string | null
           id?: string
+          landing_page?: string | null
+          medium?: string | null
           message?: string | null
           name?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          source?: string | null
+        }
+        Relationships: []
+      }
+      landing_page_events: {
+        Row: {
+          campaign: string | null
+          created_at: string
+          device: string
+          event_name: string
+          id: string
+          lead_id: string | null
+          medium: string
+          metadata: Json
+          page: string
+          referrer: string | null
+          session_id: string | null
+          source: string
+        }
+        Insert: {
+          campaign?: string | null
+          created_at?: string
+          device?: string
+          event_name: string
+          id?: string
+          lead_id?: string | null
+          medium?: string
+          metadata?: Json
+          page?: string
+          referrer?: string | null
+          session_id?: string | null
+          source?: string
+        }
+        Update: {
+          campaign?: string | null
+          created_at?: string
+          device?: string
+          event_name?: string
+          id?: string
+          lead_id?: string | null
+          medium?: string
+          metadata?: Json
+          page?: string
+          referrer?: string | null
+          session_id?: string | null
+          source?: string
         }
         Relationships: []
       }

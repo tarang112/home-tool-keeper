@@ -16,7 +16,16 @@ type LandingLead = {
   email: string;
   household_type: string | null;
   message: string | null;
+  source: string | null;
+  medium: string | null;
+  campaign: string | null;
   created_at: string;
+};
+
+type LandingEvent = {
+  event_name: "pageview" | "lead_submit";
+  source: string | null;
+  medium: string | null;
 };
 
 export default function AdminLeads() {
@@ -25,6 +34,7 @@ export default function AdminLeads() {
   const [checkingRole, setCheckingRole] = useState(true);
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<LandingLead[]>([]);
+  const [events, setEvents] = useState<LandingEvent[]>([]);
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -33,18 +43,40 @@ export default function AdminLeads() {
     return leads.filter((lead) => `${lead.name ?? ""} ${lead.email} ${lead.household_type ?? ""} ${lead.message ?? ""}`.toLowerCase().includes(value));
   }, [leads, query]);
 
+  const sourceStats = useMemo(() => {
+    const stats = new Map<string, { source: string; medium: string; pageviews: number; leads: number }>();
+    events.forEach((event) => {
+      const source = event.source || "direct";
+      const medium = event.medium || "none";
+      const key = `${source}|${medium}`;
+      const current = stats.get(key) || { source, medium, pageviews: 0, leads: 0 };
+      if (event.event_name === "pageview") current.pageviews += 1;
+      if (event.event_name === "lead_submit") current.leads += 1;
+      stats.set(key, current);
+    });
+    return Array.from(stats.values()).sort((a, b) => b.leads - a.leads || b.pageviews - a.pageviews);
+  }, [events]);
+
   const loadLeads = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const [{ data, error }, { data: eventData }] = await Promise.all([
+      supabase
       .from("landing_leads" as any)
-      .select("id, name, email, household_type, message, created_at")
-      .order("created_at", { ascending: false });
+      .select("id, name, email, household_type, message, source, medium, campaign, created_at")
+      .order("created_at", { ascending: false }),
+      supabase
+        .from("landing_page_events" as any)
+        .select("event_name, source, medium")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+    ]);
 
     if (error) {
       toast.error("Unable to load leads");
       setLeads([]);
     } else {
       setLeads((data as unknown as LandingLead[]) ?? []);
+      setEvents((eventData as unknown as LandingEvent[]) ?? []);
     }
     setLoading(false);
   };
@@ -111,6 +143,33 @@ export default function AdminLeads() {
         </div>
 
         <Card>
+          <CardHeader><CardTitle>Conversion by source</CardTitle></CardHeader>
+          <CardContent>
+            {sourceStats.length === 0 ? (
+              <div className="flex h-28 items-center justify-center rounded-lg border text-sm text-muted-foreground">No analytics yet</div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-3">
+                {sourceStats.map((stat) => {
+                  const rate = stat.pageviews ? Math.round((stat.leads / stat.pageviews) * 1000) / 10 : 0;
+                  return (
+                    <article key={`${stat.source}-${stat.medium}`} className="rounded-lg border bg-card p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div><p className="font-semibold">{stat.source}</p><p className="text-xs text-muted-foreground">{stat.medium}</p></div>
+                        <Badge variant="secondary">{rate}%</Badge>
+                      </div>
+                      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div><p className="text-muted-foreground">Views</p><p className="font-heading text-2xl font-semibold">{stat.pageviews}</p></div>
+                        <div><p className="text-muted-foreground">Leads</p><p className="font-heading text-2xl font-semibold">{stat.leads}</p></div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2">Submissions <Badge variant="secondary">{filtered.length}</Badge></CardTitle>
             <Input className="sm:max-w-xs" placeholder="Search leads..." value={query} onChange={(event) => setQuery(event.target.value)} />
@@ -128,7 +187,7 @@ export default function AdminLeads() {
                     <article key={lead.id} className="grid gap-3 px-4 py-4 md:grid-cols-[1.2fr_1.2fr_1fr_1.5fr_auto] md:items-center">
                       <div><p className="font-medium">{lead.name || "Anonymous"}</p><p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}</p></div>
                       <a className="break-all text-sm text-primary underline-offset-4 hover:underline" href={`mailto:${lead.email}`}>{lead.email}</a>
-                      <p className="text-sm text-muted-foreground">{lead.household_type || "—"}</p>
+                      <p className="text-sm text-muted-foreground">{lead.household_type || "—"}<span className="mt-1 block text-xs">{lead.source || "direct"}{lead.campaign ? ` · ${lead.campaign}` : ""}</span></p>
                       <p className="text-sm leading-6 text-muted-foreground">{lead.message || "—"}</p>
                       <Button size="icon" variant="ghost" onClick={() => deleteLead(lead.id)} aria-label={`Delete lead from ${lead.email}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </article>
