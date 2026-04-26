@@ -201,18 +201,36 @@ export default function Landing() {
       </section>
 
       <section id="pricing" className="mx-auto max-w-6xl px-5 py-16">
-        <div className="mb-8 max-w-2xl"><h2 className="font-heading text-4xl font-bold">Simple pricing for every kind of stash.</h2><p className="mt-3 text-muted-foreground">Start small, then add shared homes, reminders, and business tracking when you need them.</p></div>
+        <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl"><h2 className="font-heading text-4xl font-bold">Simple pricing for every kind of stash.</h2><p className="mt-3 text-muted-foreground">Start small, then add shared homes, reminders, and business tracking when you need them.</p></div>
+          <div className="inline-flex rounded-lg border bg-card p-1" aria-label="Billing cycle">
+            <Button type="button" variant={billingCycle === "monthly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("monthly")}>Monthly</Button>
+            <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly</Button>
+          </div>
+        </div>
         <div className="grid gap-4 md:grid-cols-3">
           {plans.map((plan) => (
             <article key={plan.name} className={`rounded-lg border p-6 ${plan.featured ? "bg-primary text-primary-foreground shadow-xl" : "bg-card"}`}>
               <h3 className="font-heading text-2xl font-semibold">{plan.name}</h3>
               <p className={`mt-2 text-sm ${plan.featured ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{plan.text}</p>
-              <div className="mt-5 flex items-end gap-1"><span className="font-heading text-4xl font-bold">{plan.price}</span><span className={plan.featured ? "text-primary-foreground/75" : "text-muted-foreground"}>/mo</span></div>
+              <div className="mt-5 flex items-end gap-1"><span className="font-heading text-4xl font-bold">{plan[billingCycle]}</span><span className={plan.featured ? "text-primary-foreground/75" : "text-muted-foreground"}>/{billingCycle === "monthly" ? "mo" : "yr"}</span></div>
               <ul className="mt-6 space-y-3 text-sm">
                 {plan.features.map((feature) => <li key={feature} className="flex gap-2"><Check className="h-4 w-4 shrink-0" /> {feature}</li>)}
               </ul>
             </article>
           ))}
+        </div>
+        <div className="mt-10 overflow-hidden rounded-lg border bg-card">
+          <div className="grid grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium">
+            <span>Feature</span><span>Starter</span><span>Household</span><span>Business</span>
+          </div>
+          <div className="divide-y">
+            {comparisonRows.map(([feature, starter, household, business]) => (
+              <div key={feature} className="grid grid-cols-[1.2fr_repeat(3,1fr)] gap-3 px-4 py-3 text-sm">
+                <span className="font-medium">{feature}</span><span className="text-muted-foreground">{starter}</span><span className="text-muted-foreground">{household}</span><span className="text-muted-foreground">{business}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
