@@ -98,6 +98,7 @@ Deno.serve(async (req) => {
 
           if (!insertError) notificationsCreated++;
           else if (insertError.code !== "23505") console.error("Error creating notification:", insertError);
+        }
       }
 
       if (prefs.email) console.log(`[restock-email] would email user ${item.user_id}: ${title}`);
