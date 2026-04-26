@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_preferences: {
+        Row: {
+          billing_cycle: string
+          created_at: string
+          id: string
+          location_count: number
+          plan: string
+          status: string
+          total_amount_cents: number
+          unit_amount_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string
+          id?: string
+          location_count?: number
+          plan?: string
+          status?: string
+          total_amount_cents?: number
+          unit_amount_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string
+          id?: string
+          location_count?: number
+          plan?: string
+          status?: string
+          total_amount_cents?: number
+          unit_amount_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_categories: {
         Row: {
           created_at: string
