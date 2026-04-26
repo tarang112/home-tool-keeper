@@ -36,13 +36,14 @@ const faqs = [
 
 const plans = [
   { name: "Starter", monthly: "$0", yearly: "$0", text: "For organizing one personal inventory.", features: ["Unlimited manual items", "Categories and locations", "Mobile install"] },
-  { name: "Household", monthly: "$6", yearly: "$60", text: "For families who share supplies and reminders.", features: ["Shared homes", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
-  { name: "Business", monthly: "$14", yearly: "$140", text: "For small teams tracking stock across workspaces.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
+  { name: "Household", monthly: "$6", yearly: "$60", text: "Per home, rental, or shared property.", features: ["Shared property access", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
+  { name: "Business", monthly: "$14", yearly: "$140", text: "Per location for small teams tracking stock.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
 ];
 
 const comparisonRows = [
   ["Manual inventory items", "Unlimited", "Unlimited", "Unlimited"],
-  ["Shared homes", "—", "3 homes", "10 workspaces"],
+  ["Included locations/properties", "1", "1", "1"],
+  ["Shared access", "—", "Household members", "Team members"],
   ["Barcode and receipt capture", "—", "Included", "Included"],
   ["Expiry and warranty reminders", "Basic", "Advanced", "Advanced"],
   ["Business locations", "—", "—", "Included"],
