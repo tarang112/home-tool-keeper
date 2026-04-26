@@ -4,6 +4,7 @@ import { ArrowRight, Bell, Boxes, Check, ChevronLeft, ChevronRight, Mail, ScanBa
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -238,7 +239,7 @@ export default function Landing() {
           <div className="flex flex-col gap-2 sm:items-end">
             <div className="inline-flex rounded-lg border bg-card p-1" aria-label="Billing cycle">
               <Button type="button" variant={billingCycle === "monthly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("monthly")}>Monthly</Button>
-              <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly <span className="ml-1 text-xs opacity-80">Save 17%</span></Button>
+              <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly <Tooltip><TooltipTrigger asChild><span className="ml-1 cursor-help text-xs opacity-80 underline decoration-dotted underline-offset-2">Save 17%</span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Yearly pricing gives 12 months for the cost of 10, so the savings are about 17% compared with paying monthly for a full year.</p></TooltipContent></Tooltip></Button>
             </div>
             <p className="max-w-xs text-xs leading-5 text-muted-foreground sm:text-right">
               Yearly plans are billed upfront for the year. Added locations use the same billing cycle and are prorated for the remaining term.
