@@ -55,7 +55,7 @@ const normalizeLocale = (value: unknown) => {
   return SUPPORTED_LOCALES.has(locale) ? locale : 'en'
 }
 
-async function resolveRecipientLocale(supabase: ReturnType<typeof createClient>, payloadData: any) {
+async function resolveRecipientLocale(supabase: any, payloadData: any) {
   const fallbackLocale = normalizeLocale(
     payloadData?.locale ||
       payloadData?.user_metadata?.preferred_language ||
@@ -78,7 +78,7 @@ async function resolveRecipientLocale(supabase: ReturnType<typeof createClient>,
     return fallbackLocale
   }
 
-  return normalizeLocale(profile?.preferred_language || fallbackLocale)
+  return normalizeLocale((profile as { preferred_language?: string } | null)?.preferred_language || fallbackLocale)
 }
 
 // Template mapping
