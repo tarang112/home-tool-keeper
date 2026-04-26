@@ -70,6 +70,30 @@ const SITE_NAME = "your-home-stash"
 const SENDER_DOMAIN = "notify.homestock.online"
 const ROOT_DOMAIN = "homestock.online"
 const FROM_DOMAIN = "notify.homestock.online" // Domain shown in From address (may be root or sender subdomain)
+const APP_BASE_URL = `https://${ROOT_DOMAIN}`
+
+const ACTION_ROUTES: Record<string, string> = {
+  signup: '/auth/callback',
+  magiclink: '/auth/callback',
+  recovery: '/auth/reset-password',
+  invite: '/auth/callback',
+  email_change: '/auth/callback',
+}
+
+function buildActionUrl(verificationUrl: string, emailType: string) {
+  const route = ACTION_ROUTES[emailType] || '/auth/callback'
+  const appUrl = new URL(route, APP_BASE_URL)
+  appUrl.searchParams.set('source', 'email')
+  appUrl.searchParams.set('action', emailType)
+
+  try {
+    const secureUrl = new URL(verificationUrl)
+    secureUrl.searchParams.set('redirect_to', appUrl.toString())
+    return secureUrl.toString()
+  } catch (_error) {
+    return appUrl.toString()
+  }
+}
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
@@ -263,9 +287,9 @@ async function handleWebhook(req: Request): Promise<Response> {
   // Build template props from payload.data (HookData structure)
   const templateProps = {
     siteName: SITE_NAME,
-    siteUrl: `https://${ROOT_DOMAIN}`,
+    siteUrl: APP_BASE_URL,
     recipient: payload.data.email,
-    confirmationUrl: payload.data.url,
+    confirmationUrl: buildActionUrl(payload.data.url, emailType),
     token: payload.data.token,
     email: payload.data.email,
     newEmail: payload.data.new_email,
