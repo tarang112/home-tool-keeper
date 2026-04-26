@@ -288,16 +288,42 @@ const Index = () => {
           onManage={() => setManageOpen(true)}
         />
 
-        <StatsBar items={items} onOutOfStockClick={() => setSearch(prev => prev === "qty:0" ? "" : "qty:0")} activeFilter={search === "qty:0" ? "outOfStock" : undefined} />
+        <StatsBar
+          items={items}
+          onOutOfStockClick={() => setSearch(prev => prev === "qty:0" ? "" : "qty:0")}
+          onCategoryClick={(category) => setActiveCategory(category)}
+          activeFilter={search === "qty:0" ? "outOfStock" : undefined}
+        />
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search items, locations..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+        {lowStockItems.length > 0 && (
+          <button onClick={() => setSearch("low")} className="flex w-full items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/15">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span className="font-medium">{lowStockItems.length} low-stock item{lowStockItems.length === 1 ? "" : "s"}</span>
+            <span className="ml-auto text-xs">View</span>
+          </button>
+        )}
+
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search items, locations, units, exp:7, low..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("pdf")}>
+              <FileText className="h-4 w-4" /> PDF
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("excel")}>
+              <Table2 className="h-4 w-4" /> Excel
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("csv")}>
+              <Download className="h-4 w-4" /> CSV
+            </Button>
+          </div>
         </div>
 
         {(() => {
