@@ -44,7 +44,7 @@ export default function AdminLeads() {
       toast.error("Unable to load leads");
       setLeads([]);
     } else {
-      setLeads((data as LandingLead[]) ?? []);
+      setLeads((data as unknown as LandingLead[]) ?? []);
     }
     setLoading(false);
   };
