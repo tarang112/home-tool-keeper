@@ -21,8 +21,10 @@ export type Database = {
           id: string
           location_count: number
           order_confirmation_email: string | null
+          order_confirmation_from_name: string | null
           plan: string
           receipt_email: string | null
+          receipt_from_name: string | null
           status: string
           total_amount_cents: number
           unit_amount_cents: number
@@ -35,8 +37,10 @@ export type Database = {
           id?: string
           location_count?: number
           order_confirmation_email?: string | null
+          order_confirmation_from_name?: string | null
           plan?: string
           receipt_email?: string | null
+          receipt_from_name?: string | null
           status?: string
           total_amount_cents?: number
           unit_amount_cents?: number
@@ -49,8 +53,10 @@ export type Database = {
           id?: string
           location_count?: number
           order_confirmation_email?: string | null
+          order_confirmation_from_name?: string | null
           plan?: string
           receipt_email?: string | null
+          receipt_from_name?: string | null
           status?: string
           total_amount_cents?: number
           unit_amount_cents?: number
