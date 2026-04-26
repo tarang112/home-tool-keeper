@@ -25,6 +25,36 @@ const EMAIL_SUBJECTS: Record<string, string> = {
   reauthentication: 'Your verification code',
 }
 
+const LOCALIZED_SUBJECTS: Record<string, Record<string, string>> = {
+  signup: {
+    en: 'Confirm your email',
+    ar: 'أكّد بريدك الإلكتروني',
+    es: 'Confirma tu correo',
+    fr: 'Confirmez votre e-mail',
+    hi: 'अपना ईमेल पुष्टि करें',
+  },
+  magiclink: {
+    en: 'Your login link',
+    ar: 'رابط تسجيل الدخول',
+    es: 'Tu enlace de inicio de sesión',
+    fr: 'Votre lien de connexion',
+    hi: 'आपका लॉगिन लिंक',
+  },
+  recovery: {
+    en: 'Reset your password',
+    ar: 'إعادة تعيين كلمة المرور',
+    es: 'Restablece tu contraseña',
+    fr: 'Réinitialisez votre mot de passe',
+    hi: 'अपना पासवर्ड रीसेट करें',
+  },
+}
+
+const SUPPORTED_LOCALES = new Set(['en', 'ar', 'es', 'fr', 'hi'])
+const normalizeLocale = (value: unknown) => {
+  const locale = typeof value === 'string' ? value.toLowerCase().split('-')[0] : 'en'
+  return SUPPORTED_LOCALES.has(locale) ? locale : 'en'
+}
+
 // Template mapping
 const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
   signup: SignupEmail,
