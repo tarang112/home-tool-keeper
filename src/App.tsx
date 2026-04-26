@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { VisitorTracker } from "@/components/VisitorTracker";
 import Landing from "./pages/Landing.tsx";
+import AdminLeads from "./pages/AdminLeads.tsx";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
@@ -48,6 +49,7 @@ const App = () => (
           <VisitorTracker />
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/admin/leads" element={<ProtectedRoute><AdminLeads /></ProtectedRoute>} />
             <Route path="/app" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationHistory /></ProtectedRoute>} />
             <Route path="/email-preview" element={<ProtectedRoute><EmailPreview /></ProtectedRoute>} />
