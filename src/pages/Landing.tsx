@@ -300,10 +300,11 @@ export default function Landing() {
             {comparisonRows.map(([feature, starter, household, business]) => (
               <div key={feature} className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.2fr_repeat(3,1fr)] md:py-3">
                 <span className="font-medium">{feature}</span>
-                <div className="grid grid-cols-3 gap-2 md:contents">
+                <div className="grid grid-cols-3 items-stretch gap-2 md:contents">
                   {[["Starter", starter], ["Household", household], ["Business", business]].map(([planName, value]) => (
-                    <span key={planName} className="rounded-md border bg-background p-2 text-muted-foreground md:border-0 md:bg-transparent md:p-0">
-                      <span className="mb-1 block text-xs font-medium text-foreground md:hidden">{planName}</span>{value}
+                    <span key={planName} className="flex min-h-20 flex-col rounded-md border bg-background p-2 text-muted-foreground md:block md:min-h-0 md:border-0 md:bg-transparent md:p-0">
+                      <span className="mb-1 block text-xs font-medium text-foreground md:hidden">{planName}</span>
+                      <span className="break-words text-xs leading-5 md:text-sm md:leading-normal">{value}</span>
                     </span>
                   ))}
                 </div>
