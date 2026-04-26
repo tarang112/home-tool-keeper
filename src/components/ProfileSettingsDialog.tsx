@@ -44,6 +44,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [selectedDefault, setSelectedDefault] = useState<string>("none");
   const [preferredLanguage, setPreferredLanguage] = useState("en");
   const [receiptEmail, setReceiptEmail] = useState("");
+  const [orderConfirmationEmail, setOrderConfirmationEmail] = useState("");
   const [warrantyInApp, setWarrantyInApp] = useState(true);
   const [warrantyEmail, setWarrantyEmail] = useState(false);
   const [warrantyPush, setWarrantyPush] = useState(false);
@@ -124,10 +125,13 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
 
       supabase
         .from("billing_preferences" as any)
-        .select("receipt_email")
+        .select("receipt_email, order_confirmation_email")
         .eq("user_id", user.id)
         .maybeSingle()
-        .then(({ data }: any) => setReceiptEmail(data?.receipt_email || ""));
+        .then(({ data }: any) => {
+          setReceiptEmail(data?.receipt_email || "");
+          setOrderConfirmationEmail(data?.order_confirmation_email || "");
+        });
 
       setSelectedDefault(defaultHouseId ?? "none");
     }
@@ -178,12 +182,14 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
     }
 
     const normalizedReceiptEmail = receiptEmail.trim();
+    const normalizedOrderConfirmationEmail = orderConfirmationEmail.trim();
     const { error: billingError } = await supabase
       .from("billing_preferences" as any)
       .upsert(
         {
           user_id: user.id,
           receipt_email: normalizedReceiptEmail || null,
+          order_confirmation_email: normalizedOrderConfirmationEmail || null,
         },
         { onConflict: "user_id" }
       );
@@ -288,6 +294,18 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               placeholder={user?.email ?? "receipts@example.com"}
             />
             <p className="text-xs text-muted-foreground">Checkout and order receipts can be sent here instead of your sign-in email.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="order-confirmation-email">Order Confirmation Email</Label>
+            <Input
+              id="order-confirmation-email"
+              type="email"
+              value={orderConfirmationEmail}
+              onChange={(e) => setOrderConfirmationEmail(e.target.value)}
+              placeholder={receiptEmail || user?.email || "orders@example.com"}
+            />
+            <p className="text-xs text-muted-foreground">Order confirmation messages can be sent here separately from receipts.</p>
           </div>
 
           <div className="space-y-4 border-t pt-4">
