@@ -40,6 +40,12 @@ export function useNotifications() {
     seenNotificationIds.current = new Set(mapped.map((n) => n.id));
     if (previousSeen.size > 0 && newUnread.length > 0) {
       toast(newUnread[0].title, { description: newUnread[0].message || "New inventory notification" });
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(newUnread[0].title, {
+          body: newUnread[0].message || "New inventory notification",
+          icon: "/placeholder.svg",
+        });
+      }
     }
     setLoading(false);
   }, [user]);
