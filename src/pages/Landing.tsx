@@ -35,9 +35,9 @@ const faqs = [
 ];
 
 const plans = [
-  { name: "Starter", monthly: "$0", yearly: "$0", text: "For organizing one personal inventory.", features: ["Unlimited manual items", "Categories and locations", "Mobile install"] },
-  { name: "Household", monthly: "$6", yearly: "$60", text: "Per home, rental, or shared property.", features: ["Shared property access", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
-  { name: "Business", monthly: "$14", yearly: "$140", text: "Per location for small teams tracking stock.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
+  { name: "Starter", monthly: "$0", yearly: "$0", monthlyAmount: 0, yearlyAmount: 0, text: "For organizing one personal inventory.", features: ["Unlimited manual items", "Categories and locations", "Mobile install"] },
+  { name: "Household", monthly: "$6", yearly: "$60", monthlyAmount: 6, yearlyAmount: 60, text: "Per home, rental, or shared property.", features: ["Shared property access", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
+  { name: "Business", monthly: "$14", yearly: "$140", monthlyAmount: 14, yearlyAmount: 140, text: "Per location for small teams tracking stock.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
 ];
 
 const comparisonRows = [
@@ -79,6 +79,7 @@ const getSavedBillingCycle = (): "monthly" | "yearly" => {
 export default function Landing() {
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(getSavedBillingCycle);
+  const [locationCount, setLocationCount] = useState(1);
   const [lead, setLead] = useState({ name: "", email: "", householdType: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const testimonial = testimonials[testimonialIndex];
