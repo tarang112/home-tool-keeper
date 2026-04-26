@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export interface Notification {
   id: string;
@@ -15,6 +16,7 @@ export function useNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const seenNotificationIds = useRef<Set<string>>(new Set());
 
   const fetchNotifications = useCallback(async () => {
     if (!user) { setNotifications([]); setLoading(false); return; }
@@ -23,17 +25,22 @@ export function useNotifications() {
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(50);
-    setNotifications(
-      (data || []).map((n: any) => ({
-        id: n.id,
-        title: n.title,
-        message: n.message,
-        read: n.read,
-        itemId: n.item_id,
-        createdAt: n.created_at,
-      }))
-    );
+      .limit(100);
+    const mapped = (data || []).map((n: any) => ({
+      id: n.id,
+      title: n.title,
+      message: n.message,
+      read: n.read,
+      itemId: n.item_id,
+      createdAt: n.created_at,
+    }));
+    const previousSeen = seenNotificationIds.current;
+    const newUnread = mapped.filter((n) => !n.read && !previousSeen.has(n.id));
+    setNotifications(mapped);
+    seenNotificationIds.current = new Set(mapped.map((n) => n.id));
+    if (previousSeen.size > 0 && newUnread.length > 0) {
+      toast(newUnread[0].title, { description: newUnread[0].message || "New inventory notification" });
+    }
     setLoading(false);
   }, [user]);
 

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare, Trash2, RotateCcw } from "lucide-react";
+import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare, Trash2, RotateCcw, Download, FileText, Table2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +109,8 @@ const Index = () => {
     }
   }, [showDeleted, fetchDeletedItems]);
 
+  const lowStockItems = useMemo(() => items.filter((item) => item.quantity <= 1), [items]);
+
   const toggleCategory = useCallback((cat: string) => {
     setCollapsedCategories(prev => {
       const next = new Set(prev);
@@ -118,19 +120,63 @@ const Index = () => {
     });
   }, []);
   const filtered = useMemo(() => {
-    const isOutOfStockFilter = search.trim().toLowerCase() === "qty:0";
+    const normalizedSearch = search.trim().toLowerCase();
+    const isOutOfStockFilter = normalizedSearch === "qty:0";
+    const isLowStockFilter = normalizedSearch === "low" || normalizedSearch === "low-stock";
+    const expiringMatch = normalizedSearch.match(/^exp(?:iring)?:?(\d+)?$/);
     return items.filter((item) => {
       if (isOutOfStockFilter) {
         return item.quantity === 0 && (activeCategory === "all" || item.category === activeCategory);
       }
-      const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.location.toLowerCase().includes(search.toLowerCase()) ||
-        item.notes.toLowerCase().includes(search.toLowerCase()) ||
-        (item.customCategory?.toLowerCase().includes(search.toLowerCase()));
+      if (isLowStockFilter && item.quantity > 1) return false;
+      if (expiringMatch) {
+        if (!item.expirationDate) return false;
+        const days = Number(expiringMatch[1] || 7);
+        const diff = Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        if (diff < 0 || diff > days) return false;
+      }
+      const matchesSearch = !normalizedSearch || isLowStockFilter || !!expiringMatch || item.name.toLowerCase().includes(normalizedSearch) ||
+        item.location.toLowerCase().includes(normalizedSearch) ||
+        item.notes.toLowerCase().includes(normalizedSearch) ||
+        item.quantityUnit.toLowerCase().includes(normalizedSearch) ||
+        (item.subcategory?.toLowerCase().includes(normalizedSearch)) ||
+        (item.customCategory?.toLowerCase().includes(normalizedSearch));
       const matchesCategory = activeCategory === "all" || item.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
   }, [items, search, activeCategory]);
+
+  const exportRows = useCallback((format: "csv" | "excel" | "pdf") => {
+    const rows = filtered.map((item) => ({
+      Name: item.name,
+      Category: item.customCategory || item.category,
+      Quantity: item.quantity,
+      Unit: item.quantityUnit,
+      Location: item.location,
+      Expiration: item.expirationDate || "",
+      Notes: item.notes || "",
+    }));
+
+    if (format === "pdf") {
+      const html = `<!doctype html><html><head><title>Inventory Export</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}th{background:#f4f4f5}h1{font-size:20px}</style></head><body><h1>HomeStock Inventory</h1><table><thead><tr>${Object.keys(rows[0] || { Name: "", Category: "", Quantity: "", Unit: "", Location: "", Expiration: "", Notes: "" }).map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${Object.values(row).map((value) => `<td>${String(value).replace(/</g, "&lt;")}</td>`).join("")}</tr>`).join("")}</tbody></table></body></html>`;
+      const win = window.open("", "_blank");
+      if (win) {
+        win.document.write(html);
+        win.document.close();
+        win.print();
+      }
+      return;
+    }
+
+    const csv = [Object.keys(rows[0] || { Name: "", Category: "", Quantity: "", Unit: "", Location: "", Expiration: "", Notes: "" }).join(","), ...rows.map((row) => Object.values(row).map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: format === "excel" ? "application/vnd.ms-excel" : "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `homestock-inventory.${format === "excel" ? "xls" : "csv"}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [filtered]);
 
   const handleEdit = (item: InventoryItem) => {
     setEditItem(item);
@@ -242,16 +288,42 @@ const Index = () => {
           onManage={() => setManageOpen(true)}
         />
 
-        <StatsBar items={items} onOutOfStockClick={() => setSearch(prev => prev === "qty:0" ? "" : "qty:0")} activeFilter={search === "qty:0" ? "outOfStock" : undefined} />
+        <StatsBar
+          items={items}
+          onOutOfStockClick={() => setSearch(prev => prev === "qty:0" ? "" : "qty:0")}
+          onCategoryClick={(category) => setActiveCategory(category)}
+          activeFilter={search === "qty:0" ? "outOfStock" : undefined}
+        />
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search items, locations..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+        {lowStockItems.length > 0 && (
+          <button onClick={() => setSearch("low")} className="flex w-full items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/15">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span className="font-medium">{lowStockItems.length} low-stock item{lowStockItems.length === 1 ? "" : "s"}</span>
+            <span className="ml-auto text-xs">View</span>
+          </button>
+        )}
+
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search items, locations, units, exp:7, low..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("pdf")}>
+              <FileText className="h-4 w-4" /> PDF
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("excel")}>
+              <Table2 className="h-4 w-4" /> Excel
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("csv")}>
+              <Download className="h-4 w-4" /> CSV
+            </Button>
+          </div>
         </div>
 
         {(() => {
