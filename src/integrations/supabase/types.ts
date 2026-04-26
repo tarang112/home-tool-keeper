@@ -431,6 +431,33 @@ export type Database = {
           },
         ]
       }
+      landing_leads: {
+        Row: {
+          created_at: string
+          email: string
+          household_type: string | null
+          id: string
+          message: string | null
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          household_type?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          household_type?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
