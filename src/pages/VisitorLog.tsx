@@ -46,7 +46,7 @@ export default function VisitorLog() {
       <main className="mx-auto max-w-5xl space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="ghost" size="sm" className="gap-2">
-            <Link to="/"><ArrowLeft className="h-4 w-4" /> Back</Link>
+            <Link to="/app"><ArrowLeft className="h-4 w-4" /> Back</Link>
           </Button>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-2" onClick={exportCsv} disabled={filtered.length === 0}>
