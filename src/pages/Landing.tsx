@@ -255,13 +255,20 @@ export default function Landing() {
           ))}
         </div>
         <div className="mt-10 overflow-hidden rounded-lg border bg-card">
-          <div className="grid grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium">
+          <div className="hidden grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium md:grid">
             <span>Feature</span><span>Starter</span><span>Household</span><span>Business</span>
           </div>
           <div className="divide-y">
             {comparisonRows.map(([feature, starter, household, business]) => (
-              <div key={feature} className="grid grid-cols-[1.2fr_repeat(3,1fr)] gap-3 px-4 py-3 text-sm">
-                <span className="font-medium">{feature}</span><span className="text-muted-foreground">{starter}</span><span className="text-muted-foreground">{household}</span><span className="text-muted-foreground">{business}</span>
+              <div key={feature} className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.2fr_repeat(3,1fr)] md:py-3">
+                <span className="font-medium">{feature}</span>
+                <div className="grid grid-cols-3 gap-2 md:contents">
+                  {[["Starter", starter], ["Household", household], ["Business", business]].map(([planName, value]) => (
+                    <span key={planName} className="rounded-md border bg-background p-2 text-muted-foreground md:border-0 md:bg-transparent md:p-0">
+                      <span className="mb-1 block text-xs font-medium text-foreground md:hidden">{planName}</span>{value}
+                    </span>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
