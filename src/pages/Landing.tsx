@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Bell, Boxes, Check, ChevronLeft, ChevronRight, Mail, ScanBarcode, ShieldCheck, Smartphone, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,21 +40,65 @@ const plans = [
   { name: "Business", price: "$14", text: "For small teams tracking stock across workspaces.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
 ];
 
+const getDevice = () => {
+  const ua = navigator.userAgent.toLowerCase();
+  if (/ipad|tablet/.test(ua)) return "tablet";
+  if (/mobi|android|iphone|ipod/.test(ua)) return "mobile";
+  return "desktop";
+};
+
+const getAttribution = () => {
+  const params = new URLSearchParams(window.location.search);
+  const referrer = document.referrer || null;
+  const referrerHost = referrer ? new URL(referrer).hostname.replace(/^www\./, "") : null;
+  return {
+    source: params.get("utm_source") || referrerHost || "direct",
+    medium: params.get("utm_medium") || (referrerHost ? "referral" : "none"),
+    campaign: params.get("utm_campaign") || null,
+    referrer,
+    landing_page: `${window.location.pathname}${window.location.search}`,
+    session_id: sessionStorage.getItem("homestock_landing_session_id") || crypto.randomUUID(),
+  };
+};
+
 export default function Landing() {
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [lead, setLead] = useState({ name: "", email: "", householdType: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const testimonial = testimonials[testimonialIndex];
+  const attribution = useMemo(getAttribution, []);
+
+  useEffect(() => {
+    sessionStorage.setItem("homestock_landing_session_id", attribution.session_id);
+    void supabase.from("landing_page_events" as any).insert({
+      event_name: "pageview",
+      page: attribution.landing_page,
+      source: attribution.source,
+      medium: attribution.medium,
+      campaign: attribution.campaign,
+      referrer: attribution.referrer,
+      session_id: attribution.session_id,
+      device: getDevice(),
+    } as any);
+  }, [attribution]);
 
   const submitLead = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
+    const leadId = crypto.randomUUID();
 
     const { error } = await supabase.from("landing_leads" as any).insert({
+      id: leadId,
       name: lead.name.trim() || null,
       email: lead.email.trim(),
       household_type: lead.householdType.trim() || null,
       message: lead.message.trim() || null,
+      source: attribution.source,
+      medium: attribution.medium,
+      campaign: attribution.campaign,
+      referrer: attribution.referrer,
+      landing_page: attribution.landing_page,
+      session_id: attribution.session_id,
     } as any);
 
     setSubmitting(false);
@@ -65,6 +109,17 @@ export default function Landing() {
     }
 
     toast.success("Thanks — we’ll be in touch soon");
+    void supabase.from("landing_page_events" as any).insert({
+      event_name: "lead_submit",
+      page: attribution.landing_page,
+      source: attribution.source,
+      medium: attribution.medium,
+      campaign: attribution.campaign,
+      referrer: attribution.referrer,
+      session_id: attribution.session_id,
+      device: getDevice(),
+      lead_id: leadId,
+    } as any);
     setLead({ name: "", email: "", householdType: "", message: "" });
   };
 
