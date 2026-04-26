@@ -289,7 +289,7 @@ export default function Landing() {
         </div>
         <div className="mt-10 overflow-hidden rounded-lg border bg-card" role="table" aria-label="Pricing feature comparison by plan">
           <div className="hidden grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium md:grid" role="row">
-            <span role="columnheader" scope="col">Feature</span><span role="columnheader" scope="col">Starter</span><span role="columnheader" scope="col">Household</span><span role="columnheader" scope="col">Business</span>
+            <span role="columnheader">Feature</span><span role="columnheader">Starter</span><span role="columnheader">Household</span><span role="columnheader">Business</span>
           </div>
           <div className="sticky top-0 z-10 grid grid-cols-3 gap-2 border-b bg-card/95 px-4 py-3 text-xs font-medium shadow-sm backdrop-blur md:hidden" aria-hidden="true">
             <span className="rounded-md bg-muted px-2 py-1 text-center">Starter</span>
