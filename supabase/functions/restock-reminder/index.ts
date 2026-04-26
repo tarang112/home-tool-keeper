@@ -95,7 +95,9 @@ Deno.serve(async (req) => {
           const { error: insertError } = await supabase
             .from("notifications")
             .insert({ user_id: item.user_id, item_id: item.id, title, message, dedupe_key: dedupeKey });
-        }
+
+          if (!insertError) notificationsCreated++;
+          else if (insertError.code !== "23505") console.error("Error creating notification:", insertError);
       }
 
       if (prefs.email) console.log(`[restock-email] would email user ${item.user_id}: ${title}`);
