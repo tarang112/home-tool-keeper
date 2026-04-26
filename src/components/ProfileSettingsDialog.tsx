@@ -13,10 +13,12 @@ import { Trash2, Save, Loader2, Bell, Mail, Smartphone } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { House } from "@/hooks/use-houses";
 
-const REMINDER_DAY_OPTIONS = [30, 14, 7, 3, 1, 0] as const;
-const DEFAULT_REMINDER_DAYS: number[] = [30, 14, 7, 3, 1, 0];
+const WARRANTY_REMINDER_DAY_OPTIONS = [30, 14, 7, 3, 1, 0] as const;
+const EXPIRATION_REMINDER_DAY_OPTIONS = [7, 3, 1, 0] as const;
+const DEFAULT_WARRANTY_REMINDER_DAYS: number[] = [30, 14, 7, 3, 1, 0];
+const DEFAULT_EXPIRATION_REMINDER_DAYS: number[] = [7, 3, 1, 0];
 
-const dayLabel = (d: number) => (d === 0 ? "On expiry day" : `${d} day${d === 1 ? "" : "s"} before`);
+const dayLabel = (d: number) => (d === 0 ? "On due day" : `${d} day${d === 1 ? "" : "s"} before`);
 
 interface ProfileSettingsDialogProps {
   open: boolean;
