@@ -143,6 +143,33 @@ export default function AdminLeads() {
         </div>
 
         <Card>
+          <CardHeader><CardTitle>Conversion by source</CardTitle></CardHeader>
+          <CardContent>
+            {sourceStats.length === 0 ? (
+              <div className="flex h-28 items-center justify-center rounded-lg border text-sm text-muted-foreground">No analytics yet</div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-3">
+                {sourceStats.map((stat) => {
+                  const rate = stat.pageviews ? Math.round((stat.leads / stat.pageviews) * 1000) / 10 : 0;
+                  return (
+                    <article key={`${stat.source}-${stat.medium}`} className="rounded-lg border bg-card p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div><p className="font-semibold">{stat.source}</p><p className="text-xs text-muted-foreground">{stat.medium}</p></div>
+                        <Badge variant="secondary">{rate}%</Badge>
+                      </div>
+                      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        <div><p className="text-muted-foreground">Views</p><p className="font-heading text-2xl font-semibold">{stat.pageviews}</p></div>
+                        <div><p className="text-muted-foreground">Leads</p><p className="font-heading text-2xl font-semibold">{stat.leads}</p></div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2">Submissions <Badge variant="secondary">{filtered.length}</Badge></CardTitle>
             <Input className="sm:max-w-xs" placeholder="Search leads..." value={query} onChange={(event) => setQuery(event.target.value)} />
@@ -160,7 +187,7 @@ export default function AdminLeads() {
                     <article key={lead.id} className="grid gap-3 px-4 py-4 md:grid-cols-[1.2fr_1.2fr_1fr_1.5fr_auto] md:items-center">
                       <div><p className="font-medium">{lead.name || "Anonymous"}</p><p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}</p></div>
                       <a className="break-all text-sm text-primary underline-offset-4 hover:underline" href={`mailto:${lead.email}`}>{lead.email}</a>
-                      <p className="text-sm text-muted-foreground">{lead.household_type || "—"}</p>
+                      <p className="text-sm text-muted-foreground">{lead.household_type || "—"}<span className="mt-1 block text-xs">{lead.source || "direct"}{lead.campaign ? ` · ${lead.campaign}` : ""}</span></p>
                       <p className="text-sm leading-6 text-muted-foreground">{lead.message || "—"}</p>
                       <Button size="icon" variant="ghost" onClick={() => deleteLead(lead.id)} aria-label={`Delete lead from ${lead.email}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </article>
