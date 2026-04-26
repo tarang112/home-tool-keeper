@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           id: string
           location_count: number
+          order_confirmation_email: string | null
           plan: string
           receipt_email: string | null
           status: string
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string
           id?: string
           location_count?: number
+          order_confirmation_email?: string | null
           plan?: string
           receipt_email?: string | null
           status?: string
@@ -46,6 +48,7 @@ export type Database = {
           created_at?: string
           id?: string
           location_count?: number
+          order_confirmation_email?: string | null
           plan?: string
           receipt_email?: string | null
           status?: string
