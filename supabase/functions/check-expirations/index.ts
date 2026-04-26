@@ -137,12 +137,13 @@ Deno.serve(async (req) => {
           .limit(1);
 
         if (!existing || existing.length === 0) {
+          const dedupeKey = `${item.id}:expiration:${diffDays}:${userDay.localDateStr}`;
           const { error: insertError } = await supabase
             .from('notifications')
-            .insert({ user_id: item.user_id, item_id: item.id, title, message });
+            .insert({ user_id: item.user_id, item_id: item.id, title, message, dedupe_key: dedupeKey });
 
           if (!insertError) notificationsCreated++;
-          else console.error('Error creating notification:', insertError);
+          else if (insertError.code !== '23505') console.error('Error creating notification:', insertError);
         }
       }
 
