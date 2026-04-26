@@ -213,6 +213,23 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
             <p className="text-xs text-muted-foreground">This location will be selected automatically when you sign in.</p>
           </div>
 
+          <div className="space-y-2">
+            <Label>Email Language</Label>
+            <Select value={preferredLanguage} onValueChange={setPreferredLanguage}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select email language" />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGE_OPTIONS.map((language) => (
+                  <SelectItem key={language.value} value={language.value}>
+                    {language.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Auth emails will use this language when available.</p>
+          </div>
+
           <div className="space-y-4 border-t pt-4">
             <div className="space-y-3">
               <div>
