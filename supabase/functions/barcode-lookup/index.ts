@@ -285,7 +285,10 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     return jsonResponse({ success: false, error: 'Could not extract product details' }, 404);
   } catch (error) {
     console.error('URL lookup error:', error);
-    return jsonResponse({ success: false, error: 'URL lookup failed' }, 500);
+    const message = error instanceof Error && /URL|protocol|host|redirect/i.test(error.message)
+      ? error.message
+      : 'URL lookup failed';
+    return jsonResponse({ success: false, error: message }, message === 'URL lookup failed' ? 500 : 400);
   }
 }
 
