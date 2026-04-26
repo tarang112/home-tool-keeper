@@ -255,6 +255,31 @@ export default function Landing() {
             </article>
           ))}
         </div>
+        <div className="mt-10 rounded-lg border bg-card p-5">
+          <div className="grid gap-5 md:grid-cols-[0.8fr_1.2fr] md:items-center">
+            <div>
+              <h3 className="font-heading text-2xl font-semibold">Pricing estimator</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Enter your number of locations/properties to estimate totals for the active billing cycle.</p>
+              <div className="mt-4 max-w-xs space-y-2">
+                <Label htmlFor="location-count">Locations/properties</Label>
+                <Input id="location-count" type="number" min="1" value={locationCount} onChange={(event) => setLocationCount(Math.max(1, Number(event.target.value) || 1))} />
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {plans.map((plan) => {
+                const amount = billingCycle === "monthly" ? plan.monthlyAmount : plan.yearlyAmount;
+                const total = amount * locationCount;
+                return (
+                  <article key={plan.name} className="rounded-lg border bg-background p-4">
+                    <p className="text-sm font-medium">{plan.name}</p>
+                    <p className="mt-2 font-heading text-3xl font-bold">${total}</p>
+                    <p className="text-xs text-muted-foreground">{locationCount} × {plan[billingCycle]}/{billingCycle === "monthly" ? "mo" : "yr"}</p>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </div>
         <div className="mt-10 overflow-hidden rounded-lg border bg-card">
           <div className="hidden grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium md:grid">
             <span>Feature</span><span>Starter</span><span>Household</span><span>Business</span>
