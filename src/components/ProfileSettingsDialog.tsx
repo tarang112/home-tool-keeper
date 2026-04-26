@@ -69,7 +69,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
 
       supabase
         .from("notification_preferences" as any)
-        .select("warranty_in_app, warranty_email, warranty_push, warranty_reminder_days")
+        .select("warranty_in_app, warranty_email, warranty_push, warranty_reminder_days, restock_in_app, restock_email, restock_push, expiration_in_app, expiration_email, expiration_push, expiration_reminder_days")
         .eq("user_id", user.id)
         .maybeSingle()
         .then(({ data }: any) => {
@@ -77,9 +77,14 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
             setWarrantyInApp(!!data.warranty_in_app);
             setWarrantyEmail(!!data.warranty_email);
             setWarrantyPush(!!data.warranty_push);
-            if (Array.isArray(data.warranty_reminder_days)) {
-              setReminderDays(data.warranty_reminder_days as number[]);
-            }
+            setRestockInApp(data.restock_in_app ?? true);
+            setRestockEmail(!!data.restock_email);
+            setRestockPush(!!data.restock_push);
+            setExpirationInApp(data.expiration_in_app ?? true);
+            setExpirationEmail(!!data.expiration_email);
+            setExpirationPush(!!data.expiration_push);
+            if (Array.isArray(data.warranty_reminder_days)) setWarrantyReminderDays(data.warranty_reminder_days as number[]);
+            if (Array.isArray(data.expiration_reminder_days)) setExpirationReminderDays(data.expiration_reminder_days as number[]);
           }
         });
 
