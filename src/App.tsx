@@ -9,6 +9,7 @@ import AuthPage from "./pages/AuthPage.tsx";
 import AcceptInvite from "./pages/AcceptInvite.tsx";
 import InstallApp from "./pages/InstallApp.tsx";
 import NotificationHistory from "./pages/NotificationHistory.tsx";
+import VisitorLog from "./pages/VisitorLog.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationHistory /></ProtectedRoute>} />
+            <Route path="/visitors" element={<ProtectedRoute><VisitorLog /></ProtectedRoute>} />
             <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
             <Route path="/accept-invite" element={<AcceptInvite />} />
             <Route path="/install" element={<InstallApp />} />
