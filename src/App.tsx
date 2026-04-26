@@ -4,11 +4,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { VisitorTracker } from "@/components/VisitorTracker";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
 import AcceptInvite from "./pages/AcceptInvite.tsx";
 import InstallApp from "./pages/InstallApp.tsx";
 import NotificationHistory from "./pages/NotificationHistory.tsx";
+import VisitorLog from "./pages/VisitorLog.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -37,9 +39,11 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <VisitorTracker />
           <Routes>
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationHistory /></ProtectedRoute>} />
+            <Route path="/visitors" element={<ProtectedRoute><VisitorLog /></ProtectedRoute>} />
             <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
             <Route path="/accept-invite" element={<AcceptInvite />} />
             <Route path="/install" element={<InstallApp />} />
