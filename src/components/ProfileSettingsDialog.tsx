@@ -45,6 +45,8 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [preferredLanguage, setPreferredLanguage] = useState("en");
   const [receiptEmail, setReceiptEmail] = useState("");
   const [orderConfirmationEmail, setOrderConfirmationEmail] = useState("");
+  const [receiptFromName, setReceiptFromName] = useState("HomeStock Receipts");
+  const [orderConfirmationFromName, setOrderConfirmationFromName] = useState("HomeStock Orders");
   const [warrantyInApp, setWarrantyInApp] = useState(true);
   const [warrantyEmail, setWarrantyEmail] = useState(false);
   const [warrantyPush, setWarrantyPush] = useState(false);
@@ -125,12 +127,14 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
 
       supabase
         .from("billing_preferences" as any)
-        .select("receipt_email, order_confirmation_email")
+        .select("receipt_email, order_confirmation_email, receipt_from_name, order_confirmation_from_name")
         .eq("user_id", user.id)
         .maybeSingle()
         .then(({ data }: any) => {
           setReceiptEmail(data?.receipt_email || "");
           setOrderConfirmationEmail(data?.order_confirmation_email || "");
+          setReceiptFromName(data?.receipt_from_name || "HomeStock Receipts");
+          setOrderConfirmationFromName(data?.order_confirmation_from_name || "HomeStock Orders");
         });
 
       setSelectedDefault(defaultHouseId ?? "none");
@@ -183,6 +187,8 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
 
     const normalizedReceiptEmail = receiptEmail.trim();
     const normalizedOrderConfirmationEmail = orderConfirmationEmail.trim();
+    const normalizedReceiptFromName = receiptFromName.trim();
+    const normalizedOrderFromName = orderConfirmationFromName.trim();
     const { error: billingError } = await supabase
       .from("billing_preferences" as any)
       .upsert(
@@ -190,6 +196,8 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           user_id: user.id,
           receipt_email: normalizedReceiptEmail || null,
           order_confirmation_email: normalizedOrderConfirmationEmail || null,
+          receipt_from_name: normalizedReceiptFromName || null,
+          order_confirmation_from_name: normalizedOrderFromName || null,
         },
         { onConflict: "user_id" }
       );
