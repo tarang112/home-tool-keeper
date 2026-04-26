@@ -49,15 +49,18 @@ Deno.serve(async (req) => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
-    // Find items expiring within 7 days
-    const sevenDaysOut = new Date(today);
-    sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
-    const futureDate = sevenDaysOut.toISOString().split('T')[0];
+    // Find items expiring within the maximum optional reminder window
+    const DEFAULT_EXPIRATION_REMINDER_DAYS = [7, 3, 1, 0];
+    const maxExpirationReminder = Math.max(...DEFAULT_EXPIRATION_REMINDER_DAYS);
+    const expirationHorizon = new Date(today);
+    expirationHorizon.setDate(expirationHorizon.getDate() + maxExpirationReminder);
+    const futureDate = expirationHorizon.toISOString().split('T')[0];
 
     const { data: expiringItems, error } = await supabase
       .from('inventory_items')
       .select('id, name, user_id, expiration_date, category, created_at')
       .not('expiration_date', 'is', null)
+      .is('deleted_at', null)
       .lte('expiration_date', futureDate)
       .order('expiration_date', { ascending: true });
 
@@ -70,18 +73,45 @@ Deno.serve(async (req) => {
     }
 
     let notificationsCreated = 0;
+    const expirationPrefCache = new Map<string, { in_app: boolean; email: boolean; push: boolean; days: number[]; tz: string }>();
+    const getExpirationPrefs = async (uid: string) => {
+      if (expirationPrefCache.has(uid)) return expirationPrefCache.get(uid)!;
+      const { data } = await supabase
+        .from('notification_preferences')
+        .select('expiration_in_app, expiration_email, expiration_push, expiration_reminder_days, timezone')
+        .eq('user_id', uid)
+        .maybeSingle();
+      const prefs = {
+        in_app: data ? data.expiration_in_app !== false : true,
+        email: data ? !!data.expiration_email : false,
+        push: data ? !!data.expiration_push : false,
+        days: Array.isArray(data?.expiration_reminder_days)
+          ? (data!.expiration_reminder_days as number[])
+          : DEFAULT_EXPIRATION_REMINDER_DAYS,
+        tz: (data && typeof data.timezone === 'string' && data.timezone) ? data.timezone : 'UTC',
+      };
+      expirationPrefCache.set(uid, prefs);
+      return prefs;
+    };
 
     for (const item of expiringItems || []) {
       // Electronics warranty reminders are handled separately below
       if (item.category === 'electronics') continue;
 
+      const prefs = await getExpirationPrefs(item.user_id);
+      if (!prefs.days || prefs.days.length === 0) continue;
+      if (!prefs.in_app && !prefs.email && !prefs.push) continue;
+
+      const userDay = localDayBoundsUtc(today, prefs.tz);
+      const userTodayLocalMidnightUtc = new Date(userDay.startUtc);
+      const expLocalMidnightUtc = new Date(localDayBoundsUtc(new Date(`${item.expiration_date}T12:00:00Z`), prefs.tz).startUtc);
+      const diffDays = Math.round(
+        (expLocalMidnightUtc.getTime() - userTodayLocalMidnightUtc.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (!prefs.days.includes(diffDays)) continue;
+
       const expDate = new Date(item.expiration_date);
-      const diffMs = expDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-      // Only notify for: expired, today, or within 3 days
-      if (diffDays > 3) continue;
-
       let title: string;
       let message: string;
 
@@ -96,27 +126,28 @@ Deno.serve(async (req) => {
         message = `Expiring on ${expDate.toLocaleDateString()}. Use it soon!`;
       }
 
-      // Dedup: check if already sent today
-      const todayStart = new Date(todayStr + 'T00:00:00Z').toISOString();
-      const todayEnd = new Date(todayStr + 'T23:59:59Z').toISOString();
+      if (prefs.in_app) {
+        const { data: existing } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('item_id', item.id)
+          .eq('user_id', item.user_id)
+          .gte('created_at', userDay.startUtc)
+          .lte('created_at', userDay.endUtc)
+          .limit(1);
 
-      const { data: existing } = await supabase
-        .from('notifications')
-        .select('id')
-        .eq('item_id', item.id)
-        .eq('user_id', item.user_id)
-        .gte('created_at', todayStart)
-        .lte('created_at', todayEnd)
-        .limit(1);
+        if (!existing || existing.length === 0) {
+          const { error: insertError } = await supabase
+            .from('notifications')
+            .insert({ user_id: item.user_id, item_id: item.id, title, message });
 
-      if (existing && existing.length > 0) continue;
+          if (!insertError) notificationsCreated++;
+          else console.error('Error creating notification:', insertError);
+        }
+      }
 
-      const { error: insertError } = await supabase
-        .from('notifications')
-        .insert({ user_id: item.user_id, item_id: item.id, title, message });
-
-      if (!insertError) notificationsCreated++;
-      else console.error('Error creating notification:', insertError);
+      if (prefs.email) console.log(`[expiration-email] would email user ${item.user_id} (${prefs.tz}): ${title}`);
+      if (prefs.push) console.log(`[expiration-push] would push user ${item.user_id} (${prefs.tz}): ${title}`);
     }
 
     // === Snack & frozen expiry alerts: notify when expired but do NOT auto-remove ===

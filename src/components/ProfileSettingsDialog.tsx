@@ -13,10 +13,12 @@ import { Trash2, Save, Loader2, Bell, Mail, Smartphone } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { House } from "@/hooks/use-houses";
 
-const REMINDER_DAY_OPTIONS = [30, 14, 7, 3, 1, 0] as const;
-const DEFAULT_REMINDER_DAYS: number[] = [30, 14, 7, 3, 1, 0];
+const WARRANTY_REMINDER_DAY_OPTIONS = [30, 14, 7, 3, 1, 0] as const;
+const EXPIRATION_REMINDER_DAY_OPTIONS = [7, 3, 1, 0] as const;
+const DEFAULT_WARRANTY_REMINDER_DAYS: number[] = [30, 14, 7, 3, 1, 0];
+const DEFAULT_EXPIRATION_REMINDER_DAYS: number[] = [7, 3, 1, 0];
 
-const dayLabel = (d: number) => (d === 0 ? "On expiry day" : `${d} day${d === 1 ? "" : "s"} before`);
+const dayLabel = (d: number) => (d === 0 ? "On due day" : `${d} day${d === 1 ? "" : "s"} before`);
 
 interface ProfileSettingsDialogProps {
   open: boolean;
@@ -35,11 +37,22 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [warrantyInApp, setWarrantyInApp] = useState(true);
   const [warrantyEmail, setWarrantyEmail] = useState(false);
   const [warrantyPush, setWarrantyPush] = useState(false);
-  const [reminderDays, setReminderDays] = useState<number[]>(DEFAULT_REMINDER_DAYS);
+  const [warrantyReminderDays, setWarrantyReminderDays] = useState<number[]>(DEFAULT_WARRANTY_REMINDER_DAYS);
+  const [restockInApp, setRestockInApp] = useState(true);
+  const [restockEmail, setRestockEmail] = useState(false);
+  const [restockPush, setRestockPush] = useState(false);
+  const [expirationInApp, setExpirationInApp] = useState(true);
+  const [expirationEmail, setExpirationEmail] = useState(false);
+  const [expirationPush, setExpirationPush] = useState(false);
+  const [expirationReminderDays, setExpirationReminderDays] = useState<number[]>(DEFAULT_EXPIRATION_REMINDER_DAYS);
 
-  const remindersEnabled = reminderDays.length > 0;
-  const toggleDay = (d: number, checked: boolean) => {
-    setReminderDays((prev) => (checked ? [...new Set([...prev, d])] : prev.filter((x) => x !== d)));
+  const warrantyRemindersEnabled = warrantyReminderDays.length > 0;
+  const expirationRemindersEnabled = expirationReminderDays.length > 0;
+  const toggleWarrantyDay = (d: number, checked: boolean) => {
+    setWarrantyReminderDays((prev) => (checked ? [...new Set([...prev, d])] : prev.filter((x) => x !== d)));
+  };
+  const toggleExpirationDay = (d: number, checked: boolean) => {
+    setExpirationReminderDays((prev) => (checked ? [...new Set([...prev, d])] : prev.filter((x) => x !== d)));
   };
 
   useEffect(() => {
@@ -56,7 +69,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
 
       supabase
         .from("notification_preferences" as any)
-        .select("warranty_in_app, warranty_email, warranty_push, warranty_reminder_days")
+        .select("warranty_in_app, warranty_email, warranty_push, warranty_reminder_days, restock_in_app, restock_email, restock_push, expiration_in_app, expiration_email, expiration_push, expiration_reminder_days")
         .eq("user_id", user.id)
         .maybeSingle()
         .then(({ data }: any) => {
@@ -64,9 +77,14 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
             setWarrantyInApp(!!data.warranty_in_app);
             setWarrantyEmail(!!data.warranty_email);
             setWarrantyPush(!!data.warranty_push);
-            if (Array.isArray(data.warranty_reminder_days)) {
-              setReminderDays(data.warranty_reminder_days as number[]);
-            }
+            setRestockInApp(data.restock_in_app ?? true);
+            setRestockEmail(!!data.restock_email);
+            setRestockPush(!!data.restock_push);
+            setExpirationInApp(data.expiration_in_app ?? true);
+            setExpirationEmail(!!data.expiration_email);
+            setExpirationPush(!!data.expiration_push);
+            if (Array.isArray(data.warranty_reminder_days)) setWarrantyReminderDays(data.warranty_reminder_days as number[]);
+            if (Array.isArray(data.expiration_reminder_days)) setExpirationReminderDays(data.expiration_reminder_days as number[]);
           }
         });
 
@@ -99,7 +117,14 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           warranty_in_app: warrantyInApp,
           warranty_email: warrantyEmail,
           warranty_push: warrantyPush,
-          warranty_reminder_days: reminderDays,
+          warranty_reminder_days: warrantyReminderDays,
+          restock_in_app: restockInApp,
+          restock_email: restockEmail,
+          restock_push: restockPush,
+          expiration_in_app: expirationInApp,
+          expiration_email: expirationEmail,
+          expiration_push: expirationPush,
+          expiration_reminder_days: expirationReminderDays,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
         },
         { onConflict: "user_id" }
@@ -178,67 +203,143 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
             <p className="text-xs text-muted-foreground">This location will be selected automatically when you sign in.</p>
           </div>
 
-          <div className="space-y-3 border-t pt-4">
-            <div>
-              <Label className="text-base">Warranty Reminders</Label>
-              <p className="text-xs text-muted-foreground mt-1">Choose how you want to be alerted before warranties expire.</p>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="warranty-in-app" className="cursor-pointer">In-app notifications</Label>
+          <div className="space-y-4 border-t pt-4">
+            <div className="space-y-3">
+              <div>
+                <Label className="text-base">Restock Reminders</Label>
+                <p className="text-xs text-muted-foreground mt-1">Choose how you want to be alerted when tracked items run out.</p>
               </div>
-              <Switch id="warranty-in-app" checked={warrantyInApp} onCheckedChange={setWarrantyInApp} />
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="warranty-email" className="cursor-pointer">Email</Label>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="restock-in-app" className="cursor-pointer">In-app notifications</Label>
+                </div>
+                <Switch id="restock-in-app" checked={restockInApp} onCheckedChange={setRestockInApp} />
               </div>
-              <Switch id="warranty-email" checked={warrantyEmail} onCheckedChange={setWarrantyEmail} />
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Smartphone className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="warranty-push" className="cursor-pointer">Push notifications</Label>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="restock-email" className="cursor-pointer">Email</Label>
+                </div>
+                <Switch id="restock-email" checked={restockEmail} onCheckedChange={setRestockEmail} />
               </div>
-              <Switch id="warranty-push" checked={warrantyPush} onCheckedChange={setWarrantyPush} />
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="restock-push" className="cursor-pointer">Push notifications</Label>
+                </div>
+                <Switch id="restock-push" checked={restockPush} onCheckedChange={setRestockPush} />
+              </div>
             </div>
 
-            <div className="space-y-2 pt-2 border-t">
-              <div className="flex items-center justify-between gap-3">
-                <Label className="cursor-pointer">Send reminders</Label>
-                <Switch
-                  checked={remindersEnabled}
-                  onCheckedChange={(on) => setReminderDays(on ? DEFAULT_REMINDER_DAYS : [])}
-                />
+            <div className="space-y-3 border-t pt-4">
+              <div>
+                <Label className="text-base">Expiration Reminders</Label>
+                <p className="text-xs text-muted-foreground mt-1">Choose how you want to be alerted before item expiration dates.</p>
               </div>
-              {remindersEnabled ? (
-                <div className="space-y-2 pt-1">
-                  <p className="text-xs text-muted-foreground">When to remind you:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {REMINDER_DAY_OPTIONS.map((d) => {
-                      const checked = reminderDays.includes(d);
-                      return (
-                        <label
-                          key={d}
-                          htmlFor={`reminder-day-${d}`}
-                          className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 cursor-pointer hover:bg-accent transition-colors"
-                        >
-                          <Checkbox
-                            id={`reminder-day-${d}`}
-                            checked={checked}
-                            onCheckedChange={(c) => toggleDay(d, !!c)}
-                          />
-                          <span className="text-sm">{dayLabel(d)}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="expiration-in-app" className="cursor-pointer">In-app notifications</Label>
                 </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">Warranty reminders are turned off.</p>
-              )}
+                <Switch id="expiration-in-app" checked={expirationInApp} onCheckedChange={setExpirationInApp} />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="expiration-email" className="cursor-pointer">Email</Label>
+                </div>
+                <Switch id="expiration-email" checked={expirationEmail} onCheckedChange={setExpirationEmail} />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="expiration-push" className="cursor-pointer">Push notifications</Label>
+                </div>
+                <Switch id="expiration-push" checked={expirationPush} onCheckedChange={setExpirationPush} />
+              </div>
+              <div className="space-y-2 pt-2 border-t">
+                <div className="flex items-center justify-between gap-3">
+                  <Label className="cursor-pointer">Send reminders</Label>
+                  <Switch
+                    checked={expirationRemindersEnabled}
+                    onCheckedChange={(on) => setExpirationReminderDays(on ? DEFAULT_EXPIRATION_REMINDER_DAYS : [])}
+                  />
+                </div>
+                {expirationRemindersEnabled ? (
+                  <div className="space-y-2 pt-1">
+                    <p className="text-xs text-muted-foreground">When to remind you:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {EXPIRATION_REMINDER_DAY_OPTIONS.map((d) => {
+                        const checked = expirationReminderDays.includes(d);
+                        return (
+                          <label key={d} htmlFor={`expiration-reminder-day-${d}`} className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 cursor-pointer hover:bg-accent transition-colors">
+                            <Checkbox id={`expiration-reminder-day-${d}`} checked={checked} onCheckedChange={(c) => toggleExpirationDay(d, !!c)} />
+                            <span className="text-sm">{dayLabel(d)}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Expiration reminders are turned off.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <div>
+                <Label className="text-base">Warranty Reminders</Label>
+                <p className="text-xs text-muted-foreground mt-1">Choose how you want to be alerted before warranties expire.</p>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="warranty-in-app" className="cursor-pointer">In-app notifications</Label>
+                </div>
+                <Switch id="warranty-in-app" checked={warrantyInApp} onCheckedChange={setWarrantyInApp} />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="warranty-email" className="cursor-pointer">Email</Label>
+                </div>
+                <Switch id="warranty-email" checked={warrantyEmail} onCheckedChange={setWarrantyEmail} />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="warranty-push" className="cursor-pointer">Push notifications</Label>
+                </div>
+                <Switch id="warranty-push" checked={warrantyPush} onCheckedChange={setWarrantyPush} />
+              </div>
+              <div className="space-y-2 pt-2 border-t">
+                <div className="flex items-center justify-between gap-3">
+                  <Label className="cursor-pointer">Send reminders</Label>
+                  <Switch
+                    checked={warrantyRemindersEnabled}
+                    onCheckedChange={(on) => setWarrantyReminderDays(on ? DEFAULT_WARRANTY_REMINDER_DAYS : [])}
+                  />
+                </div>
+                {warrantyRemindersEnabled ? (
+                  <div className="space-y-2 pt-1">
+                    <p className="text-xs text-muted-foreground">When to remind you:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {WARRANTY_REMINDER_DAY_OPTIONS.map((d) => {
+                        const checked = warrantyReminderDays.includes(d);
+                        return (
+                          <label key={d} htmlFor={`warranty-reminder-day-${d}`} className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 cursor-pointer hover:bg-accent transition-colors">
+                            <Checkbox id={`warranty-reminder-day-${d}`} checked={checked} onCheckedChange={(c) => toggleWarrantyDay(d, !!c)} />
+                            <span className="text-sm">{dayLabel(d)}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Warranty reminders are turned off.</p>
+                )}
+              </div>
             </div>
           </div>
 
