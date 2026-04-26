@@ -37,11 +37,22 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [warrantyInApp, setWarrantyInApp] = useState(true);
   const [warrantyEmail, setWarrantyEmail] = useState(false);
   const [warrantyPush, setWarrantyPush] = useState(false);
-  const [reminderDays, setReminderDays] = useState<number[]>(DEFAULT_REMINDER_DAYS);
+  const [warrantyReminderDays, setWarrantyReminderDays] = useState<number[]>(DEFAULT_WARRANTY_REMINDER_DAYS);
+  const [restockInApp, setRestockInApp] = useState(true);
+  const [restockEmail, setRestockEmail] = useState(false);
+  const [restockPush, setRestockPush] = useState(false);
+  const [expirationInApp, setExpirationInApp] = useState(true);
+  const [expirationEmail, setExpirationEmail] = useState(false);
+  const [expirationPush, setExpirationPush] = useState(false);
+  const [expirationReminderDays, setExpirationReminderDays] = useState<number[]>(DEFAULT_EXPIRATION_REMINDER_DAYS);
 
-  const remindersEnabled = reminderDays.length > 0;
-  const toggleDay = (d: number, checked: boolean) => {
-    setReminderDays((prev) => (checked ? [...new Set([...prev, d])] : prev.filter((x) => x !== d)));
+  const warrantyRemindersEnabled = warrantyReminderDays.length > 0;
+  const expirationRemindersEnabled = expirationReminderDays.length > 0;
+  const toggleWarrantyDay = (d: number, checked: boolean) => {
+    setWarrantyReminderDays((prev) => (checked ? [...new Set([...prev, d])] : prev.filter((x) => x !== d)));
+  };
+  const toggleExpirationDay = (d: number, checked: boolean) => {
+    setExpirationReminderDays((prev) => (checked ? [...new Set([...prev, d])] : prev.filter((x) => x !== d)));
   };
 
   useEffect(() => {
