@@ -234,9 +234,14 @@ export default function Landing() {
       <section id="pricing" className="mx-auto max-w-6xl px-5 py-16">
         <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl"><h2 className="font-heading text-4xl font-bold">Simple pricing for every location.</h2><p className="mt-3 text-muted-foreground">Plans are priced per home, rental, property, or business location so each space has its own inventory.</p></div>
-          <div className="inline-flex rounded-lg border bg-card p-1" aria-label="Billing cycle">
-            <Button type="button" variant={billingCycle === "monthly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("monthly")}>Monthly</Button>
-            <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly <span className="ml-1 text-xs opacity-80">Save 17%</span></Button>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <div className="inline-flex rounded-lg border bg-card p-1" aria-label="Billing cycle">
+              <Button type="button" variant={billingCycle === "monthly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("monthly")}>Monthly</Button>
+              <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly <span className="ml-1 text-xs opacity-80">Save 17%</span></Button>
+            </div>
+            <p className="max-w-xs text-xs leading-5 text-muted-foreground sm:text-right">
+              Yearly plans are billed upfront for the year. Added locations use the same billing cycle and are prorated for the remaining term.
+            </p>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
