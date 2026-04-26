@@ -33,7 +33,7 @@ export interface PendingInvite {
   shareMode?: string;
   status: string;
   createdAt: string;
-  inviteToken: string;
+  inviteToken?: string;
 }
 
 export const PERSONAL_RELATIONSHIPS = [
@@ -169,11 +169,9 @@ export function useHouses() {
       displayName: profileMap[m.user_id] || undefined,
     })));
 
-    const { data: invites } = await supabase
-      .from("house_invites")
-      .select("*")
-      .eq("house_id", houseId)
-      .eq("status", "pending");
+    const { data: invites } = await supabaseRpc("get_pending_house_invites", {
+      _house_id: houseId,
+    });
 
     setPendingInvites((invites || []).map((inv: any) => ({
       id: inv.id,
@@ -184,7 +182,6 @@ export function useHouses() {
       shareMode: inv.share_mode,
       status: inv.status,
       createdAt: inv.created_at,
-      inviteToken: inv.invite_token,
     })));
   }, []);
 
