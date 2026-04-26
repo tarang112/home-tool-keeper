@@ -36,11 +36,13 @@ export function useVisitorTracker() {
     }
 
     void supabase.functions.invoke("log-visitor", {
-      page,
-      device: getDevice(),
-      referrer: document.referrer || null,
-      user_agent: navigator.userAgent,
-      session_id: sessionId,
+      body: {
+        page,
+        device: getDevice(),
+        referrer: document.referrer || null,
+        user_agent: navigator.userAgent,
+        session_id: sessionId,
+      },
     });
   }, [page, session, user]);
 }
