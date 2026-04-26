@@ -29,7 +29,8 @@ Deno.serve(async (req) => {
     const { data: outOfStock, error } = await supabase
       .from("inventory_items")
       .select("id, name, user_id, category, subcategory")
-      .eq("quantity", 0);
+      .eq("quantity", 0)
+      .is("deleted_at", null);
 
     if (error) {
       console.error("Error fetching out-of-stock items:", error);
@@ -40,6 +41,22 @@ Deno.serve(async (req) => {
     }
 
     let notificationsCreated = 0;
+    const prefCache = new Map<string, { inApp: boolean; email: boolean; push: boolean }>();
+    const getPrefs = async (uid: string) => {
+      if (prefCache.has(uid)) return prefCache.get(uid)!;
+      const { data } = await supabase
+        .from("notification_preferences")
+        .select("restock_in_app, restock_email, restock_push")
+        .eq("user_id", uid)
+        .maybeSingle();
+      const prefs = {
+        inApp: data ? data.restock_in_app !== false : true,
+        email: data ? !!data.restock_email : false,
+        push: data ? !!data.restock_push : false,
+      };
+      prefCache.set(uid, prefs);
+      return prefs;
+    };
 
     for (const item of outOfStock || []) {
       const sub = (item.subcategory || "").toLowerCase();
@@ -49,7 +66,17 @@ Deno.serve(async (req) => {
 
       // Monday: all out-of-stock items get a reminder
       // Friday: only frequent categories (snacks, frozen/ice cream)
-      if (isMonday || (isFriday && isFrequent)) {
+      if (!(isMonday || (isFriday && isFrequent))) continue;
+
+      const prefs = await getPrefs(item.user_id);
+      if (!prefs.inApp && !prefs.email && !prefs.push) continue;
+
+      const title = `🛒 Restock: ${item.name}`;
+      const message = isFrequent && isFriday
+        ? `${item.name} is out of stock — grab some for the weekend!`
+        : `${item.name} is out of stock. Time to restock!`;
+
+      if (prefs.inApp) {
         // Dedup: check if already notified today
         const todayStart = new Date(todayStr + "T00:00:00Z").toISOString();
         const todayEnd = new Date(todayStr + "T23:59:59Z").toISOString();
@@ -63,28 +90,18 @@ Deno.serve(async (req) => {
           .lte("created_at", todayEnd)
           .limit(1);
 
-        if (existing && existing.length > 0) continue;
+        if (!existing || existing.length === 0) {
+          const { error: insertError } = await supabase
+            .from("notifications")
+            .insert({ user_id: item.user_id, item_id: item.id, title, message });
 
-        const title = `🛒 Restock: ${item.name}`;
-        const message = isFrequent && isFriday
-          ? `${item.name} is out of stock — grab some for the weekend!`
-          : `${item.name} is out of stock. Time to restock!`;
-
-        const { error: insertError } = await supabase
-          .from("notifications")
-          .insert({
-            user_id: item.user_id,
-            item_id: item.id,
-            title,
-            message,
-          });
-
-        if (!insertError) {
-          notificationsCreated++;
-        } else {
-          console.error("Error creating notification:", insertError);
+          if (!insertError) notificationsCreated++;
+          else console.error("Error creating notification:", insertError);
         }
       }
+
+      if (prefs.email) console.log(`[restock-email] would email user ${item.user_id}: ${title}`);
+      if (prefs.push) console.log(`[restock-push] would push user ${item.user_id}: ${title}`);
     }
 
     return new Response(
