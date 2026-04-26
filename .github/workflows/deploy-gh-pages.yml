@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -52,12 +54,27 @@ jobs:
 
       - uses: actions/configure-pages@v6
 
+      - name: Upload build preview artifact
+        id: preview-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-${{ github.event_name }}-${{ github.run_number }}
+          path: dist
+          if-no-files-found: error
+
+      - name: Add preview link to summary
+        run: |
+          echo "## Build preview" >> "$GITHUB_STEP_SUMMARY"
+          echo "Download and open this build locally before GitHub Pages deploys:" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.preview-artifact.outputs.artifact-url }}" >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
