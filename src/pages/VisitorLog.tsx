@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Search, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Download, Eye, RefreshCw, Search, Trash2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,28 @@ export default function VisitorLog() {
     return logs.filter((log) => `${log.page} ${log.device} ${log.referrer ?? ""} ${log.userAgent ?? ""}`.toLowerCase().includes(q));
   }, [logs, query]);
 
+  const sessions = useMemo(() => new Set(logs.map((log) => log.sessionId).filter(Boolean)).size, [logs]);
+
+  const exportCsv = () => {
+    const rows = filtered.map((log) => ({
+      Time: format(new Date(log.createdAt), "yyyy-MM-dd HH:mm:ss"),
+      Page: log.page,
+      Device: log.device,
+      Session: log.sessionId || "",
+      Referrer: log.referrer || "Direct",
+      IpHash: log.ipHash ? log.ipHash.slice(0, 16) : "",
+    }));
+    const header = Object.keys(rows[0] || { Time: "", Page: "", Device: "", Session: "", Referrer: "", IpHash: "" });
+    const csv = [header.join(","), ...rows.map((row) => Object.values(row).map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "homestock-visitor-analytics.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-background px-4 py-4">
       <main className="mx-auto max-w-5xl space-y-4">
@@ -26,16 +48,21 @@ export default function VisitorLog() {
           <Button asChild variant="ghost" size="sm" className="gap-2">
             <Link to="/"><ArrowLeft className="h-4 w-4" /> Back</Link>
           </Button>
-          <Button variant="outline" size="sm" className="gap-2" onClick={refetch} disabled={loading}>
-            <RefreshCw className="h-4 w-4" /> Refresh
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={exportCsv} disabled={filtered.length === 0}>
+              <Download className="h-4 w-4" /> CSV
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" onClick={refetch} disabled={loading}>
+              <RefreshCw className="h-4 w-4" /> Refresh
+            </Button>
+          </div>
         </div>
 
         <section className="rounded-lg border bg-card p-4 shadow-sm">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h1 className="font-heading text-2xl font-bold">Visitor Log</h1>
-              <p className="text-sm text-muted-foreground">{logs.length} individual visit{logs.length === 1 ? "" : "s"} recorded</p>
+              <p className="text-sm text-muted-foreground">{logs.length} visit{logs.length === 1 ? "" : "s"} · {sessions} session{sessions === 1 ? "" : "s"} · IP anonymized</p>
             </div>
             <Badge variant="secondary" className="gap-1"><Users className="h-3 w-3" /> {filtered.length} shown</Badge>
           </div>
@@ -58,6 +85,7 @@ export default function VisitorLog() {
                   <TableHead>Time</TableHead>
                   <TableHead>Page</TableHead>
                   <TableHead>Device</TableHead>
+                  <TableHead>Session</TableHead>
                   <TableHead>Referrer</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
@@ -68,6 +96,7 @@ export default function VisitorLog() {
                     <TableCell className="whitespace-nowrap text-sm">{format(new Date(log.createdAt), "MMM d, yyyy h:mm a")}</TableCell>
                     <TableCell className="font-medium">{log.page}</TableCell>
                     <TableCell><Badge variant="outline">{log.device}</Badge></TableCell>
+                    <TableCell>{log.sessionId ? <Button asChild variant="link" size="sm" className="h-auto p-0"><Link to={`/visitors/${encodeURIComponent(log.sessionId)}`}><Eye className="mr-1 h-3 w-3" /> Details</Link></Button> : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell className="max-w-xs truncate text-muted-foreground">{log.referrer || "Direct"}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteLog(log.id)}>

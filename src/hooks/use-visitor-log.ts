@@ -9,6 +9,8 @@ export interface VisitorLogEntry {
   device: string;
   referrer: string | null;
   userAgent: string | null;
+  sessionId: string | null;
+  ipHash: string | null;
   createdAt: string;
 }
 
@@ -20,21 +22,29 @@ const getDevice = () => {
 };
 
 export function useVisitorTracker() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const location = useLocation();
   const page = `${location.pathname}${location.search}`;
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !session) return;
+    const sessionKey = "homestock_visitor_session_id";
+    let sessionId = sessionStorage.getItem(sessionKey);
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      sessionStorage.setItem(sessionKey, sessionId);
+    }
 
-    void supabase.from("visitor_logs" as any).insert({
-      user_id: user.id,
-      page,
-      device: getDevice(),
-      referrer: document.referrer || null,
-      user_agent: navigator.userAgent,
+    void supabase.functions.invoke("log-visitor", {
+      body: {
+        page,
+        device: getDevice(),
+        referrer: document.referrer || null,
+        user_agent: navigator.userAgent,
+        session_id: sessionId,
+      },
     });
-  }, [page, user]);
+  }, [page, session, user]);
 }
 
 export function useVisitorLogs() {
@@ -52,7 +62,7 @@ export function useVisitorLogs() {
     setLoading(true);
     const { data } = await supabase
       .from("visitor_logs" as any)
-      .select("id,page,device,referrer,user_agent,created_at")
+      .select("id,page,device,referrer,user_agent,session_id,ip_hash,created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(500);
@@ -63,6 +73,8 @@ export function useVisitorLogs() {
       device: row.device,
       referrer: row.referrer,
       userAgent: row.user_agent,
+      sessionId: row.session_id,
+      ipHash: row.ip_hash,
       createdAt: row.created_at,
     })));
     setLoading(false);

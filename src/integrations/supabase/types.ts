@@ -504,8 +504,10 @@ export type Database = {
           created_at: string
           device: string
           id: string
+          ip_hash: string | null
           page: string
           referrer: string | null
+          session_id: string | null
           user_agent: string | null
           user_id: string
         }
@@ -513,8 +515,10 @@ export type Database = {
           created_at?: string
           device: string
           id?: string
+          ip_hash?: string | null
           page: string
           referrer?: string | null
+          session_id?: string | null
           user_agent?: string | null
           user_id: string
         }
@@ -522,8 +526,10 @@ export type Database = {
           created_at?: string
           device?: string
           id?: string
+          ip_hash?: string | null
           page?: string
           referrer?: string | null
+          session_id?: string | null
           user_agent?: string | null
           user_id?: string
         }
