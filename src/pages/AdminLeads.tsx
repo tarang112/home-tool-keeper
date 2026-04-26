@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +36,7 @@ export default function AdminLeads() {
   const [leads, setLeads] = useState<LandingLead[]>([]);
   const [events, setEvents] = useState<LandingEvent[]>([]);
   const [query, setQuery] = useState("");
+  const [sendingTests, setSendingTests] = useState(false);
 
   const filtered = useMemo(() => {
     const value = query.trim().toLowerCase();
@@ -112,6 +113,50 @@ export default function AdminLeads() {
     toast.success("Lead deleted");
   };
 
+  const sendSampleEmails = async () => {
+    if (!user?.email) return;
+    setSendingTests(true);
+
+    const { data, error } = await supabase
+      .from("billing_preferences" as any)
+      .select("receipt_email, order_confirmation_email")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      setSendingTests(false);
+      toast.error("Unable to load email settings");
+      return;
+    }
+
+    const receiptEmail = (data as any)?.receipt_email || user.email;
+    const orderEmail = (data as any)?.order_confirmation_email || receiptEmail;
+    const runId = crypto.randomUUID();
+    const results = await Promise.allSettled([
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "sample-receipt",
+          recipientEmail: receiptEmail,
+          idempotencyKey: `admin-sample-receipt-${runId}`,
+          templateData: { name: "Team", receiptNumber: "TEST-1001", total: "$6.00", summary: "Household plan · 1 location/property" },
+        },
+      }),
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "order-confirmation",
+          recipientEmail: orderEmail,
+          idempotencyKey: `admin-sample-order-${runId}`,
+          templateData: { name: "Team", orderNumber: "TEST-2001", summary: "Sample order confirmation for your checkout/order flow." },
+        },
+      }),
+    ]);
+
+    setSendingTests(false);
+    const failed = results.some((result) => result.status === "rejected" || result.value.error);
+    if (failed) toast.error("One or more test emails could not be sent");
+    else toast.success("Sample receipt and order confirmation sent");
+  };
+
   if (checkingRole || loading) {
     return <div className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-7 w-7 animate-spin text-muted-foreground" /></div>;
   }
@@ -139,7 +184,12 @@ export default function AdminLeads() {
             <h1 className="font-heading text-3xl font-bold">Landing Leads</h1>
             <p className="text-sm text-muted-foreground">Review and remove lead capture submissions.</p>
           </div>
-          <Button variant="outline" className="gap-2" onClick={loadLeads}><RefreshCw className="h-4 w-4" /> Refresh</Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" className="gap-2" onClick={sendSampleEmails} disabled={sendingTests}>
+              {sendingTests ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Send sample emails
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={loadLeads}><RefreshCw className="h-4 w-4" /> Refresh</Button>
+          </div>
         </div>
 
         <Card>
