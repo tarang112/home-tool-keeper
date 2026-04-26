@@ -64,6 +64,29 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
     setExpirationReminderDays((prev) => (checked ? [...new Set([...prev, d])] : prev.filter((x) => x !== d)));
   };
 
+  const enableMobileAlerts = async (setter: (enabled: boolean) => void) => {
+    if (!("Notification" in window)) {
+      toast.error("Mobile alerts are not supported on this device");
+      setter(false);
+      return;
+    }
+    if (Notification.permission === "granted") {
+      setter(true);
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") setter(true);
+    else {
+      setter(false);
+      toast.error("Enable notification permission to use mobile alerts");
+    }
+  };
+
+  const setMobileAlert = (setter: (enabled: boolean) => void) => (enabled: boolean) => {
+    if (enabled) void enableMobileAlerts(setter);
+    else setter(false);
+  };
+
   useEffect(() => {
     if (open && user) {
       supabase
@@ -253,9 +276,9 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Smartphone className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="restock-push" className="cursor-pointer">Push notifications</Label>
+                  <Label htmlFor="restock-push" className="cursor-pointer">Mobile alerts</Label>
                 </div>
-                <Switch id="restock-push" checked={restockPush} onCheckedChange={setRestockPush} />
+                <Switch id="restock-push" checked={restockPush} onCheckedChange={setMobileAlert(setRestockPush)} />
               </div>
             </div>
 
@@ -281,9 +304,9 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Smartphone className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="expiration-push" className="cursor-pointer">Push notifications</Label>
+                  <Label htmlFor="expiration-push" className="cursor-pointer">Mobile alerts</Label>
                 </div>
-                <Switch id="expiration-push" checked={expirationPush} onCheckedChange={setExpirationPush} />
+                <Switch id="expiration-push" checked={expirationPush} onCheckedChange={setMobileAlert(setExpirationPush)} />
               </div>
               <div className="space-y-2 pt-2 border-t">
                 <div className="flex items-center justify-between gap-3">
@@ -336,9 +359,9 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Smartphone className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="warranty-push" className="cursor-pointer">Push notifications</Label>
+                  <Label htmlFor="warranty-push" className="cursor-pointer">Mobile alerts</Label>
                 </div>
-                <Switch id="warranty-push" checked={warrantyPush} onCheckedChange={setWarrantyPush} />
+                <Switch id="warranty-push" checked={warrantyPush} onCheckedChange={setMobileAlert(setWarrantyPush)} />
               </div>
               <div className="space-y-2 pt-2 border-t">
                 <div className="flex items-center justify-between gap-3">
