@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.100.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const hashIp = async (ip: string, userId: string) => {
@@ -17,14 +17,18 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) throw new Error("Unauthorized");
     const token = authHeader.replace("Bearer ", "");
-    if (!token) throw new Error("Missing authorization");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) throw new Error("Unauthorized");
+
     const supabase = createClient(supabaseUrl, serviceKey);
-    const { data: authData, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authData.user) throw new Error("Unauthorized");
 
     const body = await req.json().catch(() => ({}));
     const page = typeof body.page === "string" ? body.page.slice(0, 300) : "/";
@@ -35,13 +39,13 @@ Deno.serve(async (req) => {
     const ip = (req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip") ?? "").split(",")[0].trim();
 
     const { error } = await supabase.from("visitor_logs").insert({
-      user_id: authData.user.id,
+      user_id: claimsData.claims.sub,
       page,
       device,
       referrer,
       user_agent: userAgent,
       session_id: sessionId,
-      ip_hash: await hashIp(ip, authData.user.id),
+      ip_hash: await hashIp(ip, claimsData.claims.sub),
     });
 
     if (error) throw error;
