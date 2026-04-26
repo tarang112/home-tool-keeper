@@ -291,6 +291,11 @@ export default function Landing() {
           <div className="hidden grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium md:grid">
             <span>Feature</span><span>Starter</span><span>Household</span><span>Business</span>
           </div>
+          <div className="sticky top-0 z-10 grid grid-cols-3 gap-2 border-b bg-card/95 px-4 py-3 text-xs font-medium shadow-sm backdrop-blur md:hidden">
+            <span className="rounded-md bg-muted px-2 py-1 text-center">Starter</span>
+            <span className="rounded-md bg-primary px-2 py-1 text-center text-primary-foreground">Household</span>
+            <span className="rounded-md bg-muted px-2 py-1 text-center">Business</span>
+          </div>
           <div className="divide-y">
             {comparisonRows.map(([feature, starter, household, business]) => (
               <div key={feature} className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.2fr_repeat(3,1fr)] md:py-3">
