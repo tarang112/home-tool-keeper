@@ -16,7 +16,16 @@ type LandingLead = {
   email: string;
   household_type: string | null;
   message: string | null;
+  source: string | null;
+  medium: string | null;
+  campaign: string | null;
   created_at: string;
+};
+
+type LandingEvent = {
+  event_name: "pageview" | "lead_submit";
+  source: string | null;
+  medium: string | null;
 };
 
 export default function AdminLeads() {
@@ -25,6 +34,7 @@ export default function AdminLeads() {
   const [checkingRole, setCheckingRole] = useState(true);
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<LandingLead[]>([]);
+  const [events, setEvents] = useState<LandingEvent[]>([]);
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -33,18 +43,40 @@ export default function AdminLeads() {
     return leads.filter((lead) => `${lead.name ?? ""} ${lead.email} ${lead.household_type ?? ""} ${lead.message ?? ""}`.toLowerCase().includes(value));
   }, [leads, query]);
 
+  const sourceStats = useMemo(() => {
+    const stats = new Map<string, { source: string; medium: string; pageviews: number; leads: number }>();
+    events.forEach((event) => {
+      const source = event.source || "direct";
+      const medium = event.medium || "none";
+      const key = `${source}|${medium}`;
+      const current = stats.get(key) || { source, medium, pageviews: 0, leads: 0 };
+      if (event.event_name === "pageview") current.pageviews += 1;
+      if (event.event_name === "lead_submit") current.leads += 1;
+      stats.set(key, current);
+    });
+    return Array.from(stats.values()).sort((a, b) => b.leads - a.leads || b.pageviews - a.pageviews);
+  }, [events]);
+
   const loadLeads = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const [{ data, error }, { data: eventData }] = await Promise.all([
+      supabase
       .from("landing_leads" as any)
-      .select("id, name, email, household_type, message, created_at")
-      .order("created_at", { ascending: false });
+      .select("id, name, email, household_type, message, source, medium, campaign, created_at")
+      .order("created_at", { ascending: false }),
+      supabase
+        .from("landing_page_events" as any)
+        .select("event_name, source, medium")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+    ]);
 
     if (error) {
       toast.error("Unable to load leads");
       setLeads([]);
     } else {
       setLeads((data as unknown as LandingLead[]) ?? []);
+      setEvents((eventData as unknown as LandingEvent[]) ?? []);
     }
     setLoading(false);
   };
