@@ -147,7 +147,20 @@ async function handlePreview(req: Request): Promise<Response> {
   const apiKey = Deno.env.get('LOVABLE_API_KEY')
   const authHeader = req.headers.get('Authorization')
 
-  if (!apiKey || authHeader !== `Bearer ${apiKey}`) {
+  let authorized = Boolean(apiKey && authHeader === `Bearer ${apiKey}`)
+
+  if (!authorized && authHeader?.startsWith('Bearer ')) {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    )
+    const token = authHeader.replace('Bearer ', '')
+    const { data } = await supabase.auth.getClaims(token)
+    authorized = Boolean(data?.claims?.sub)
+  }
+
+  if (!authorized) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...previewCorsHeaders, 'Content-Type': 'application/json' },
@@ -155,9 +168,11 @@ async function handlePreview(req: Request): Promise<Response> {
   }
 
   let type: string
+  let locale = 'en'
   try {
     const body = await req.json()
     type = body.type
+    locale = normalizeLocale(body.locale)
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
       status: 400,
@@ -174,7 +189,7 @@ async function handlePreview(req: Request): Promise<Response> {
     })
   }
 
-  const sampleData = SAMPLE_DATA[type] || {}
+  const sampleData = { ...(SAMPLE_DATA[type] || {}), locale }
   const html = await renderAsync(React.createElement(EmailTemplate, sampleData))
 
   return new Response(html, {
