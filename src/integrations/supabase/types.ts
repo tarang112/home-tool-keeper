@@ -528,6 +528,19 @@ export type Database = {
         Args: { _email: string; _house_id: string }
         Returns: string
       }
+      get_pending_house_invites: {
+        Args: { _house_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          house_id: string
+          id: string
+          relationship: string
+          role: string
+          share_mode: string
+          status: string
+        }[]
+      }
       has_full_house_access: {
         Args: { _house_id: string; _user_id: string }
         Returns: boolean
