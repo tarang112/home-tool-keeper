@@ -39,6 +39,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><NotificationHistory /></ProtectedRoute>} />
             <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
             <Route path="/accept-invite" element={<AcceptInvite />} />
             <Route path="/install" element={<InstallApp />} />
