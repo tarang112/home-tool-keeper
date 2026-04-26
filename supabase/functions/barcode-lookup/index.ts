@@ -147,7 +147,7 @@ async function webSearchBarcode(barcode: string) {
     // Fetch up to 3 top results and try to extract JSON-LD / og data
     for (const pageUrl of linkMatches.slice(0, 3)) {
       try {
-        const pageRes = await fetch(pageUrl, { headers: BROWSER_HEADERS, redirect: 'follow' });
+        const pageRes = await fetchPublicUrl(pageUrl);
         if (!pageRes.ok) continue;
         const html = await pageRes.text();
         const extracted = extractProductFromHtml(html, pageUrl);
@@ -251,7 +251,7 @@ function extractProductFromHtml(html: string, pageUrl: string) {
 
 async function handleUrlLookup(rawUrl: string): Promise<Response> {
   try {
-    const url = validatePublicHttpUrl(rawUrl);
+    const url = await validatePublicHttpUrl(rawUrl);
     const pageRes = await fetchPublicUrl(url);
     if (!pageRes.ok) {
       console.error('URL fetch failed:', pageRes.status, pageRes.statusText);
@@ -289,7 +289,7 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
   }
 }
 
-function validatePublicHttpUrl(rawUrl: string): string {
+async function validatePublicHttpUrl(rawUrl: string): Promise<string> {
   if (rawUrl.length > 2048) throw new Error('URL too long');
   const withProtocol = rawUrl.match(/^https?:\/\//i) ? rawUrl : `https://${rawUrl}`;
   const parsed = new URL(withProtocol);
@@ -312,17 +312,33 @@ function validatePublicHttpUrl(rawUrl: string): string {
   ) {
     throw new Error('Forbidden host');
   }
+  await assertHostnameResolvesPublic(hostname);
   return parsed.toString();
 }
 
+async function assertHostnameResolvesPublic(hostname: string): Promise<void> {
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname) || hostname.includes(':')) return;
+  const records = await Promise.allSettled([
+    Deno.resolveDns(hostname, 'A'),
+    Deno.resolveDns(hostname, 'AAAA'),
+  ]);
+  const addresses = records.flatMap((record) => record.status === 'fulfilled' ? record.value : []);
+  if (addresses.some((address) => isPrivateAddress(address))) throw new Error('Forbidden host');
+}
+
+function isPrivateAddress(address: string): boolean {
+  return /^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(address)
+    || /^(::1$|fc|fd|fe80:)/i.test(address);
+}
+
 async function fetchPublicUrl(url: string): Promise<Response> {
-  let currentUrl = url;
+  let currentUrl = await validatePublicHttpUrl(url);
   for (let i = 0; i < 4; i++) {
     const response = await fetch(currentUrl, { headers: BROWSER_HEADERS, redirect: 'manual' });
     if (![301, 302, 303, 307, 308].includes(response.status)) return response;
     const location = response.headers.get('location');
     if (!location) return response;
-    currentUrl = validatePublicHttpUrl(new URL(location, currentUrl).toString());
+    currentUrl = await validatePublicHttpUrl(new URL(location, currentUrl).toString());
   }
   throw new Error('Too many redirects');
 }
