@@ -109,6 +109,40 @@ const Index = () => {
     }
   }, [showDeleted, fetchDeletedItems]);
 
+  const lowStockItems = useMemo(() => items.filter((item) => item.quantity <= 1), [items]);
+
+  const exportRows = useCallback((format: "csv" | "excel" | "pdf") => {
+    const rows = filtered.map((item) => ({
+      Name: item.name,
+      Category: item.customCategory || item.category,
+      Quantity: item.quantity,
+      Unit: item.quantityUnit,
+      Location: item.location,
+      Expiration: item.expirationDate || "",
+      Notes: item.notes || "",
+    }));
+
+    if (format === "pdf") {
+      const html = `<!doctype html><html><head><title>Inventory Export</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}th{background:#f4f4f5}h1{font-size:20px}</style></head><body><h1>HomeStock Inventory</h1><table><thead><tr>${Object.keys(rows[0] || { Name: "", Category: "", Quantity: "", Unit: "", Location: "", Expiration: "", Notes: "" }).map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${Object.values(row).map((value) => `<td>${String(value).replace(/</g, "&lt;")}</td>`).join("")}</tr>`).join("")}</tbody></table></body></html>`;
+      const win = window.open("", "_blank");
+      if (win) {
+        win.document.write(html);
+        win.document.close();
+        win.print();
+      }
+      return;
+    }
+
+    const csv = [Object.keys(rows[0] || { Name: "", Category: "", Quantity: "", Unit: "", Location: "", Expiration: "", Notes: "" }).join(","), ...rows.map((row) => Object.values(row).map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: format === "excel" ? "application/vnd.ms-excel" : "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `homestock-inventory.${format === "excel" ? "xls" : "csv"}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [filtered]);
+
   const toggleCategory = useCallback((cat: string) => {
     setCollapsedCategories(prev => {
       const next = new Set(prev);
