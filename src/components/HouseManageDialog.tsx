@@ -222,7 +222,7 @@ export function HouseManageDialog({
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {isOwner && (
+                    {isOwner && inv.inviteToken && (
                       <Button
                         variant="ghost"
                         size="icon"
