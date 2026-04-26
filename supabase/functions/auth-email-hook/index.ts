@@ -55,6 +55,32 @@ const normalizeLocale = (value: unknown) => {
   return SUPPORTED_LOCALES.has(locale) ? locale : 'en'
 }
 
+async function resolveRecipientLocale(supabase: any, payloadData: any) {
+  const fallbackLocale = normalizeLocale(
+    payloadData?.locale ||
+      payloadData?.user_metadata?.preferred_language ||
+      payloadData?.raw_user_meta_data?.preferred_language,
+  )
+
+  if (!payloadData?.user_id) return fallbackLocale
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('preferred_language')
+    .eq('user_id', payloadData.user_id)
+    .maybeSingle()
+
+  if (error) {
+    console.error('Failed to load recipient language preference', {
+      user_id: payloadData.user_id,
+      error: error.message,
+    })
+    return fallbackLocale
+  }
+
+  return normalizeLocale((profile as { preferred_language?: string } | null)?.preferred_language || fallbackLocale)
+}
+
 // Template mapping
 const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
   signup: SignupEmail,
@@ -276,13 +302,7 @@ async function handleWebhook(req: Request): Promise<Response> {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('preferred_language')
-    .eq('user_id', payload.data.user_id)
-    .maybeSingle()
-
-  const locale = normalizeLocale(profile?.preferred_language || payload.data.locale)
+  const locale = await resolveRecipientLocale(supabase, payload.data)
 
   // Build template props from payload.data (HookData structure)
   const templateProps = {
