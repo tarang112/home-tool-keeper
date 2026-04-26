@@ -269,7 +269,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="restock-email" className="cursor-pointer">Email</Label>
+                  <Label htmlFor="restock-email" className="cursor-pointer">Restock email alerts</Label>
                 </div>
                 <Switch id="restock-email" checked={restockEmail} onCheckedChange={setRestockEmail} />
               </div>
@@ -297,7 +297,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="expiration-email" className="cursor-pointer">Email</Label>
+                  <Label htmlFor="expiration-email" className="cursor-pointer">Expiration email alerts</Label>
                 </div>
                 <Switch id="expiration-email" checked={expirationEmail} onCheckedChange={setExpirationEmail} />
               </div>
@@ -352,7 +352,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="warranty-email" className="cursor-pointer">Email</Label>
+                  <Label htmlFor="warranty-email" className="cursor-pointer">Warranty email alerts</Label>
                 </div>
                 <Switch id="warranty-email" checked={warrantyEmail} onCheckedChange={setWarrantyEmail} />
               </div>
