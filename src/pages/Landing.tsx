@@ -206,7 +206,7 @@ export default function Landing() {
           <div className="max-w-2xl"><h2 className="font-heading text-4xl font-bold">Simple pricing for every location.</h2><p className="mt-3 text-muted-foreground">Plans are priced per home, rental, property, or business location so each space has its own inventory.</p></div>
           <div className="inline-flex rounded-lg border bg-card p-1" aria-label="Billing cycle">
             <Button type="button" variant={billingCycle === "monthly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("monthly")}>Monthly</Button>
-            <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly</Button>
+            <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly <span className="ml-1 text-xs opacity-80">Save 17%</span></Button>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
