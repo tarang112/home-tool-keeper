@@ -488,6 +488,15 @@ export type Database = {
         Args: { _email: string; _user_id: string }
         Returns: undefined
       }
+      create_house_invite_link: {
+        Args: {
+          _house_id: string
+          _relationship?: string
+          _role?: string
+          _share_mode?: string
+        }
+        Returns: string
+      }
       find_house_invitable_user: {
         Args: { _email: string; _house_id: string }
         Returns: {
