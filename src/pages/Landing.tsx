@@ -199,6 +199,26 @@ export default function Landing() {
             </article>
           ))}
         </div>
+        <div className="mt-10 overflow-hidden rounded-lg border bg-card">
+          <div className="grid grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium">
+            <span>Feature</span><span>Starter</span><span>Household</span><span>Business</span>
+          </div>
+          <div className="divide-y">
+            <div className="grid grid-cols-[1.2fr_repeat(3,1fr)] gap-3 bg-primary/5 px-4 py-3 text-sm">
+              <span className="font-medium">Active billing cycle</span>
+              {plans.map((plan) => <span key={plan.name} className="font-medium text-primary">{billingCycle === "monthly" ? "Monthly" : "Yearly"}</span>)}
+            </div>
+            <div className="grid grid-cols-[1.2fr_repeat(3,1fr)] gap-3 bg-primary/5 px-4 py-3 text-sm">
+              <span className="font-medium">Price per location/property</span>
+              {plans.map((plan) => <span key={plan.name} className="font-medium text-foreground">{plan[billingCycle]}/{billingCycle === "monthly" ? "mo" : "yr"}</span>)}
+            </div>
+            {comparisonRows.map(([feature, starter, household, business]) => (
+              <div key={feature} className="grid grid-cols-[1.2fr_repeat(3,1fr)] gap-3 px-4 py-3 text-sm">
+                <span className="font-medium">{feature}</span><span className="text-muted-foreground">{starter}</span><span className="text-muted-foreground">{household}</span><span className="text-muted-foreground">{business}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section id="pricing" className="mx-auto max-w-6xl px-5 py-16">
