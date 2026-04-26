@@ -35,20 +35,14 @@ export function useVisitorTracker() {
       sessionStorage.setItem(sessionKey, sessionId);
     }
 
-    void fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/log-visitor`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      },
-      body: JSON.stringify({
+    void supabase.functions.invoke("log-visitor", {
+      body: {
         page,
         device: getDevice(),
         referrer: document.referrer || null,
         user_agent: navigator.userAgent,
         session_id: sessionId,
-      }),
+      },
     }).catch(() => undefined);
   }, [page, session, user]);
 }
