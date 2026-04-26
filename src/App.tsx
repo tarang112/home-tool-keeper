@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { VisitorTracker } from "@/components/VisitorTracker";
+import Landing from "./pages/Landing.tsx";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
@@ -33,7 +34,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   const params = new URLSearchParams(location.search);
   const redirect = params.get("redirect");
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
-  if (user) return <Navigate to={redirect || "/"} replace />;
+  if (user) return <Navigate to={redirect || "/app"} replace />;
   return <>{children}</>;
 }
 
@@ -46,7 +47,8 @@ const App = () => (
         <BrowserRouter>
           <VisitorTracker />
           <Routes>
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/app" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationHistory /></ProtectedRoute>} />
             <Route path="/email-preview" element={<ProtectedRoute><EmailPreview /></ProtectedRoute>} />
             <Route path="/visitors" element={<ProtectedRoute><VisitorLog /></ProtectedRoute>} />

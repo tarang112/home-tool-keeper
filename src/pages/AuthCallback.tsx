@@ -25,7 +25,7 @@ export default function AuthCallback() {
       }
 
       setStatus("success");
-      window.setTimeout(() => navigate("/", { replace: true }), 900);
+      window.setTimeout(() => navigate("/app", { replace: true }), 900);
     };
 
     finishAuth();
