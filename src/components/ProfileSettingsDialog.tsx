@@ -45,6 +45,8 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [preferredLanguage, setPreferredLanguage] = useState("en");
   const [receiptEmail, setReceiptEmail] = useState("");
   const [orderConfirmationEmail, setOrderConfirmationEmail] = useState("");
+  const [receiptFromName, setReceiptFromName] = useState("HomeStock Receipts");
+  const [orderConfirmationFromName, setOrderConfirmationFromName] = useState("HomeStock Orders");
   const [warrantyInApp, setWarrantyInApp] = useState(true);
   const [warrantyEmail, setWarrantyEmail] = useState(false);
   const [warrantyPush, setWarrantyPush] = useState(false);
@@ -125,12 +127,14 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
 
       supabase
         .from("billing_preferences" as any)
-        .select("receipt_email, order_confirmation_email")
+        .select("receipt_email, order_confirmation_email, receipt_from_name, order_confirmation_from_name")
         .eq("user_id", user.id)
         .maybeSingle()
         .then(({ data }: any) => {
           setReceiptEmail(data?.receipt_email || "");
           setOrderConfirmationEmail(data?.order_confirmation_email || "");
+          setReceiptFromName(data?.receipt_from_name || "HomeStock Receipts");
+          setOrderConfirmationFromName(data?.order_confirmation_from_name || "HomeStock Orders");
         });
 
       setSelectedDefault(defaultHouseId ?? "none");
@@ -183,6 +187,8 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
 
     const normalizedReceiptEmail = receiptEmail.trim();
     const normalizedOrderConfirmationEmail = orderConfirmationEmail.trim();
+    const normalizedReceiptFromName = receiptFromName.trim();
+    const normalizedOrderFromName = orderConfirmationFromName.trim();
     const { error: billingError } = await supabase
       .from("billing_preferences" as any)
       .upsert(
@@ -190,6 +196,8 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           user_id: user.id,
           receipt_email: normalizedReceiptEmail || null,
           order_confirmation_email: normalizedOrderConfirmationEmail || null,
+          receipt_from_name: normalizedReceiptFromName || null,
+          order_confirmation_from_name: normalizedOrderFromName || null,
         },
         { onConflict: "user_id" }
       );
@@ -297,6 +305,17 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="receipt-from-name">Receipt From Name</Label>
+            <Input
+              id="receipt-from-name"
+              maxLength={80}
+              value={receiptFromName}
+              onChange={(e) => setReceiptFromName(e.target.value)}
+              placeholder="HomeStock Receipts"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="order-confirmation-email">Order Confirmation Email</Label>
             <Input
               id="order-confirmation-email"
@@ -306,6 +325,17 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               placeholder={receiptEmail || user?.email || "orders@example.com"}
             />
             <p className="text-xs text-muted-foreground">Order confirmation messages can be sent here separately from receipts.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="order-confirmation-from-name">Order Confirmation From Name</Label>
+            <Input
+              id="order-confirmation-from-name"
+              maxLength={80}
+              value={orderConfirmationFromName}
+              onChange={(e) => setOrderConfirmationFromName(e.target.value)}
+              placeholder="HomeStock Orders"
+            />
           </div>
 
           <div className="space-y-4 border-t pt-4">

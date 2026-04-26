@@ -119,7 +119,7 @@ export default function AdminLeads() {
 
     const { data, error } = await supabase
       .from("billing_preferences" as any)
-      .select("receipt_email, order_confirmation_email")
+      .select("receipt_email, order_confirmation_email, receipt_from_name, order_confirmation_from_name")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -131,12 +131,15 @@ export default function AdminLeads() {
 
     const receiptEmail = (data as any)?.receipt_email || user.email;
     const orderEmail = (data as any)?.order_confirmation_email || receiptEmail;
+    const receiptFromName = (data as any)?.receipt_from_name || "HomeStock Receipts";
+    const orderFromName = (data as any)?.order_confirmation_from_name || "HomeStock Orders";
     const runId = crypto.randomUUID();
     const results = await Promise.allSettled([
       supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "sample-receipt",
           recipientEmail: receiptEmail,
+          fromName: receiptFromName,
           idempotencyKey: `admin-sample-receipt-${runId}`,
           templateData: { name: "Team", receiptNumber: "TEST-1001", total: "$6.00", summary: "Household plan · 1 location/property" },
         },
@@ -145,6 +148,7 @@ export default function AdminLeads() {
         body: {
           templateName: "order-confirmation",
           recipientEmail: orderEmail,
+          fromName: orderFromName,
           idempotencyKey: `admin-sample-order-${runId}`,
           templateData: { name: "Team", orderNumber: "TEST-2001", summary: "Sample order confirmation for your checkout/order flow." },
         },
