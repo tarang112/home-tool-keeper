@@ -36,13 +36,14 @@ const faqs = [
 
 const plans = [
   { name: "Starter", monthly: "$0", yearly: "$0", text: "For organizing one personal inventory.", features: ["Unlimited manual items", "Categories and locations", "Mobile install"] },
-  { name: "Household", monthly: "$6", yearly: "$60", text: "For families who share supplies and reminders.", features: ["Shared homes", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
-  { name: "Business", monthly: "$14", yearly: "$140", text: "For small teams tracking stock across workspaces.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
+  { name: "Household", monthly: "$6", yearly: "$60", text: "Per home, rental, or shared property.", features: ["Shared property access", "Receipt and barcode capture", "Expiry and warranty alerts"], featured: true },
+  { name: "Business", monthly: "$14", yearly: "$140", text: "Per location for small teams tracking stock.", features: ["Business locations", "CSV exports", "Visitor and notification history"] },
 ];
 
 const comparisonRows = [
   ["Manual inventory items", "Unlimited", "Unlimited", "Unlimited"],
-  ["Shared homes", "—", "3 homes", "10 workspaces"],
+  ["Included locations/properties", "1", "1", "1"],
+  ["Shared access", "—", "Household members", "Team members"],
   ["Barcode and receipt capture", "—", "Included", "Included"],
   ["Expiry and warranty reminders", "Basic", "Advanced", "Advanced"],
   ["Business locations", "—", "—", "Included"],
@@ -202,7 +203,7 @@ export default function Landing() {
 
       <section id="pricing" className="mx-auto max-w-6xl px-5 py-16">
         <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-2xl"><h2 className="font-heading text-4xl font-bold">Simple pricing for every kind of stash.</h2><p className="mt-3 text-muted-foreground">Start small, then add shared homes, reminders, and business tracking when you need them.</p></div>
+          <div className="max-w-2xl"><h2 className="font-heading text-4xl font-bold">Simple pricing for every location.</h2><p className="mt-3 text-muted-foreground">Plans are priced per home, rental, property, or business location so each space has its own inventory.</p></div>
           <div className="inline-flex rounded-lg border bg-card p-1" aria-label="Billing cycle">
             <Button type="button" variant={billingCycle === "monthly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("monthly")}>Monthly</Button>
             <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly</Button>
@@ -214,6 +215,7 @@ export default function Landing() {
               <h3 className="font-heading text-2xl font-semibold">{plan.name}</h3>
               <p className={`mt-2 text-sm ${plan.featured ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{plan.text}</p>
               <div className="mt-5 flex items-end gap-1"><span className="font-heading text-4xl font-bold">{plan[billingCycle]}</span><span className={plan.featured ? "text-primary-foreground/75" : "text-muted-foreground"}>/{billingCycle === "monthly" ? "mo" : "yr"}</span></div>
+              <p className={`mt-1 text-xs ${plan.featured ? "text-primary-foreground/75" : "text-muted-foreground"}`}>per location/property</p>
               <ul className="mt-6 space-y-3 text-sm">
                 {plan.features.map((feature) => <li key={feature} className="flex gap-2"><Check className="h-4 w-4 shrink-0" /> {feature}</li>)}
               </ul>
