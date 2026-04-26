@@ -43,6 +43,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [deleting, setDeleting] = useState(false);
   const [selectedDefault, setSelectedDefault] = useState<string>("none");
   const [preferredLanguage, setPreferredLanguage] = useState("en");
+  const [receiptEmail, setReceiptEmail] = useState("");
   const [warrantyInApp, setWarrantyInApp] = useState(true);
   const [warrantyEmail, setWarrantyEmail] = useState(false);
   const [warrantyPush, setWarrantyPush] = useState(false);
@@ -121,6 +122,13 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
           }
         });
 
+      supabase
+        .from("billing_preferences" as any)
+        .select("receipt_email")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }: any) => setReceiptEmail(data?.receipt_email || ""));
+
       setSelectedDefault(defaultHouseId ?? "none");
     }
   }, [open, user, defaultHouseId]);
@@ -166,6 +174,23 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
     if (prefError) {
       setLoading(false);
       toast.error("Failed to save notification preferences");
+      return;
+    }
+
+    const normalizedReceiptEmail = receiptEmail.trim();
+    const { error: billingError } = await supabase
+      .from("billing_preferences" as any)
+      .upsert(
+        {
+          user_id: user.id,
+          receipt_email: normalizedReceiptEmail || null,
+        },
+        { onConflict: "user_id" }
+      );
+
+    if (billingError) {
+      setLoading(false);
+      toast.error("Failed to save receipt email");
       return;
     }
 
@@ -251,6 +276,18 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">Auth emails will use this language when available.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="receipt-email">Receipt Email</Label>
+            <Input
+              id="receipt-email"
+              type="email"
+              value={receiptEmail}
+              onChange={(e) => setReceiptEmail(e.target.value)}
+              placeholder={user?.email ?? "receipts@example.com"}
+            />
+            <p className="text-xs text-muted-foreground">Checkout and order receipts can be sent here instead of your sign-in email.</p>
           </div>
 
           <div className="space-y-4 border-t pt-4">

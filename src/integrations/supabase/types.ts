@@ -21,6 +21,7 @@ export type Database = {
           id: string
           location_count: number
           plan: string
+          receipt_email: string | null
           status: string
           total_amount_cents: number
           unit_amount_cents: number
@@ -33,6 +34,7 @@ export type Database = {
           id?: string
           location_count?: number
           plan?: string
+          receipt_email?: string | null
           status?: string
           total_amount_cents?: number
           unit_amount_cents?: number
@@ -45,6 +47,7 @@ export type Database = {
           id?: string
           location_count?: number
           plan?: string
+          receipt_email?: string | null
           status?: string
           total_amount_cents?: number
           unit_amount_cents?: number
