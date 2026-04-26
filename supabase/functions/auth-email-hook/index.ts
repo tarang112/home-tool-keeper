@@ -25,6 +25,36 @@ const EMAIL_SUBJECTS: Record<string, string> = {
   reauthentication: 'Your verification code',
 }
 
+const LOCALIZED_SUBJECTS: Record<string, Record<string, string>> = {
+  signup: {
+    en: 'Confirm your email',
+    ar: 'أكّد بريدك الإلكتروني',
+    es: 'Confirma tu correo',
+    fr: 'Confirmez votre e-mail',
+    hi: 'अपना ईमेल पुष्टि करें',
+  },
+  magiclink: {
+    en: 'Your login link',
+    ar: 'رابط تسجيل الدخول',
+    es: 'Tu enlace de inicio de sesión',
+    fr: 'Votre lien de connexion',
+    hi: 'आपका लॉगिन लिंक',
+  },
+  recovery: {
+    en: 'Reset your password',
+    ar: 'إعادة تعيين كلمة المرور',
+    es: 'Restablece tu contraseña',
+    fr: 'Réinitialisez votre mot de passe',
+    hi: 'अपना पासवर्ड रीसेट करें',
+  },
+}
+
+const SUPPORTED_LOCALES = new Set(['en', 'ar', 'es', 'fr', 'hi'])
+const normalizeLocale = (value: unknown) => {
+  const locale = typeof value === 'string' ? value.toLowerCase().split('-')[0] : 'en'
+  return SUPPORTED_LOCALES.has(locale) ? locale : 'en'
+}
+
 // Template mapping
 const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
   signup: SignupEmail,
@@ -217,6 +247,19 @@ async function handleWebhook(req: Request): Promise<Response> {
     )
   }
 
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('preferred_language')
+    .eq('user_id', payload.data.user_id)
+    .maybeSingle()
+
+  const locale = normalizeLocale(profile?.preferred_language || payload.data.locale)
+
   // Build template props from payload.data (HookData structure)
   const templateProps = {
     siteName: SITE_NAME,
@@ -226,6 +269,7 @@ async function handleWebhook(req: Request): Promise<Response> {
     token: payload.data.token,
     email: payload.data.email,
     newEmail: payload.data.new_email,
+    locale,
   }
 
   // Render React Email to HTML and plain text
@@ -233,12 +277,6 @@ async function handleWebhook(req: Request): Promise<Response> {
   const text = await renderAsync(React.createElement(EmailTemplate, templateProps), {
     plainText: true,
   })
-
-  // Enqueue email for async processing by the dispatcher (process-email-queue).
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  )
 
   const messageId = crypto.randomUUID()
 
@@ -258,7 +296,7 @@ async function handleWebhook(req: Request): Promise<Response> {
       to: payload.data.email,
       from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
-      subject: EMAIL_SUBJECTS[emailType] || 'Notification',
+      subject: LOCALIZED_SUBJECTS[emailType]?.[locale] || EMAIL_SUBJECTS[emailType] || 'Notification',
       html,
       text,
       purpose: 'transactional',

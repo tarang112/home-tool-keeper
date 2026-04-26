@@ -536,6 +536,7 @@ export type Database = {
           default_house_id: string | null
           display_name: string | null
           id: string
+          preferred_language: string
           updated_at: string
           user_id: string
         }
@@ -545,6 +546,7 @@ export type Database = {
           default_house_id?: string | null
           display_name?: string | null
           id?: string
+          preferred_language?: string
           updated_at?: string
           user_id: string
         }
@@ -554,6 +556,7 @@ export type Database = {
           default_house_id?: string | null
           display_name?: string | null
           id?: string
+          preferred_language?: string
           updated_at?: string
           user_id?: string
         }

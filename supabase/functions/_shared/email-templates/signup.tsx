@@ -19,44 +19,99 @@ interface SignupEmailProps {
   siteUrl: string
   recipient: string
   confirmationUrl: string
+  locale?: string
 }
+
+const copy = {
+  en: {
+    preview: 'Confirm your HomeStock email',
+    heading: 'Confirm your HomeStock email',
+    intro: 'Thanks for creating your HomeStock account for',
+    confirmPrefix: 'Confirm this email address',
+    confirmSuffix: 'to start tracking your inventory:',
+    button: 'Confirm Email',
+    footer: "If you didn't create an account, you can safely ignore this email.",
+  },
+  ar: {
+    preview: 'أكّد بريدك الإلكتروني في HomeStock',
+    heading: 'أكّد بريدك الإلكتروني في HomeStock',
+    intro: 'شكرًا لإنشاء حسابك في HomeStock لـ',
+    confirmPrefix: 'أكّد عنوان البريد الإلكتروني هذا',
+    confirmSuffix: 'للبدء في تتبع مخزونك:',
+    button: 'تأكيد البريد',
+    footer: 'إذا لم تنشئ حسابًا، يمكنك تجاهل هذه الرسالة بأمان.',
+  },
+  es: {
+    preview: 'Confirma tu correo de HomeStock',
+    heading: 'Confirma tu correo de HomeStock',
+    intro: 'Gracias por crear tu cuenta de HomeStock para',
+    confirmPrefix: 'Confirma esta dirección de correo',
+    confirmSuffix: 'para empezar a controlar tu inventario:',
+    button: 'Confirmar correo',
+    footer: 'Si no creaste una cuenta, puedes ignorar este correo.',
+  },
+  fr: {
+    preview: 'Confirmez votre e-mail HomeStock',
+    heading: 'Confirmez votre e-mail HomeStock',
+    intro: 'Merci d’avoir créé votre compte HomeStock pour',
+    confirmPrefix: 'Confirmez cette adresse e-mail',
+    confirmSuffix: 'pour commencer à suivre votre inventaire :',
+    button: 'Confirmer l’e-mail',
+    footer: 'Si vous n’avez pas créé de compte, vous pouvez ignorer cet e-mail.',
+  },
+  hi: {
+    preview: 'अपना HomeStock ईमेल पुष्टि करें',
+    heading: 'अपना HomeStock ईमेल पुष्टि करें',
+    intro: 'HomeStock खाता बनाने के लिए धन्यवाद',
+    confirmPrefix: 'इस ईमेल पते की पुष्टि करें',
+    confirmSuffix: 'ताकि आप अपनी इन्वेंटरी ट्रैक करना शुरू कर सकें:',
+    button: 'ईमेल पुष्टि करें',
+    footer: 'अगर आपने खाता नहीं बनाया है, तो इस ईमेल को अनदेखा कर सकते हैं।',
+  },
+} as const
+
+const getCopy = (locale?: string) => copy[(locale || 'en') as keyof typeof copy] || copy.en
 
 export const SignupEmail = ({
   siteName,
   siteUrl,
   recipient,
   confirmationUrl,
-}: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
-    <Head />
-    <Preview>Confirm your HomeStock email</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm your HomeStock email</Heading>
-        <Text style={text}>
-          Thanks for creating your HomeStock account for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
-        </Text>
-        <Text style={text}>
-          Confirm this email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) to start tracking your inventory:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Confirm Email
-        </Button>
-        <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
-)
+  locale,
+}: SignupEmailProps) => {
+  const t = getCopy(locale)
+  const isRtl = locale === 'ar'
+
+  return (
+    <Html lang={locale || 'en'} dir={isRtl ? 'rtl' : 'ltr'}>
+      <Head />
+      <Preview>{t.preview}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Heading style={h1}>{t.heading}</Heading>
+          <Text style={text}>
+            {t.intro}{' '}
+            <Link href={siteUrl} style={link}>
+              <strong>{siteName}</strong>
+            </Link>
+            !
+          </Text>
+          <Text style={text}>
+            {t.confirmPrefix} (
+            <Link href={`mailto:${recipient}`} style={link}>
+              {recipient}
+            </Link>
+            ) {t.confirmSuffix}
+          </Text>
+          <Button style={button} href={confirmationUrl}>
+            {t.button}
+          </Button>
+          <Text style={footer}>{t.footer}</Text>
+        </Container>
+      </Body>
+    </Html>
+  )
+}
 
 export default SignupEmail
 
