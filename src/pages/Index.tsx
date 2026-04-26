@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare, Trash2, RotateCcw, Download, FileText, Table2, AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare, Trash2, RotateCcw, Download, FileText, Table2, AlertTriangle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -263,6 +264,9 @@ const Index = () => {
             <h1 className="font-heading font-bold text-xl">HomeStock</h1>
           </div>
           <div className="flex items-center gap-0.5">
+            <Button asChild size="icon" variant="ghost" className="h-9 w-9" title="Visitor log">
+              <Link to="/visitors"><Users className="h-4 w-4" /></Link>
+            </Button>
             <NotificationBell />
             <ThemeToggle />
             <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
