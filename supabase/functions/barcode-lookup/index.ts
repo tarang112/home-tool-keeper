@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -30,6 +32,21 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+    }
+
     const body = await req.json();
     const { barcode, url } = body;
 
@@ -37,9 +54,9 @@ Deno.serve(async (req) => {
       return await handleUrlLookup(url);
     }
 
-    if (!barcode || typeof barcode !== 'string') {
+    if (!barcode || typeof barcode !== 'string' || !/^\d{6,18}$/.test(barcode.trim())) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Barcode or URL is required' }),
+        JSON.stringify({ success: false, error: 'A valid barcode or URL is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
