@@ -29,6 +29,7 @@ const testimonials = [
 
 const faqs = [
   ["Can I use HomeStock with my family?", "Yes. You can share household inventory, invite members, and choose who can edit or view shared spaces."],
+  ["What counts as a location or property for billing?", "A location/property is one separately managed space, such as a primary home, rental unit, vacation home, shared workspace, office, shop, or storage location."],
   ["Does it work on mobile?", "HomeStock is built as a mobile-ready web app and can be installed on supported phones for quick access."],
   ["Can I track warranties and expiry dates?", "Yes. Add expiry or warranty dates and receive reminders before food, supplies, or coverage runs out."],
   ["Is my inventory private?", "Your inventory is tied to your account and protected by sign-in. Shared homes only show items to invited members."],
