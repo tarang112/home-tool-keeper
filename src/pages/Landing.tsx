@@ -71,13 +71,22 @@ const getAttribution = () => {
   };
 };
 
+const getSavedBillingCycle = (): "monthly" | "yearly" => {
+  const saved = localStorage.getItem("homestock_billing_cycle");
+  return saved === "yearly" ? "yearly" : "monthly";
+};
+
 export default function Landing() {
   const [testimonialIndex, setTestimonialIndex] = useState(0);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(getSavedBillingCycle);
   const [lead, setLead] = useState({ name: "", email: "", householdType: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const testimonial = testimonials[testimonialIndex];
   const attribution = useMemo(getAttribution, []);
+
+  useEffect(() => {
+    localStorage.setItem("homestock_billing_cycle", billingCycle);
+  }, [billingCycle]);
 
   useEffect(() => {
     sessionStorage.setItem("homestock_landing_session_id", attribution.session_id);
