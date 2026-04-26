@@ -251,8 +251,8 @@ function extractProductFromHtml(html: string, pageUrl: string) {
 
 async function handleUrlLookup(rawUrl: string): Promise<Response> {
   try {
-    const url = rawUrl.match(/^https?:\/\//i) ? rawUrl : `https://${rawUrl}`;
-    const pageRes = await fetch(url, { redirect: 'follow', headers: BROWSER_HEADERS });
+    const url = validatePublicHttpUrl(rawUrl);
+    const pageRes = await fetchPublicUrl(url);
     if (!pageRes.ok) {
       console.error('URL fetch failed:', pageRes.status, pageRes.statusText);
       return jsonResponse({ success: false, error: 'Could not fetch URL' }, 400);
@@ -287,6 +287,44 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     console.error('URL lookup error:', error);
     return jsonResponse({ success: false, error: 'URL lookup failed' }, 500);
   }
+}
+
+function validatePublicHttpUrl(rawUrl: string): string {
+  if (rawUrl.length > 2048) throw new Error('URL too long');
+  const withProtocol = rawUrl.match(/^https?:\/\//i) ? rawUrl : `https://${rawUrl}`;
+  const parsed = new URL(withProtocol);
+  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Invalid protocol');
+
+  const hostname = parsed.hostname.toLowerCase().replace(/\.$/, '');
+  const blockedHosts = new Set([
+    'localhost',
+    'metadata.google.internal',
+    'metadata.azure.com',
+    '169.254.169.254',
+  ]);
+  const privateIpv4 = /^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/;
+  const privateIpv6 = /^(::1$|fc|fd|fe80:)/i;
+  if (
+    blockedHosts.has(hostname) ||
+    hostname.endsWith('.local') ||
+    privateIpv4.test(hostname) ||
+    privateIpv6.test(hostname)
+  ) {
+    throw new Error('Forbidden host');
+  }
+  return parsed.toString();
+}
+
+async function fetchPublicUrl(url: string): Promise<Response> {
+  let currentUrl = url;
+  for (let i = 0; i < 4; i++) {
+    const response = await fetch(currentUrl, { headers: BROWSER_HEADERS, redirect: 'manual' });
+    if (![301, 302, 303, 307, 308].includes(response.status)) return response;
+    const location = response.headers.get('location');
+    if (!location) return response;
+    currentUrl = validatePublicHttpUrl(new URL(location, currentUrl).toString());
+  }
+  throw new Error('Too many redirects');
 }
 
 /** Use AI ONLY to parse already-fetched real text content — not to hallucinate */
