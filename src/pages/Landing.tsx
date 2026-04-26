@@ -248,6 +248,9 @@ export default function Landing() {
               <ul className="mt-6 space-y-3 text-sm">
                 {plan.features.map((feature) => <li key={feature} className="flex gap-2"><Check className="h-4 w-4 shrink-0" /> {feature}</li>)}
               </ul>
+              <Button asChild variant={plan.featured ? "secondary" : "default"} className="mt-6 w-full">
+                <Link to={`/auth?plan=${plan.name.toLowerCase()}&billing=${billingCycle}`}>Choose {plan.name}</Link>
+              </Button>
             </article>
           ))}
         </div>
