@@ -18,6 +18,14 @@ const EXPIRATION_REMINDER_DAY_OPTIONS = [7, 3, 1, 0] as const;
 const DEFAULT_WARRANTY_REMINDER_DAYS: number[] = [30, 14, 7, 3, 1, 0];
 const DEFAULT_EXPIRATION_REMINDER_DAYS: number[] = [7, 3, 1, 0];
 
+const LANGUAGE_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "ar", label: "العربية" },
+  { value: "es", label: "Español" },
+  { value: "fr", label: "Français" },
+  { value: "hi", label: "हिन्दी" },
+] as const;
+
 const dayLabel = (d: number) => (d === 0 ? "On due day" : `${d} day${d === 1 ? "" : "s"} before`);
 
 interface ProfileSettingsDialogProps {
@@ -34,6 +42,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedDefault, setSelectedDefault] = useState<string>("none");
+  const [preferredLanguage, setPreferredLanguage] = useState("en");
   const [warrantyInApp, setWarrantyInApp] = useState(true);
   const [warrantyEmail, setWarrantyEmail] = useState(false);
   const [warrantyPush, setWarrantyPush] = useState(false);
@@ -59,12 +68,13 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
     if (open && user) {
       supabase
         .from("profiles")
-        .select("display_name")
+        .select("display_name, preferred_language")
         .eq("user_id", user.id)
         .single()
         .then(({ data }) => {
           if (data?.display_name) setDisplayName(data.display_name);
           else setDisplayName(user.email ?? "");
+          setPreferredLanguage((data as any)?.preferred_language || "en");
         });
 
       supabase
@@ -100,7 +110,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, houses, defaultHouse
 
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: displayName.trim() } as any)
+      .update({ display_name: displayName.trim(), preferred_language: preferredLanguage } as any)
       .eq("user_id", user.id);
 
     if (error) {
