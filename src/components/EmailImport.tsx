@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator, Undo2 } from "lucide-react";
+import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator, Undo2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -292,6 +292,17 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     updateExtractedItem(index, { unitPrice: Number((item.totalPrice / item.quantity).toFixed(2)) });
   };
 
+  const getItemWarnings = (item: ExtractedItem) => {
+    const warnings: string[] = [];
+    if (!item.quantity || item.quantity <= 0) warnings.push("Quantity is required");
+    if (item.quantity < 0) warnings.push("Quantity cannot be negative");
+    if (item.unitPrice == null) warnings.push("Unit price is required");
+    if (item.totalPrice == null) warnings.push("Total price is required");
+    if ((item.unitPrice ?? 0) < 0) warnings.push("Unit price cannot be negative");
+    if ((item.totalPrice ?? 0) < 0) warnings.push("Total price cannot be negative");
+    return warnings;
+  };
+
   const toggleAll = () => {
     const allSelected = extractedItems.every((i) => i.selected);
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
@@ -301,6 +312,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     const selected = extractedItems.filter((i) => i.selected);
     if (selected.length === 0) {
       toast.error("No items selected");
+      return;
+    }
+    if (selected.some((item) => getItemWarnings(item).length > 0)) {
+      toast.error("Fix quantity and price warnings before finalizing");
       return;
     }
 
@@ -365,6 +380,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
+  const hasValidationWarnings = extractedItems.some((item) => item.selected && getItemWarnings(item).length > 0);
 
   return (
     <>
@@ -524,11 +540,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
 
               <ScrollArea className="flex-1 max-h-[40vh]">
                 <div className="space-y-1 pr-2">
-                  {extractedItems.map((item, i) => (
+                  {extractedItems.map((item, i) => {
+                    const warnings = getItemWarnings(item);
+                    return (
                     <div
                       key={i}
                       className={`grid grid-cols-[auto_1fr_auto] gap-2 p-2 rounded-md border text-sm transition-colors ${
-                        item.selected ? "bg-primary/5 border-primary/20" : "opacity-50"
+                        item.selected ? (warnings.length > 0 ? "bg-destructive/5 border-destructive/30" : "bg-primary/5 border-primary/20") : "opacity-50"
                       }`}
                     >
                       <Checkbox
@@ -563,6 +581,12 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                               <Calculator className="h-3.5 w-3.5" /> Calc
                             </Button>
                           </div>
+                          {item.selected && warnings.length > 0 && (
+                            <div className="col-span-2 flex items-start gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                              <span>{warnings.join(" · ")}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <Button
@@ -575,7 +599,8 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </ScrollArea>
 
@@ -599,7 +624,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <Button
                   className="flex-1 gap-1"
                   onClick={handleAddSelected}
-                  disabled={selectedCount === 0}
+                  disabled={selectedCount === 0 || hasValidationWarnings}
                 >
                   <Check className="h-4 w-4" />
                   Finalize {selectedCount} Item{selectedCount !== 1 ? "s" : ""}
