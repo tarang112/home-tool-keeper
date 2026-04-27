@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +69,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [bulkCategory, setBulkCategory] = useState("");
   const [bulkLocation, setBulkLocation] = useState("");
   const [bulkUnit, setBulkUnit] = useState("");
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
 
   const readReceiptFile = async (file: File) => {
     if (!file) return;
@@ -283,6 +285,15 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
   };
 
+  const confirmBulkValues = () => {
+    if (selectedCount === 0) return;
+    if (!bulkCategory.trim() && !bulkLocation.trim() && !bulkUnit.trim()) {
+      toast.error("Enter a category, location, or unit to apply");
+      return;
+    }
+    setBulkConfirmOpen(true);
+  };
+
   const applyBulkValues = () => {
     setExtractedItems((prev) => prev.map((item) => item.selected ? {
       ...item,
@@ -290,6 +301,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       location: bulkLocation.trim() || item.location,
       quantityUnit: bulkUnit.trim() || item.quantityUnit,
     } : item));
+    setBulkConfirmOpen(false);
   };
 
   const clearBulkValues = () => {
@@ -523,7 +535,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   <Input value={bulkUnit} onChange={(event) => setBulkUnit(event.target.value)} className="h-8" placeholder="Unit" />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" size="sm" className="h-8 flex-1" onClick={applyBulkValues} disabled={selectedCount === 0}>
+                  <Button type="button" variant="outline" size="sm" className="h-8 flex-1" onClick={confirmBulkValues} disabled={selectedCount === 0}>
                     Apply to selected
                   </Button>
                   <Button type="button" variant="ghost" size="sm" className="h-8" onClick={clearBulkValues}>
@@ -618,6 +630,20 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
           )}
         </DialogContent>
       </Dialog>
+      <AlertDialog open={bulkConfirmOpen} onOpenChange={setBulkConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apply bulk values?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will update {selectedCount} selected item{selectedCount !== 1 ? "s" : ""} in the review list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={applyBulkValues}>Apply</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
