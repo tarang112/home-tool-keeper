@@ -9,8 +9,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -24,13 +22,19 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 22
 
-      - run: npm install -g bun
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - run: bun install --frozen-lockfile
       - run: bun run build
+      - name: Add SPA fallback for GitHub Pages
+        run: cp dist/index.html dist/404.html
 
       - name: Verify GitHub Pages is enabled
+        if: github.event_name != 'pull_request'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
@@ -53,6 +57,7 @@ jobs:
           fi
 
       - uses: actions/configure-pages@v6
+        if: github.event_name != 'pull_request'
 
       - name: Upload build preview artifact
         id: preview-artifact
@@ -69,6 +74,7 @@ jobs:
           echo "${{ steps.preview-artifact.outputs.artifact-url }}" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
         with:
           path: dist
 
@@ -76,6 +82,9 @@ jobs:
     needs: build
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
