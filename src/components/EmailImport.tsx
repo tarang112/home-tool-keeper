@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Mail, Loader2, Check, Trash2, ClipboardPaste, X } from "lucide-react";
+import { useState } from "react";
+import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +24,13 @@ interface ExtractedItem {
   totalPrice?: number;
   selected: boolean;
 }
+
+const MAX_UPLOAD_SIZE = 20 * 1024 * 1024;
+
+const extractEmlHeader = (content: string, header: string) => {
+  const match = content.match(new RegExp(`^${header}:\\s*(.+)$`, "im"));
+  return match?.[1]?.trim() || "";
+};
 
 interface EmailImportProps {
   onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
