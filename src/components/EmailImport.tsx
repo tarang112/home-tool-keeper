@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -321,6 +321,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setBulkUnit(firstSelected.quantityUnit || "");
   };
 
+  const handleBulkShortcut = (event: KeyboardEvent<HTMLDivElement>) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      confirmBulkValues();
+    }
+  };
+
   const handleAddSelected = () => {
     const selected = extractedItems.filter((i) => i.selected);
     if (selected.length === 0) {
@@ -500,7 +507,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col flex-1 min-h-0 space-y-2">
+            <div className="flex flex-col flex-1 min-h-0 space-y-2" onKeyDown={handleBulkShortcut}>
               {/* Order info */}
               <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
                 {storeName && (
