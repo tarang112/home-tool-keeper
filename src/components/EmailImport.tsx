@@ -172,6 +172,29 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       : supabase.from("receipt_email_imports" as any).insert(receiptPayload);
   };
 
+  const mergeDuplicateItems = (items: ExtractedItem[]) => {
+    const merged = new Map<string, ExtractedItem>();
+    for (const item of items) {
+      const key = [item.name, item.category, item.subcategory || "", item.quantityUnit, item.location || ""]
+        .map((value) => String(value).trim().toLowerCase().replace(/\s+/g, " "))
+        .join("|");
+      const existing = merged.get(key);
+      if (!existing) {
+        merged.set(key, item);
+        continue;
+      }
+      const quantity = (existing.quantity || 0) + (item.quantity || 0);
+      const totalPrice = (existing.totalPrice ?? 0) + (item.totalPrice ?? 0);
+      merged.set(key, {
+        ...existing,
+        quantity,
+        totalPrice: existing.totalPrice != null || item.totalPrice != null ? Number(totalPrice.toFixed(2)) : undefined,
+        unitPrice: totalPrice > 0 && quantity > 0 ? Number((totalPrice / quantity).toFixed(2)) : existing.unitPrice,
+      });
+    }
+    return Array.from(merged.values());
+  };
+
   const handleParse = async () => {
     const accountEmail = user?.email?.trim().toLowerCase();
     const matchedEmail = forwardedToEmail.trim().toLowerCase();
@@ -192,7 +215,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        const items: ExtractedItem[] = (data.items || []).map((item: any) => ({
+        const items: ExtractedItem[] = mergeDuplicateItems((data.items || []).map((item: any) => ({
           ...item,
           subcategory: item.subcategory || "",
           location: item.location || "",
@@ -205,7 +228,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
           receiptOrderNumber: data.orderNumber || "",
           receiptOrderDate: data.orderDate || "",
           receiptContent: content,
-        }));
+        })));
 
         const { error: saveError } = await saveReceiptImport({ data, items, content, receiptSubject, receiptSender, receiptSourceType, file });
         if (saveError) throw saveError;
