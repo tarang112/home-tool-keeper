@@ -106,6 +106,8 @@ serve(async (req) => {
       );
     }
 
+    const parsingInput = buildParsingInput(emailContent, subject, from);
+
     // Fetch item defaults
     const { data: defaults } = await supabase
       .from("item_defaults")
@@ -128,8 +130,10 @@ serve(async (req) => {
     const systemPrompt = `You are an AI assistant for HomeStock inventory app.
 Parse the receipt, order confirmation, PDF text, or EML content and extract ALL purchased items and order totals.
 
-Email subject: ${subject || "Unknown"}
-Email from: ${from || "Unknown"}
+Email subject: ${parsingInput.subject}
+Email from: ${parsingInput.from}
+Forwarded/account recipient if visible: ${parsingInput.forwardedTo || "Unknown"}
+Email/order date if visible: ${parsingInput.forwardedDate || "Unknown"}
 
 Available categories with subcategories:
 - groceries: dairy, snacks, beverages, canned, frozen, bakery, condiments
@@ -155,19 +159,26 @@ ${defaultsContext || "None yet"}
 Today: ${today}
 
 Rules:
-- Extract EVERY purchased item. Skip shipping, taxes, totals, payment info, promo codes, tracking info.
+- Extract EVERY purchased physical item from common retailer emails, forwarded emails, copied email bodies, PDF text, EML content, order confirmations, shipment confirmations, pickup confirmations, invoices, and receipt tables.
+- Handle Amazon, Walmart, Target, Costco, Sam's Club, Home Depot, Lowe's, Instacart, DoorDash/Uber Eats grocery orders, Best Buy, Apple, Staples, Office Depot, pharmacy receipts, and plain-text forwarded emails.
+- Pay attention to table-like rows where item name, quantity, price, SKU, and total are separated by whitespace or line breaks.
+- Skip shipping, handling, taxes, fees, tips, discounts, coupons, gift cards, store credit, totals, payment info, promo codes, order tracking, warranties sold as services, memberships, subscriptions, donations, and return/refund lines unless the purchased item itself is a physical product.
+- Do not extract bundled marketing/recommendation items such as "You may also like", "Customers also bought", "Sponsored", or saved-for-later items.
 - Use clean readable names (e.g. "LED Light Bulb 60W" not "GE-LED60W-SW-2PK").
+- Preserve meaningful size/count descriptors in names (e.g. "AA Batteries 24 Pack", "Milk 1 Gallon", "USB-C Cable 6 ft").
 - ALWAYS assign the most appropriate category AND subcategory.
 - For electronics (TVs, phones, laptops, tablets, speakers, headphones, cameras, gaming consoles, smart home devices, chargers, cables, etc.): category MUST be "electronics" with appropriate subcategory. Set expirationDate to WARRANTY expiry (default 1 year: ${warrantyExpiry}).
-- Detect quantity from the order. Default 1 if unclear.
+- Detect quantity from labels like Qty, Quantity, x2, 2 @, pack count, cases, weights, and line-item repeats. Default 1 if unclear.
 - Detect units (lb, oz, kg, pcs etc). Default "pcs".
 - For produce: set expirationDate to ${produceExpiry}.
 - For medicine: set expirationDate to ${medicineExpiry}.
 - Use past defaults for known items.
 - Detect store/retailer name from the email.
 - Include order number if found.
-- Extract the price per unit (unitPrice) and total line price (totalPrice) for each item as numbers (e.g. 29.99 not "$29.99"). If quantity > 1, unitPrice = totalPrice / quantity.
-- Extract subtotalAmount, taxAmount, shippingAmount, and totalAmount as numbers when present. Use null if missing.`;
+- Extract the price per unit (unitPrice) and total line price (totalPrice) for each item as numbers (e.g. 29.99 not "$29.99"). If quantity > 1 and only line total is present, unitPrice = totalPrice / quantity.
+- Extract subtotalAmount, taxAmount, shippingAmount, and totalAmount as numbers when present. Use null if missing.
+- If multiple order totals appear, use the final charged/order total, not installment/payment balance or rewards balance.
+- Return empty strings or nulls for missing optional values; never invent order numbers or prices.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -189,7 +200,7 @@ Rules:
           model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: `Parse this order email and extract all items:\n\n${emailContent.slice(0, 15000)}` },
+            { role: "user", content: `Parse this normalized order/receipt content and extract all purchased items and totals:\n\n${parsingInput.normalized.slice(0, 24000)}` },
           ],
           tools: [
             {
