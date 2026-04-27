@@ -31,7 +31,7 @@ export default function ReceiptImports() {
   const fetchImports = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("receipt_email_imports" as any)
+      .from("receipt_email_import_summaries" as any)
       .select("id, created_at, updated_at, status, store_name, order_number, order_date, subject, source_type, total_amount")
       .order("created_at", { ascending: false });
 
