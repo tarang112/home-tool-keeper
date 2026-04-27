@@ -508,9 +508,16 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <Button variant="ghost" size="sm" className="text-xs h-7" onClick={toggleAll}>
                   {extractedItems.every((i) => i.selected) ? "Deselect All" : "Select All"}
                 </Button>
-                <span className="text-xs text-muted-foreground">
-                  {selectedCount} of {extractedItems.length} selected
-                </span>
+                <div className="flex items-center gap-2">
+                  {removedItems.length > 0 && (
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={undoRemoveItem}>
+                      <Undo2 className="h-3 w-3" /> Undo
+                    </Button>
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {selectedCount} of {extractedItems.length} selected
+                  </span>
+                </div>
               </div>
 
               <div className="text-sm font-medium">Review extracted items</div>
@@ -561,10 +568,11 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-6 w-6 shrink-0"
+                        className="h-8 w-8 shrink-0 text-destructive"
                         onClick={() => removeItem(i)}
+                        title="Remove item"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
