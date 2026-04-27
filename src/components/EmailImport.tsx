@@ -24,6 +24,11 @@ interface ExtractedItem {
   unitPrice?: number;
   totalPrice?: number;
   selected: boolean;
+  receiptSubject?: string;
+  receiptStoreName?: string;
+  receiptOrderNumber?: string;
+  receiptOrderDate?: string;
+  receiptContent?: string;
 }
 
 const MAX_UPLOAD_SIZE = 20 * 1024 * 1024;
@@ -49,7 +54,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [subject, setSubject] = useState("");
   const [forwardedToEmail, setForwardedToEmail] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [sourceType, setSourceType] = useState("pasted_email");
   const [parsing, setParsing] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
@@ -61,48 +66,51 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [shippingAmount, setShippingAmount] = useState<number | null>(null);
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
 
-  const handleFileUpload = async (file: File | null) => {
+  const readReceiptFile = async (file: File) => {
     if (!file) return;
     if (file.size > MAX_UPLOAD_SIZE) {
       toast.error("File must be 20MB or smaller");
-      return;
+      return null;
     }
 
-    setUploadedFile(file);
     const lowerName = file.name.toLowerCase();
+    if (file.type === "application/pdf" || lowerName.endsWith(".pdf")) {
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url).toString();
+      const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+      const pages: string[] = [];
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const text = await page.getTextContent();
+        pages.push(text.items.map((item: any) => item.str).join(" "));
+      }
+      return { content: pages.join("\n\n"), subject: "", sender: "", sourceType: "pdf_upload" };
+    }
+
+    if (file.type === "message/rfc822" || lowerName.endsWith(".eml")) {
+      const content = await file.text();
+      return { content, subject: extractEmlHeader(content, "Subject"), sender: extractEmlHeader(content, "From"), sourceType: "eml_upload" };
+    }
+
+    toast.error("Upload PDF or EML files only");
+    return null;
+  };
+
+  const handleFileUpload = async (files: FileList | null) => {
+    const nextFiles = Array.from(files || []);
+    if (nextFiles.length === 0) return;
     try {
-      if (file.type === "application/pdf" || lowerName.endsWith(".pdf")) {
-        const pdfjs = await import("pdfjs-dist");
-        pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url).toString();
-        const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-        const pages: string[] = [];
-        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-          const page = await pdf.getPage(pageNumber);
-          const text = await page.getTextContent();
-          pages.push(text.items.map((item: any) => item.str).join(" "));
-        }
-        setEmailContent(pages.join("\n\n"));
-        setSourceType("pdf_upload");
-        toast.success("PDF text extracted");
-        return;
-      }
-
-      if (file.type === "message/rfc822" || lowerName.endsWith(".eml")) {
-        const content = await file.text();
-        setEmailContent(content);
-        setSubject((current) => current || extractEmlHeader(content, "Subject"));
-        setSenderEmail((current) => current || extractEmlHeader(content, "From"));
-        setForwardedToEmail((current) => current || extractEmlHeader(content, "To"));
-        setSourceType("eml_upload");
-        toast.success("EML loaded");
-        return;
-      }
-
-      toast.error("Upload a PDF or EML file");
-      setUploadedFile(null);
+      const first = await readReceiptFile(nextFiles[0]);
+      if (!first) return;
+      setUploadedFiles(nextFiles);
+      setEmailContent(first.content);
+      setSubject((current) => current || first.subject);
+      setSenderEmail((current) => current || first.sender);
+      setSourceType(first.sourceType);
+      toast.success(`${nextFiles.length} file${nextFiles.length > 1 ? "s" : ""} ready to parse`);
     } catch {
-      toast.error("Could not read that file");
-      setUploadedFile(null);
+      toast.error("Could not read the uploaded files");
+      setUploadedFiles([]);
     }
   };
 
