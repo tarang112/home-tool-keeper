@@ -24,6 +24,11 @@ interface ExtractedItem {
   unitPrice?: number;
   totalPrice?: number;
   selected: boolean;
+  receiptSubject?: string;
+  receiptStoreName?: string;
+  receiptOrderNumber?: string;
+  receiptOrderDate?: string;
+  receiptContent?: string;
 }
 
 const MAX_UPLOAD_SIZE = 20 * 1024 * 1024;
@@ -49,7 +54,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [subject, setSubject] = useState("");
   const [forwardedToEmail, setForwardedToEmail] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [sourceType, setSourceType] = useState("pasted_email");
   const [parsing, setParsing] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
@@ -61,48 +66,51 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [shippingAmount, setShippingAmount] = useState<number | null>(null);
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
 
-  const handleFileUpload = async (file: File | null) => {
+  const readReceiptFile = async (file: File) => {
     if (!file) return;
     if (file.size > MAX_UPLOAD_SIZE) {
       toast.error("File must be 20MB or smaller");
-      return;
+      return null;
     }
 
-    setUploadedFile(file);
     const lowerName = file.name.toLowerCase();
+    if (file.type === "application/pdf" || lowerName.endsWith(".pdf")) {
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url).toString();
+      const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+      const pages: string[] = [];
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const text = await page.getTextContent();
+        pages.push(text.items.map((item: any) => item.str).join(" "));
+      }
+      return { content: pages.join("\n\n"), subject: "", sender: "", sourceType: "pdf_upload" };
+    }
+
+    if (file.type === "message/rfc822" || lowerName.endsWith(".eml")) {
+      const content = await file.text();
+      return { content, subject: extractEmlHeader(content, "Subject"), sender: extractEmlHeader(content, "From"), sourceType: "eml_upload" };
+    }
+
+    toast.error("Upload PDF or EML files only");
+    return null;
+  };
+
+  const handleFileUpload = async (files: FileList | null) => {
+    const nextFiles = Array.from(files || []);
+    if (nextFiles.length === 0) return;
     try {
-      if (file.type === "application/pdf" || lowerName.endsWith(".pdf")) {
-        const pdfjs = await import("pdfjs-dist");
-        pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url).toString();
-        const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-        const pages: string[] = [];
-        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-          const page = await pdf.getPage(pageNumber);
-          const text = await page.getTextContent();
-          pages.push(text.items.map((item: any) => item.str).join(" "));
-        }
-        setEmailContent(pages.join("\n\n"));
-        setSourceType("pdf_upload");
-        toast.success("PDF text extracted");
-        return;
-      }
-
-      if (file.type === "message/rfc822" || lowerName.endsWith(".eml")) {
-        const content = await file.text();
-        setEmailContent(content);
-        setSubject((current) => current || extractEmlHeader(content, "Subject"));
-        setSenderEmail((current) => current || extractEmlHeader(content, "From"));
-        setForwardedToEmail((current) => current || extractEmlHeader(content, "To"));
-        setSourceType("eml_upload");
-        toast.success("EML loaded");
-        return;
-      }
-
-      toast.error("Upload a PDF or EML file");
-      setUploadedFile(null);
+      const first = await readReceiptFile(nextFiles[0]);
+      if (!first) return;
+      setUploadedFiles(nextFiles);
+      setEmailContent(first.content);
+      setSubject((current) => current || first.subject);
+      setSenderEmail((current) => current || first.sender);
+      setSourceType(first.sourceType);
+      toast.success(`${nextFiles.length} file${nextFiles.length > 1 ? "s" : ""} ready to parse`);
     } catch {
-      toast.error("Could not read that file");
-      setUploadedFile(null);
+      toast.error("Could not read the uploaded files");
+      setUploadedFiles([]);
     }
   };
 
@@ -110,10 +118,57 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     try {
       const text = await navigator.clipboard.readText();
       setEmailContent(text);
+      setUploadedFiles([]);
+      setSourceType("pasted_email");
       toast.success("Pasted from clipboard");
     } catch {
       toast.error("Could not read clipboard. Please paste manually.");
     }
+  };
+
+  const saveReceiptImport = async ({ data, items, content, receiptSubject, receiptSender, receiptSourceType, file }: {
+    data: any;
+    items: ExtractedItem[];
+    content: string;
+    receiptSubject: string;
+    receiptSender: string;
+    receiptSourceType: string;
+    file?: File;
+  }) => {
+    const accountEmail = user?.email?.trim().toLowerCase();
+    const receiptPayload = {
+      user_id: user?.id,
+      matched_email: accountEmail,
+      sender_email: receiptSender || null,
+      subject: receiptSubject || null,
+      email_content: content,
+      store_name: data.storeName || null,
+      order_number: data.orderNumber || null,
+      order_date: data.orderDate || null,
+      parsed_items: items,
+      source_type: receiptSourceType,
+      file_name: file?.name || null,
+      file_type: file?.type || null,
+      subtotal_amount: data.subtotalAmount ?? null,
+      tax_amount: data.taxAmount ?? null,
+      shipping_amount: data.shippingAmount ?? null,
+      total_amount: data.totalAmount ?? null,
+      status: items.length > 0 ? "parsed" : "no_items_found",
+    } as any;
+
+    const duplicateQuery = supabase.from("receipt_email_imports" as any).select("id").eq("user_id", user?.id).limit(1);
+    if (data.orderNumber) {
+      duplicateQuery.eq("order_number", data.orderNumber);
+      if (data.storeName) duplicateQuery.eq("store_name", data.storeName);
+    } else {
+      duplicateQuery.eq("matched_email", accountEmail).eq("subject", receiptSubject || null).eq("total_amount", data.totalAmount ?? null);
+    }
+
+    const { data: duplicateImport } = await duplicateQuery.maybeSingle();
+    const duplicateId = (duplicateImport as { id?: string } | null)?.id;
+    return duplicateId
+      ? supabase.from("receipt_email_imports" as any).update(receiptPayload).eq("id", duplicateId)
+      : supabase.from("receipt_email_imports" as any).insert(receiptPayload);
   };
 
   const handleParse = async () => {
@@ -129,94 +184,66 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     }
     setParsing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("parse-order-email", {
-        body: {
-          emailContent: emailContent.trim(),
-          subject: subject.trim(),
-          from: senderEmail.trim(),
-          locations: customLocations,
-        },
-      });
+      const parseOne = async (content: string, receiptSubject: string, receiptSender: string, receiptSourceType: string, file?: File) => {
+        const { data, error } = await supabase.functions.invoke("parse-order-email", {
+          body: { emailContent: content.trim(), subject: receiptSubject, from: receiptSender, locations: customLocations },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
 
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
+        const items: ExtractedItem[] = (data.items || []).map((item: any) => ({
+          ...item,
+          subcategory: item.subcategory || "",
+          location: item.location || "",
+          expirationDate: item.expirationDate || null,
+          unitPrice: item.unitPrice ?? null,
+          totalPrice: item.totalPrice ?? null,
+          selected: true,
+          receiptSubject,
+          receiptStoreName: data.storeName || "",
+          receiptOrderNumber: data.orderNumber || "",
+          receiptOrderDate: data.orderDate || "",
+          receiptContent: content,
+        }));
+
+        const { error: saveError } = await saveReceiptImport({ data, items, content, receiptSubject, receiptSender, receiptSourceType, file });
+        if (saveError) throw saveError;
+        return { data, items };
+      };
+
+      const filesToParse = uploadedFiles.length > 0 ? uploadedFiles : [];
+      if (filesToParse.length > 1) {
+        const allItems: ExtractedItem[] = [];
+        for (const file of filesToParse) {
+          const readFile = await readReceiptFile(file);
+          if (!readFile) continue;
+          const parsed = await parseOne(readFile.content, readFile.subject || subject.trim(), readFile.sender || senderEmail.trim(), readFile.sourceType, file);
+          allItems.push(...parsed.items);
+        }
+        setExtractedItems(allItems);
+        setStoreName("Multiple receipts");
+        setOrderNumber("");
+        setOrderDate("");
+        setSubtotalAmount(null);
+        setTaxAmount(null);
+        setShippingAmount(null);
+        setTotalAmount(null);
+        toast.success(`Linked ${filesToParse.length} receipts and found ${allItems.length} item${allItems.length !== 1 ? "s" : ""}`);
         return;
       }
 
-      const items: ExtractedItem[] = (data.items || []).map((item: any) => ({
-        ...item,
-        subcategory: item.subcategory || "",
-        location: item.location || "",
-        expirationDate: item.expirationDate || null,
-        unitPrice: item.unitPrice ?? null,
-        totalPrice: item.totalPrice ?? null,
-        selected: true,
-      }));
+      const parsed = await parseOne(emailContent.trim(), subject.trim(), senderEmail.trim(), sourceType, uploadedFiles[0]);
+      setExtractedItems(parsed.items);
+      setStoreName(parsed.data.storeName || "");
+      setOrderNumber(parsed.data.orderNumber || "");
+      setOrderDate(parsed.data.orderDate || "");
+      setSubtotalAmount(parsed.data.subtotalAmount ?? null);
+      setTaxAmount(parsed.data.taxAmount ?? null);
+      setShippingAmount(parsed.data.shippingAmount ?? null);
+      setTotalAmount(parsed.data.totalAmount ?? null);
 
-      setExtractedItems(items);
-      setStoreName(data.storeName || "");
-      setOrderNumber(data.orderNumber || "");
-      setOrderDate(data.orderDate || "");
-      setSubtotalAmount(data.subtotalAmount ?? null);
-      setTaxAmount(data.taxAmount ?? null);
-      setShippingAmount(data.shippingAmount ?? null);
-      setTotalAmount(data.totalAmount ?? null);
-
-      const receiptPayload = {
-        user_id: user?.id,
-        matched_email: accountEmail,
-        sender_email: senderEmail.trim() || null,
-        subject: subject.trim() || null,
-        email_content: emailContent.trim(),
-        store_name: data.storeName || null,
-        order_number: data.orderNumber || null,
-        order_date: data.orderDate || null,
-        parsed_items: items,
-        source_type: sourceType,
-        file_name: uploadedFile?.name || null,
-        file_type: uploadedFile?.type || null,
-        subtotal_amount: data.subtotalAmount ?? null,
-        tax_amount: data.taxAmount ?? null,
-        shipping_amount: data.shippingAmount ?? null,
-        total_amount: data.totalAmount ?? null,
-        status: items.length > 0 ? "parsed" : "no_items_found",
-      } as any;
-
-      const duplicateQuery = supabase
-        .from("receipt_email_imports" as any)
-        .select("id")
-        .eq("user_id", user?.id)
-        .limit(1);
-
-      if (data.orderNumber) {
-        duplicateQuery.eq("order_number", data.orderNumber);
-        if (data.storeName) duplicateQuery.eq("store_name", data.storeName);
-      } else {
-        duplicateQuery
-          .eq("matched_email", accountEmail)
-          .eq("subject", subject.trim() || null)
-          .eq("total_amount", data.totalAmount ?? null);
-      }
-
-      const { data: duplicateImport } = await duplicateQuery.maybeSingle();
-      const duplicateId = (duplicateImport as { id?: string } | null)?.id;
-      const { error: saveError } = duplicateId
-        ? await supabase.from("receipt_email_imports" as any).update(receiptPayload).eq("id", duplicateId)
-        : await supabase.from("receipt_email_imports" as any).insert(receiptPayload);
-
-      if (saveError) {
-        toast.error("Parsed email, but could not link the receipt to your account");
-        return;
-      }
-
-      if (items.length === 0) {
-        toast.info("No items found. Make sure you pasted an order confirmation email.");
-      } else if (duplicateId) {
-        toast.success(`Updated existing linked receipt and found ${items.length} item${items.length > 1 ? "s" : ""}`);
-      } else {
-        toast.success(`Linked receipt to your account and found ${items.length} item${items.length > 1 ? "s" : ""}`);
-      }
+      if (parsed.items.length === 0) toast.info("No items found. Make sure you pasted an order confirmation email.");
+      else toast.success(`Linked receipt to your account and found ${parsed.items.length} item${parsed.items.length > 1 ? "s" : ""}`);
     } catch (err: any) {
       console.error("Email parse error:", err);
       toast.error("Failed to parse email. Please try again.");
@@ -298,7 +325,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setSubject("");
     setForwardedToEmail("");
     setSenderEmail("");
-    setUploadedFile(null);
+    setUploadedFiles([]);
     setSourceType("pasted_email");
     setExtractedItems([]);
     setStoreName("");
@@ -377,12 +404,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <Input
                   id="receipt-upload"
                   type="file"
+                  multiple
                   accept=".pdf,.eml,application/pdf,message/rfc822"
-                  onChange={(e) => void handleFileUpload(e.target.files?.[0] || null)}
+                  onChange={(e) => void handleFileUpload(e.target.files)}
                 />
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Upload className="h-3 w-3" />
-                  <span>{uploadedFile ? uploadedFile.name : "PDF receipts and .eml order emails up to 20MB"}</span>
+                  <span>{uploadedFiles.length > 0 ? `${uploadedFiles.length} file${uploadedFiles.length > 1 ? "s" : ""} selected` : "PDF receipts and .eml order emails up to 20MB each"}</span>
                 </div>
               </div>
               <div>
@@ -400,7 +428,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <Textarea
                   placeholder="Copy the entire order confirmation email, or upload a PDF/EML above...&#10;&#10;Supports: Amazon, Home Depot, Lowe's, Walmart, Target, and any other retailer"
                   value={emailContent}
-                  onChange={(e) => { setEmailContent(e.target.value); setSourceType(uploadedFile ? sourceType : "pasted_email"); }}
+                  onChange={(e) => { setEmailContent(e.target.value); setUploadedFiles([]); setSourceType("pasted_email"); }}
                   className="min-h-[200px] text-sm"
                 />
               </div>
