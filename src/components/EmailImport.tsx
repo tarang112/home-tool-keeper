@@ -65,6 +65,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [taxAmount, setTaxAmount] = useState<number | null>(null);
   const [shippingAmount, setShippingAmount] = useState<number | null>(null);
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
+  const [bulkCategory, setBulkCategory] = useState("");
+  const [bulkLocation, setBulkLocation] = useState("");
+  const [bulkUnit, setBulkUnit] = useState("");
 
   const readReceiptFile = async (file: File) => {
     if (!file) return;
@@ -280,6 +283,21 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
   };
 
+  const applyBulkValues = () => {
+    setExtractedItems((prev) => prev.map((item) => item.selected ? {
+      ...item,
+      category: bulkCategory.trim() || item.category,
+      location: bulkLocation.trim() || item.location,
+      quantityUnit: bulkUnit.trim() || item.quantityUnit,
+    } : item));
+  };
+
+  const clearBulkValues = () => {
+    setBulkCategory("");
+    setBulkLocation("");
+    setBulkUnit("");
+  };
+
   const handleAddSelected = () => {
     const selected = extractedItems.filter((i) => i.selected);
     if (selected.length === 0) {
@@ -344,6 +362,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setTaxAmount(null);
     setShippingAmount(null);
     setTotalAmount(null);
+    clearBulkValues();
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
