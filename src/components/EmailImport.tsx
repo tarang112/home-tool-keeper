@@ -200,8 +200,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       }
 
       const { data: duplicateImport } = await duplicateQuery.maybeSingle();
-      const { error: saveError } = duplicateImport?.id
-        ? await supabase.from("receipt_email_imports" as any).update(receiptPayload).eq("id", duplicateImport.id)
+      const duplicateId = (duplicateImport as { id?: string } | null)?.id;
+      const { error: saveError } = duplicateId
+        ? await supabase.from("receipt_email_imports" as any).update(receiptPayload).eq("id", duplicateId)
         : await supabase.from("receipt_email_imports" as any).insert(receiptPayload);
 
       if (saveError) {
@@ -211,7 +212,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
 
       if (items.length === 0) {
         toast.info("No items found. Make sure you pasted an order confirmation email.");
-      } else if (duplicateImport?.id) {
+      } else if (duplicateId) {
         toast.success(`Updated existing linked receipt and found ${items.length} item${items.length > 1 ? "s" : ""}`);
       } else {
         toast.success(`Linked receipt to your account and found ${items.length} item${items.length > 1 ? "s" : ""}`);
