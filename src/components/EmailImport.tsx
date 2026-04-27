@@ -66,6 +66,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [taxAmount, setTaxAmount] = useState<number | null>(null);
   const [shippingAmount, setShippingAmount] = useState<number | null>(null);
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
+  const [bulkCategory, setBulkCategory] = useState("");
+  const [bulkLocation, setBulkLocation] = useState("");
+  const [bulkUnit, setBulkUnit] = useState("");
 
   const readReceiptFile = async (file: File) => {
     if (!file) return;
@@ -308,6 +311,24 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
   };
 
+  const applyBulkValues = () => {
+    if (selectedCount === 0) {
+      toast.error("Select at least one item first");
+      return;
+    }
+    if (!bulkCategory.trim() && !bulkLocation.trim() && !bulkUnit.trim()) {
+      toast.error("Enter a category, location, or unit to apply");
+      return;
+    }
+    setExtractedItems((prev) => prev.map((item) => item.selected ? {
+      ...item,
+      category: bulkCategory.trim() || item.category,
+      location: bulkLocation.trim() || item.location,
+      quantityUnit: bulkUnit.trim() || item.quantityUnit,
+    } : item));
+    toast.success(`Applied bulk values to ${selectedCount} item${selectedCount !== 1 ? "s" : ""}`);
+  };
+
   const handleAddSelected = () => {
     const selected = extractedItems.filter((i) => i.selected);
     if (selected.length === 0) {
@@ -377,6 +398,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setTaxAmount(null);
     setShippingAmount(null);
     setTotalAmount(null);
+    setBulkCategory("");
+    setBulkLocation("");
+    setBulkUnit("");
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
