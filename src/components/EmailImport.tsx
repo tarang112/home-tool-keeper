@@ -310,6 +310,17 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setBulkUnit("");
   };
 
+  const useFirstSelectedForBulk = () => {
+    const firstSelected = extractedItems.find((item) => item.selected);
+    if (!firstSelected) {
+      toast.error("Select an item first");
+      return;
+    }
+    setBulkCategory(firstSelected.category || "");
+    setBulkLocation(firstSelected.location || "");
+    setBulkUnit(firstSelected.quantityUnit || "");
+  };
+
   const handleAddSelected = () => {
     const selected = extractedItems.filter((i) => i.selected);
     if (selected.length === 0) {
@@ -537,6 +548,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" size="sm" className="h-8 flex-1" onClick={confirmBulkValues} disabled={selectedCount === 0}>
                     Apply to selected
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-8" onClick={useFirstSelectedForBulk} disabled={selectedCount === 0}>
+                    Use first selected
                   </Button>
                   <Button type="button" variant="ghost" size="sm" className="h-8" onClick={clearBulkValues}>
                     Clear
