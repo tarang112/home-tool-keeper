@@ -16,8 +16,10 @@ export default function VisitorLog() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return logs;
-    return logs.filter((log) => `${log.page} ${log.device} ${log.referrer ?? ""} ${log.userAgent ?? ""}`.toLowerCase().includes(q));
+    return logs.filter((log) => `${log.page} ${log.device} ${log.referrer ?? ""} ${log.userAgent ?? ""} ${log.ipAddressMasked ?? ""} ${log.city ?? ""} ${log.region ?? ""} ${log.country ?? ""}`.toLowerCase().includes(q));
   }, [logs, query]);
+
+  const formatLocation = (log: (typeof logs)[number]) => [log.city, log.region, log.country].filter(Boolean).join(", ") || "—";
 
   const sessions = useMemo(() => new Set(logs.map((log) => log.sessionId).filter(Boolean)).size, [logs]);
 
@@ -27,10 +29,12 @@ export default function VisitorLog() {
       Page: log.page,
       Device: log.device,
       Session: log.sessionId || "",
+      IP: log.ipAddressMasked || "",
+      Location: formatLocation(log),
       Referrer: log.referrer || "Direct",
       IpHash: log.ipHash ? log.ipHash.slice(0, 16) : "",
     }));
-    const header = Object.keys(rows[0] || { Time: "", Page: "", Device: "", Session: "", Referrer: "", IpHash: "" });
+    const header = Object.keys(rows[0] || { Time: "", Page: "", Device: "", Session: "", IP: "", Location: "", Referrer: "", IpHash: "" });
     const csv = [header.join(","), ...rows.map((row) => Object.values(row).map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -69,7 +73,7 @@ export default function VisitorLog() {
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search page, device, referrer..." className="pl-9" />
+              <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search page, device, IP, location..." className="pl-9" />
           </div>
         </section>
 
@@ -85,6 +89,8 @@ export default function VisitorLog() {
                   <TableHead>Time</TableHead>
                   <TableHead>Page</TableHead>
                   <TableHead>Device</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Location</TableHead>
                   <TableHead>Session</TableHead>
                   <TableHead>Referrer</TableHead>
                   <TableHead className="w-12" />
@@ -96,6 +102,8 @@ export default function VisitorLog() {
                     <TableCell className="whitespace-nowrap text-sm">{format(new Date(log.createdAt), "MMM d, yyyy h:mm a")}</TableCell>
                     <TableCell className="font-medium">{log.page}</TableCell>
                     <TableCell><Badge variant="outline">{log.device}</Badge></TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{log.ipAddressMasked || "—"}</TableCell>
+                    <TableCell className="max-w-xs truncate text-muted-foreground">{formatLocation(log)}</TableCell>
                     <TableCell>{log.sessionId ? <Button asChild variant="link" size="sm" className="h-auto p-0"><Link to={`/visitors/${encodeURIComponent(log.sessionId)}`}><Eye className="mr-1 h-3 w-3" /> Details</Link></Button> : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell className="max-w-xs truncate text-muted-foreground">{log.referrer || "Direct"}</TableCell>
                     <TableCell>
