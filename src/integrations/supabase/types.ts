@@ -906,7 +906,69 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      receipt_email_import_summaries: {
+        Row: {
+          created_at: string | null
+          file_name: string | null
+          file_type: string | null
+          id: string | null
+          matched_email: string | null
+          order_date: string | null
+          order_number: string | null
+          sender_email: string | null
+          shipping_amount: number | null
+          source_type: string | null
+          status: string | null
+          store_name: string | null
+          subject: string | null
+          subtotal_amount: number | null
+          tax_amount: number | null
+          total_amount: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          id?: string | null
+          matched_email?: string | null
+          order_date?: string | null
+          order_number?: string | null
+          sender_email?: string | null
+          shipping_amount?: number | null
+          source_type?: string | null
+          status?: string | null
+          store_name?: string | null
+          subject?: string | null
+          subtotal_amount?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          id?: string | null
+          matched_email?: string | null
+          order_date?: string | null
+          order_number?: string | null
+          sender_email?: string | null
+          shipping_amount?: number | null
+          source_type?: string | null
+          status?: string | null
+          store_name?: string | null
+          subject?: string | null
+          subtotal_amount?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_invite_by_token: {
