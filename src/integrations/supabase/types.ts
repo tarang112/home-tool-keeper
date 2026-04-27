@@ -730,6 +730,54 @@ export type Database = {
         }
         Relationships: []
       }
+      receipt_email_imports: {
+        Row: {
+          created_at: string
+          email_content: string
+          id: string
+          matched_email: string
+          order_date: string | null
+          order_number: string | null
+          parsed_items: Json
+          sender_email: string | null
+          status: string
+          store_name: string | null
+          subject: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_content: string
+          id?: string
+          matched_email: string
+          order_date?: string | null
+          order_number?: string | null
+          parsed_items?: Json
+          sender_email?: string | null
+          status?: string
+          store_name?: string | null
+          subject?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_content?: string
+          id?: string
+          matched_email?: string
+          order_date?: string | null
+          order_number?: string | null
+          parsed_items?: Json
+          sender_email?: string | null
+          status?: string
+          store_name?: string | null
+          subject?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
