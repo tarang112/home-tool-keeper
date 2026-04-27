@@ -535,7 +535,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   <Input value={bulkUnit} onChange={(event) => setBulkUnit(event.target.value)} className="h-8" placeholder="Unit" />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" size="sm" className="h-8 flex-1" onClick={applyBulkValues} disabled={selectedCount === 0}>
+                  <Button type="button" variant="outline" size="sm" className="h-8 flex-1" onClick={confirmBulkValues} disabled={selectedCount === 0}>
                     Apply to selected
                   </Button>
                   <Button type="button" variant="ghost" size="sm" className="h-8" onClick={clearBulkValues}>
@@ -630,6 +630,20 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
           )}
         </DialogContent>
       </Dialog>
+      <AlertDialog open={bulkConfirmOpen} onOpenChange={setBulkConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apply bulk values?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will update {selectedCount} selected item{selectedCount !== 1 ? "s" : ""} in the review list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={applyBulkValues}>Apply</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
