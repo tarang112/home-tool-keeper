@@ -318,6 +318,15 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     updateExtractedItem(index, { unitPrice: Number((item.totalPrice / item.quantity).toFixed(2)) });
   };
 
+  const fixItemValues = (index: number) => {
+    const item = extractedItems[index];
+    if (!item) return;
+    const quantity = Math.abs(item.quantity || 0);
+    const totalPrice = Math.abs(item.totalPrice ?? 0);
+    const unitPrice = quantity > 0 ? Number((totalPrice / quantity).toFixed(2)) : Math.abs(item.unitPrice ?? 0);
+    updateExtractedItem(index, { quantity, totalPrice, unitPrice });
+  };
+
   const getItemWarnings = (item: ExtractedItem) => {
     const warnings: string[] = [];
     if (!item.quantity || item.quantity <= 0) warnings.push("Quantity is required");
@@ -640,9 +649,14 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                             </Button>
                           </div>
                           {item.selected && warnings.length > 0 && (
-                            <div className="col-span-2 flex items-start gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
-                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                              <span>{warnings.join(" · ")}</span>
+                            <div className="col-span-2 flex items-start justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                              <div className="flex items-start gap-1.5">
+                                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <span>{warnings.join(" · ")}</span>
+                              </div>
+                              <Button type="button" variant="outline" size="sm" className="h-7 shrink-0" onClick={() => fixItemValues(i)}>
+                                Fix
+                              </Button>
                             </div>
                           )}
                         </div>
