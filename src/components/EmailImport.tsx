@@ -540,11 +540,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
 
               <ScrollArea className="flex-1 max-h-[40vh]">
                 <div className="space-y-1 pr-2">
-                  {extractedItems.map((item, i) => (
+                  {extractedItems.map((item, i) => {
+                    const warnings = getItemWarnings(item);
+                    return (
                     <div
                       key={i}
                       className={`grid grid-cols-[auto_1fr_auto] gap-2 p-2 rounded-md border text-sm transition-colors ${
-                        item.selected ? "bg-primary/5 border-primary/20" : "opacity-50"
+                        item.selected ? (warnings.length > 0 ? "bg-destructive/5 border-destructive/30" : "bg-primary/5 border-primary/20") : "opacity-50"
                       }`}
                     >
                       <Checkbox
@@ -579,6 +581,12 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                               <Calculator className="h-3.5 w-3.5" /> Calc
                             </Button>
                           </div>
+                          {item.selected && warnings.length > 0 && (
+                            <div className="col-span-2 flex items-start gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                              <span>{warnings.join(" · ")}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <Button
@@ -591,7 +599,8 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </ScrollArea>
 
@@ -615,7 +624,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <Button
                   className="flex-1 gap-1"
                   onClick={handleAddSelected}
-                  disabled={selectedCount === 0}
+                  disabled={selectedCount === 0 || hasValidationWarnings}
                 >
                   <Check className="h-4 w-4" />
                   Finalize {selectedCount} Item{selectedCount !== 1 ? "s" : ""}
