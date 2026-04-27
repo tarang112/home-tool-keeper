@@ -561,7 +561,21 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <div className="grid grid-cols-3 gap-2">
                   <Input value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} className="h-8" placeholder="Category" />
                   <Input value={bulkLocation} onChange={(event) => setBulkLocation(event.target.value)} className="h-8" placeholder="Location" />
-                  <Input value={bulkUnit} onChange={(event) => setBulkUnit(event.target.value)} className="h-8" placeholder="Unit" />
+                  <div className="space-y-1">
+                    <Input
+                      value={bulkUnit}
+                      onChange={(event) => setBulkUnit(event.target.value)}
+                      className="h-8 aria-[invalid=true]:border-destructive"
+                      placeholder="Unit"
+                      aria-invalid={Boolean(bulkUnitWarning)}
+                      aria-describedby="bulk-unit-warning"
+                    />
+                    {bulkUnitWarning && (
+                      <p id="bulk-unit-warning" className="text-xs text-destructive">
+                        {bulkUnitWarning}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" size="sm" className="h-8 flex-1" onClick={confirmBulkValues} disabled={selectedCount === 0}>
