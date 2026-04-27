@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator, Undo2, AlertTriangle } from "lucide-react";
+import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -58,7 +58,6 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [sourceType, setSourceType] = useState("pasted_email");
   const [parsing, setParsing] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
-  const [removedItems, setRemovedItems] = useState<Array<{ item: ExtractedItem; index: number }>>([]);
   const [storeName, setStoreName] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [orderDate, setOrderDate] = useState("");
@@ -175,29 +174,6 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       : supabase.from("receipt_email_imports" as any).insert(receiptPayload);
   };
 
-  const mergeDuplicateItems = (items: ExtractedItem[]) => {
-    const merged = new Map<string, ExtractedItem>();
-    for (const item of items) {
-      const key = [item.name, item.category, item.subcategory || "", item.quantityUnit, item.location || ""]
-        .map((value) => String(value).trim().toLowerCase().replace(/\s+/g, " "))
-        .join("|");
-      const existing = merged.get(key);
-      if (!existing) {
-        merged.set(key, item);
-        continue;
-      }
-      const quantity = (existing.quantity || 0) + (item.quantity || 0);
-      const totalPrice = (existing.totalPrice ?? 0) + (item.totalPrice ?? 0);
-      merged.set(key, {
-        ...existing,
-        quantity,
-        totalPrice: existing.totalPrice != null || item.totalPrice != null ? Number(totalPrice.toFixed(2)) : undefined,
-        unitPrice: totalPrice > 0 && quantity > 0 ? Number((totalPrice / quantity).toFixed(2)) : existing.unitPrice,
-      });
-    }
-    return Array.from(merged.values());
-  };
-
   const handleParse = async () => {
     const accountEmail = user?.email?.trim().toLowerCase();
     const matchedEmail = forwardedToEmail.trim().toLowerCase();
@@ -218,7 +194,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        const items: ExtractedItem[] = mergeDuplicateItems((data.items || []).map((item: any) => ({
+        const items: ExtractedItem[] = (data.items || []).map((item: any) => ({
           ...item,
           subcategory: item.subcategory || "",
           location: item.location || "",
@@ -231,7 +207,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
           receiptOrderNumber: data.orderNumber || "",
           receiptOrderDate: data.orderDate || "",
           receiptContent: content,
-        })));
+        }));
 
         const { error: saveError } = await saveReceiptImport({ data, items, content, receiptSubject, receiptSender, receiptSourceType, file });
         if (saveError) throw saveError;
@@ -286,23 +262,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   };
 
   const removeItem = (index: number) => {
-    const item = extractedItems[index];
-    if (!item) return;
-    setRemovedItems((prev) => [...prev, { item, index }]);
     setExtractedItems((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const undoRemoveItem = () => {
-    setRemovedItems((prev) => {
-      const last = prev[prev.length - 1];
-      if (!last) return prev;
-      setExtractedItems((items) => {
-        const next = [...items];
-        next.splice(Math.min(last.index, next.length), 0, last.item);
-        return next;
-      });
-      return prev.slice(0, -1);
-    });
   };
 
   const updateExtractedItem = (index: number, updates: Partial<ExtractedItem>) => {
@@ -318,57 +278,30 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     updateExtractedItem(index, { unitPrice: Number((item.totalPrice / item.quantity).toFixed(2)) });
   };
 
-  const fixItemValues = (index: number) => {
-    const item = extractedItems[index];
-    if (!item) return;
-    const quantity = Math.abs(item.quantity || 0);
-    const totalPrice = Math.abs(item.totalPrice ?? 0);
-    const unitPrice = quantity > 0 ? Number((totalPrice / quantity).toFixed(2)) : Math.abs(item.unitPrice ?? 0);
-    updateExtractedItem(index, { quantity, totalPrice, unitPrice });
-  };
-
-  const getItemWarnings = (item: ExtractedItem) => {
-    const warnings: string[] = [];
-    if (!item.quantity || item.quantity <= 0) warnings.push("Quantity is required");
-    if (item.quantity < 0) warnings.push("Quantity cannot be negative");
-    if (item.unitPrice == null) warnings.push("Unit price is required");
-    if (item.totalPrice == null) warnings.push("Total price is required");
-    if ((item.unitPrice ?? 0) < 0) warnings.push("Unit price cannot be negative");
-    if ((item.totalPrice ?? 0) < 0) warnings.push("Total price cannot be negative");
-    return warnings;
-  };
-
   const toggleAll = () => {
     const allSelected = extractedItems.every((i) => i.selected);
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
   };
 
   const applyBulkValues = () => {
-    if (selectedCount === 0) {
-      toast.error("Select at least one item first");
-      return;
-    }
-    if (!bulkCategory.trim() && !bulkLocation.trim() && !bulkUnit.trim()) {
-      toast.error("Enter a category, location, or unit to apply");
-      return;
-    }
     setExtractedItems((prev) => prev.map((item) => item.selected ? {
       ...item,
       category: bulkCategory.trim() || item.category,
       location: bulkLocation.trim() || item.location,
       quantityUnit: bulkUnit.trim() || item.quantityUnit,
     } : item));
-    toast.success(`Applied bulk values to ${selectedCount} item${selectedCount !== 1 ? "s" : ""}`);
+  };
+
+  const clearBulkValues = () => {
+    setBulkCategory("");
+    setBulkLocation("");
+    setBulkUnit("");
   };
 
   const handleAddSelected = () => {
     const selected = extractedItems.filter((i) => i.selected);
     if (selected.length === 0) {
       toast.error("No items selected");
-      return;
-    }
-    if (selected.some((item) => getItemWarnings(item).length > 0)) {
-      toast.error("Fix quantity and price warnings before finalizing");
       return;
     }
 
@@ -422,7 +355,6 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setUploadedFiles([]);
     setSourceType("pasted_email");
     setExtractedItems([]);
-    setRemovedItems([]);
     setStoreName("");
     setOrderNumber("");
     setOrderDate("");
@@ -430,13 +362,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setTaxAmount(null);
     setShippingAmount(null);
     setTotalAmount(null);
-    setBulkCategory("");
-    setBulkLocation("");
-    setBulkUnit("");
+    clearBulkValues();
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
-  const hasValidationWarnings = extractedItems.some((item) => item.selected && getItemWarnings(item).length > 0);
 
   return (
     <>
@@ -580,16 +509,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <Button variant="ghost" size="sm" className="text-xs h-7" onClick={toggleAll}>
                   {extractedItems.every((i) => i.selected) ? "Deselect All" : "Select All"}
                 </Button>
-                <div className="flex items-center gap-2">
-                  {removedItems.length > 0 && (
-                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={undoRemoveItem}>
-                      <Undo2 className="h-3 w-3" /> Undo
-                    </Button>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {selectedCount} of {extractedItems.length} selected
-                  </span>
-                </div>
+                <span className="text-xs text-muted-foreground">
+                  {selectedCount} of {extractedItems.length} selected
+                </span>
               </div>
 
               <div className="text-sm font-medium">Review extracted items</div>
@@ -600,20 +522,23 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   <Input value={bulkLocation} onChange={(event) => setBulkLocation(event.target.value)} className="h-8" placeholder="Location" />
                   <Input value={bulkUnit} onChange={(event) => setBulkUnit(event.target.value)} className="h-8" placeholder="Unit" />
                 </div>
-                <Button type="button" variant="outline" size="sm" className="h-8 w-full" onClick={applyBulkValues} disabled={selectedCount === 0}>
-                  Apply to selected
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" className="h-8 flex-1" onClick={applyBulkValues} disabled={selectedCount === 0}>
+                    Apply to selected
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-8" onClick={clearBulkValues}>
+                    Clear
+                  </Button>
+                </div>
               </div>
 
               <ScrollArea className="flex-1 max-h-[40vh]">
                 <div className="space-y-1 pr-2">
-                  {extractedItems.map((item, i) => {
-                    const warnings = getItemWarnings(item);
-                    return (
+                  {extractedItems.map((item, i) => (
                     <div
                       key={i}
                       className={`grid grid-cols-[auto_1fr_auto] gap-2 p-2 rounded-md border text-sm transition-colors ${
-                        item.selected ? (warnings.length > 0 ? "bg-destructive/5 border-destructive/30" : "bg-primary/5 border-primary/20") : "opacity-50"
+                        item.selected ? "bg-primary/5 border-primary/20" : "opacity-50"
                       }`}
                     >
                       <Checkbox
@@ -648,31 +573,18 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                               <Calculator className="h-3.5 w-3.5" /> Calc
                             </Button>
                           </div>
-                          {item.selected && warnings.length > 0 && (
-                            <div className="col-span-2 flex items-start justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
-                              <div className="flex items-start gap-1.5">
-                                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                                <span>{warnings.join(" · ")}</span>
-                              </div>
-                              <Button type="button" variant="outline" size="sm" className="h-7 shrink-0" onClick={() => fixItemValues(i)}>
-                                Fix
-                              </Button>
-                            </div>
-                          )}
                         </div>
                       </div>
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 shrink-0 text-destructive"
+                        className="h-6 w-6 shrink-0"
                         onClick={() => removeItem(i)}
-                        title="Remove item"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
-                  );
-                  })}
+                  ))}
                 </div>
               </ScrollArea>
 
@@ -696,7 +608,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <Button
                   className="flex-1 gap-1"
                   onClick={handleAddSelected}
-                  disabled={selectedCount === 0 || hasValidationWarnings}
+                  disabled={selectedCount === 0}
                 >
                   <Check className="h-4 w-4" />
                   Finalize {selectedCount} Item{selectedCount !== 1 ? "s" : ""}
