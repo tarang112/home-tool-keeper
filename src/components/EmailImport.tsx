@@ -211,6 +211,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setExtractedItems((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const updateExtractedItem = (index: number, updates: Partial<ExtractedItem>) => {
+    setExtractedItems((prev) => prev.map((item, i) => (i === index ? { ...item, ...updates } : item)));
+  };
+
   const toggleAll = () => {
     const allSelected = extractedItems.every((i) => i.selected);
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
