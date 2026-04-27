@@ -549,6 +549,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   <Button type="button" variant="outline" size="sm" className="h-8 flex-1" onClick={confirmBulkValues} disabled={selectedCount === 0}>
                     Apply to selected
                   </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-8" onClick={useFirstSelectedForBulk} disabled={selectedCount === 0}>
+                    Use first selected
+                  </Button>
                   <Button type="button" variant="ghost" size="sm" className="h-8" onClick={clearBulkValues}>
                     Clear
                   </Button>
