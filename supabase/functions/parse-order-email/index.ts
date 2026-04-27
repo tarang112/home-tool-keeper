@@ -7,6 +7,66 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const decodeEmailText = (value: string) =>
+  value
+    .replace(/=\r?\n/g, "")
+    .replace(/=([A-Fa-f0-9]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/p>|<\/div>|<\/tr>|<\/li>|<\/h\d>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+const pickHeader = (content: string, names: string[]) => {
+  for (const name of names) {
+    const match = content.match(new RegExp(`(?:^|\\n)${name}:\\s*(.+)`, "i"));
+    if (match?.[1]) return match[1].trim();
+  }
+  return null;
+};
+
+const extractForwardedMetadata = (content: string) => {
+  const forwardedBlocks = [
+    /-{2,}\s*Forwarded message\s*-{2,}([\s\S]*)/i,
+    /Begin forwarded message:([\s\S]*)/i,
+    /Original Message([\s\S]*)/i,
+    /From:\s*.+\nSent:\s*.+\nTo:\s*.+\nSubject:\s*.+/i,
+  ];
+
+  const block = forwardedBlocks
+    .map((pattern) => content.match(pattern)?.[1] || content.match(pattern)?.[0])
+    .find(Boolean) || content;
+
+  return {
+    subject: pickHeader(block, ["Subject"]),
+    from: pickHeader(block, ["From", "Sender"]),
+    to: pickHeader(block, ["To", "Delivered-To", "X-Original-To"]),
+    date: pickHeader(block, ["Date", "Sent"]),
+  };
+};
+
+const buildParsingInput = (emailContent: string, subject?: string, from?: string) => {
+  const normalized = decodeEmailText(emailContent);
+  const forwarded = extractForwardedMetadata(normalized);
+
+  return {
+    normalized,
+    subject: forwarded.subject || subject || "Unknown",
+    from: forwarded.from || from || "Unknown",
+    forwardedTo: forwarded.to,
+    forwardedDate: forwarded.date,
+  };
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
