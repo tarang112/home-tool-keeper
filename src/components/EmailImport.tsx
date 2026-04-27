@@ -118,10 +118,57 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     try {
       const text = await navigator.clipboard.readText();
       setEmailContent(text);
+      setUploadedFiles([]);
+      setSourceType("pasted_email");
       toast.success("Pasted from clipboard");
     } catch {
       toast.error("Could not read clipboard. Please paste manually.");
     }
+  };
+
+  const saveReceiptImport = async ({ data, items, content, receiptSubject, receiptSender, receiptSourceType, file }: {
+    data: any;
+    items: ExtractedItem[];
+    content: string;
+    receiptSubject: string;
+    receiptSender: string;
+    receiptSourceType: string;
+    file?: File;
+  }) => {
+    const accountEmail = user?.email?.trim().toLowerCase();
+    const receiptPayload = {
+      user_id: user?.id,
+      matched_email: accountEmail,
+      sender_email: receiptSender || null,
+      subject: receiptSubject || null,
+      email_content: content,
+      store_name: data.storeName || null,
+      order_number: data.orderNumber || null,
+      order_date: data.orderDate || null,
+      parsed_items: items,
+      source_type: receiptSourceType,
+      file_name: file?.name || null,
+      file_type: file?.type || null,
+      subtotal_amount: data.subtotalAmount ?? null,
+      tax_amount: data.taxAmount ?? null,
+      shipping_amount: data.shippingAmount ?? null,
+      total_amount: data.totalAmount ?? null,
+      status: items.length > 0 ? "parsed" : "no_items_found",
+    } as any;
+
+    const duplicateQuery = supabase.from("receipt_email_imports" as any).select("id").eq("user_id", user?.id).limit(1);
+    if (data.orderNumber) {
+      duplicateQuery.eq("order_number", data.orderNumber);
+      if (data.storeName) duplicateQuery.eq("store_name", data.storeName);
+    } else {
+      duplicateQuery.eq("matched_email", accountEmail).eq("subject", receiptSubject || null).eq("total_amount", data.totalAmount ?? null);
+    }
+
+    const { data: duplicateImport } = await duplicateQuery.maybeSingle();
+    const duplicateId = (duplicateImport as { id?: string } | null)?.id;
+    return duplicateId
+      ? supabase.from("receipt_email_imports" as any).update(receiptPayload).eq("id", duplicateId)
+      : supabase.from("receipt_email_imports" as any).insert(receiptPayload);
   };
 
   const handleParse = async () => {
