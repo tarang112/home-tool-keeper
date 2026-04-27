@@ -66,6 +66,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [taxAmount, setTaxAmount] = useState<number | null>(null);
   const [shippingAmount, setShippingAmount] = useState<number | null>(null);
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
+  const [bulkCategory, setBulkCategory] = useState("");
+  const [bulkLocation, setBulkLocation] = useState("");
+  const [bulkUnit, setBulkUnit] = useState("");
 
   const readReceiptFile = async (file: File) => {
     if (!file) return;
@@ -308,6 +311,24 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
   };
 
+  const applyBulkValues = () => {
+    if (selectedCount === 0) {
+      toast.error("Select at least one item first");
+      return;
+    }
+    if (!bulkCategory.trim() && !bulkLocation.trim() && !bulkUnit.trim()) {
+      toast.error("Enter a category, location, or unit to apply");
+      return;
+    }
+    setExtractedItems((prev) => prev.map((item) => item.selected ? {
+      ...item,
+      category: bulkCategory.trim() || item.category,
+      location: bulkLocation.trim() || item.location,
+      quantityUnit: bulkUnit.trim() || item.quantityUnit,
+    } : item));
+    toast.success(`Applied bulk values to ${selectedCount} item${selectedCount !== 1 ? "s" : ""}`);
+  };
+
   const handleAddSelected = () => {
     const selected = extractedItems.filter((i) => i.selected);
     if (selected.length === 0) {
@@ -377,6 +398,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setTaxAmount(null);
     setShippingAmount(null);
     setTotalAmount(null);
+    setBulkCategory("");
+    setBulkLocation("");
+    setBulkUnit("");
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
@@ -537,6 +561,17 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
               </div>
 
               <div className="text-sm font-medium">Review extracted items</div>
+
+              <div className="rounded-md border bg-muted/30 p-2 space-y-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <Input value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} className="h-8" placeholder="Category" />
+                  <Input value={bulkLocation} onChange={(event) => setBulkLocation(event.target.value)} className="h-8" placeholder="Location" />
+                  <Input value={bulkUnit} onChange={(event) => setBulkUnit(event.target.value)} className="h-8" placeholder="Unit" />
+                </div>
+                <Button type="button" variant="outline" size="sm" className="h-8 w-full" onClick={applyBulkValues} disabled={selectedCount === 0}>
+                  Apply to selected
+                </Button>
+              </div>
 
               <ScrollArea className="flex-1 max-h-[40vh]">
                 <div className="space-y-1 pr-2">
