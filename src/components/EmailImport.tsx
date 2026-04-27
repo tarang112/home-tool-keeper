@@ -285,6 +285,15 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
   };
 
+  const confirmBulkValues = () => {
+    if (selectedCount === 0) return;
+    if (!bulkCategory.trim() && !bulkLocation.trim() && !bulkUnit.trim()) {
+      toast.error("Enter a category, location, or unit to apply");
+      return;
+    }
+    setBulkConfirmOpen(true);
+  };
+
   const applyBulkValues = () => {
     setExtractedItems((prev) => prev.map((item) => item.selected ? {
       ...item,
@@ -292,6 +301,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       location: bulkLocation.trim() || item.location,
       quantityUnit: bulkUnit.trim() || item.quantityUnit,
     } : item));
+    setBulkConfirmOpen(false);
   };
 
   const clearBulkValues = () => {
