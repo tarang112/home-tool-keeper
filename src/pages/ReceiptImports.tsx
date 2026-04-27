@@ -38,7 +38,7 @@ export default function ReceiptImports() {
     if (error) {
       toast.error("Could not load receipt imports");
     } else {
-      setImports((data || []) as ReceiptImport[]);
+      setImports((data || []) as unknown as ReceiptImport[]);
     }
     setLoading(false);
   };
