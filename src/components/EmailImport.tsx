@@ -310,6 +310,17 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setBulkUnit("");
   };
 
+  const useFirstSelectedForBulk = () => {
+    const firstSelected = extractedItems.find((item) => item.selected);
+    if (!firstSelected) {
+      toast.error("Select an item first");
+      return;
+    }
+    setBulkCategory(firstSelected.category || "");
+    setBulkLocation(firstSelected.location || "");
+    setBulkUnit(firstSelected.quantityUnit || "");
+  };
+
   const handleAddSelected = () => {
     const selected = extractedItems.filter((i) => i.selected);
     if (selected.length === 0) {
