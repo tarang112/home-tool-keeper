@@ -11,6 +11,14 @@ export interface VisitorLogEntry {
   userAgent: string | null;
   sessionId: string | null;
   ipHash: string | null;
+  ipAddressMasked: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  timezone: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  locationProvider: string | null;
   createdAt: string;
 }
 
@@ -62,7 +70,7 @@ export function useVisitorLogs() {
     setLoading(true);
     const { data } = await supabase
       .from("visitor_logs" as any)
-      .select("id,page,device,referrer,user_agent,session_id,ip_hash,created_at")
+      .select("id,page,device,referrer,user_agent,session_id,ip_hash,ip_address_masked,country,region,city,timezone,latitude,longitude,location_provider,created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(500);
@@ -75,6 +83,14 @@ export function useVisitorLogs() {
       userAgent: row.user_agent,
       sessionId: row.session_id,
       ipHash: row.ip_hash,
+      ipAddressMasked: row.ip_address_masked,
+      country: row.country,
+      region: row.region,
+      city: row.city,
+      timezone: row.timezone,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      locationProvider: row.location_provider,
       createdAt: row.created_at,
     })));
     setLoading(false);
