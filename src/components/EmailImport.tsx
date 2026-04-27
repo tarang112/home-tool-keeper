@@ -336,6 +336,19 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   onChange={(e) => setSubject(e.target.value)}
                 />
               </div>
+              <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+                <label className="text-sm font-medium" htmlFor="receipt-upload">Upload PDF/EML</label>
+                <Input
+                  id="receipt-upload"
+                  type="file"
+                  accept=".pdf,.eml,application/pdf,message/rfc822"
+                  onChange={(e) => void handleFileUpload(e.target.files?.[0] || null)}
+                />
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Upload className="h-3 w-3" />
+                  <span>{uploadedFile ? uploadedFile.name : "PDF receipts and .eml order emails up to 20MB"}</span>
+                </div>
+              </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-sm font-medium">Email Content</label>
@@ -349,9 +362,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   </Button>
                 </div>
                 <Textarea
-                  placeholder="Copy the entire order confirmation email and paste it here...&#10;&#10;Supports: Amazon, Home Depot, Lowe's, Walmart, Target, and any other retailer"
+                  placeholder="Copy the entire order confirmation email, or upload a PDF/EML above...&#10;&#10;Supports: Amazon, Home Depot, Lowe's, Walmart, Target, and any other retailer"
                   value={emailContent}
-                  onChange={(e) => setEmailContent(e.target.value)}
+                  onChange={(e) => { setEmailContent(e.target.value); setSourceType(uploadedFile ? sourceType : "pasted_email"); }}
                   className="min-h-[200px] text-sm"
                 />
               </div>
@@ -390,6 +403,14 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                     📅 {orderDate}
                   </Badge>
                 )}
+                {totalAmount != null && (
+                  <Badge variant="secondary" className="text-xs">
+                    Total ${totalAmount.toFixed(2)}
+                  </Badge>
+                )}
+                {subtotalAmount != null && <span className="text-xs">Subtotal ${subtotalAmount.toFixed(2)}</span>}
+                {taxAmount != null && <span className="text-xs">Tax ${taxAmount.toFixed(2)}</span>}
+                {shippingAmount != null && <span className="text-xs">Shipping ${shippingAmount.toFixed(2)}</span>}
               </div>
 
               <div className="flex items-center justify-between">
@@ -450,6 +471,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                     setStoreName("");
                     setOrderNumber("");
                     setOrderDate("");
+                    setSubtotalAmount(null);
+                    setTaxAmount(null);
+                    setShippingAmount(null);
+                    setTotalAmount(null);
                   }}
                 >
                   Parse Another
