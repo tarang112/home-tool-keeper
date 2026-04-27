@@ -439,7 +439,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   {extractedItems.map((item, i) => (
                     <div
                       key={i}
-                      className={`flex items-center gap-2 p-2 rounded-md border text-sm transition-colors ${
+                      className={`grid grid-cols-[auto_1fr_auto] gap-2 p-2 rounded-md border text-sm transition-colors ${
                         item.selected ? "bg-primary/5 border-primary/20" : "opacity-50"
                       }`}
                     >
@@ -447,18 +447,22 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                         checked={item.selected}
                         onCheckedChange={() => toggleItem(i)}
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-medium truncate">{item.name}</span>
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 shrink-0">
-                            {item.subcategory ? `${item.category} › ${item.subcategory}` : item.category}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          <span>{item.quantity} {item.quantityUnit}</span>
-                          {item.location && <span>· {item.location}</span>}
-                          {item.totalPrice != null && <span>· ${item.totalPrice.toFixed(2)}</span>}
-                          {item.unitPrice != null && item.quantity > 1 && <span className="text-[10px]">(${item.unitPrice.toFixed(2)}/ea)</span>}
+                      <div className="grid gap-2 min-w-0">
+                        <Input
+                          value={item.name}
+                          onChange={(event) => updateExtractedItem(i, { name: event.target.value })}
+                          className="h-8 font-medium"
+                          placeholder="Item name"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input value={item.category} onChange={(event) => updateExtractedItem(i, { category: event.target.value })} className="h-8" placeholder="Category" />
+                          <Input value={item.subcategory || ""} onChange={(event) => updateExtractedItem(i, { subcategory: event.target.value })} className="h-8" placeholder="Subcategory" />
+                          <Input type="number" min="0" step="0.01" value={item.quantity} onChange={(event) => updateExtractedItem(i, { quantity: Number(event.target.value) || 0 })} className="h-8" placeholder="Qty" />
+                          <Input value={item.quantityUnit} onChange={(event) => updateExtractedItem(i, { quantityUnit: event.target.value })} className="h-8" placeholder="Unit" />
+                          <Input value={item.location || ""} onChange={(event) => updateExtractedItem(i, { location: event.target.value })} className="h-8" placeholder="Location" />
+                          <Input type="date" value={item.expirationDate || ""} onChange={(event) => updateExtractedItem(i, { expirationDate: event.target.value })} className="h-8" />
+                          <Input type="number" min="0" step="0.01" value={item.unitPrice ?? ""} onChange={(event) => updateExtractedItem(i, { unitPrice: event.target.value === "" ? undefined : Number(event.target.value) })} className="h-8" placeholder="Unit price" />
+                          <Input type="number" min="0" step="0.01" value={item.totalPrice ?? ""} onChange={(event) => updateExtractedItem(i, { totalPrice: event.target.value === "" ? undefined : Number(event.target.value) })} className="h-8" placeholder="Total" />
                         </div>
                       </div>
                       <Button
