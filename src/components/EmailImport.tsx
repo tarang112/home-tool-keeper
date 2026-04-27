@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { InventoryItem } from "@/hooks/use-inventory";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ExtractedItem {
   name: string;
@@ -32,11 +33,14 @@ interface EmailImportProps {
 }
 
 export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOpenChange }: EmailImportProps) {
+  const { user } = useAuth();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = onExternalOpenChange || setInternalOpen;
   const [emailContent, setEmailContent] = useState("");
   const [subject, setSubject] = useState("");
+  const [forwardedToEmail, setForwardedToEmail] = useState("");
+  const [senderEmail, setSenderEmail] = useState("");
   const [parsing, setParsing] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
   const [storeName, setStoreName] = useState("");
@@ -54,6 +58,12 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   };
 
   const handleParse = async () => {
+    const accountEmail = user?.email?.trim().toLowerCase();
+    const matchedEmail = forwardedToEmail.trim().toLowerCase();
+    if (!accountEmail || matchedEmail !== accountEmail) {
+      toast.error("Forwarded-to email must match your registered account email");
+      return;
+    }
     if (!emailContent.trim()) {
       toast.error("Please paste email content first");
       return;
@@ -64,7 +74,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
         body: {
           emailContent: emailContent.trim(),
           subject: subject.trim(),
-          from: "",
+          from: senderEmail.trim(),
           locations: customLocations,
         },
       });
@@ -90,10 +100,28 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       setOrderNumber(data.orderNumber || "");
       setOrderDate(data.orderDate || "");
 
+      const { error: saveError } = await supabase.from("receipt_email_imports" as any).insert({
+        user_id: user?.id,
+        matched_email: accountEmail,
+        sender_email: senderEmail.trim() || null,
+        subject: subject.trim() || null,
+        email_content: emailContent.trim(),
+        store_name: data.storeName || null,
+        order_number: data.orderNumber || null,
+        order_date: data.orderDate || null,
+        parsed_items: items,
+        status: items.length > 0 ? "parsed" : "no_items_found",
+      } as any);
+
+      if (saveError) {
+        toast.error("Parsed email, but could not link the receipt to your account");
+        return;
+      }
+
       if (items.length === 0) {
         toast.info("No items found. Make sure you pasted an order confirmation email.");
       } else {
-        toast.success(`Found ${items.length} item${items.length > 1 ? "s" : ""}`);
+        toast.success(`Linked receipt to your account and found ${items.length} item${items.length > 1 ? "s" : ""}`);
       }
     } catch (err: any) {
       console.error("Email parse error:", err);
@@ -170,6 +198,8 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setOpen(false);
     setEmailContent("");
     setSubject("");
+    setForwardedToEmail("");
+    setSenderEmail("");
     setExtractedItems([]);
     setStoreName("");
     setOrderNumber("");
