@@ -163,7 +163,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       setShippingAmount(data.shippingAmount ?? null);
       setTotalAmount(data.totalAmount ?? null);
 
-      const { error: saveError } = await supabase.from("receipt_email_imports" as any).insert({
+      const receiptPayload = {
         user_id: user?.id,
         matched_email: accountEmail,
         sender_email: senderEmail.trim() || null,
@@ -181,7 +181,28 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
         shipping_amount: data.shippingAmount ?? null,
         total_amount: data.totalAmount ?? null,
         status: items.length > 0 ? "parsed" : "no_items_found",
-      } as any);
+      } as any;
+
+      const duplicateQuery = supabase
+        .from("receipt_email_imports" as any)
+        .select("id")
+        .eq("user_id", user?.id)
+        .limit(1);
+
+      if (data.orderNumber) {
+        duplicateQuery.eq("order_number", data.orderNumber);
+        if (data.storeName) duplicateQuery.eq("store_name", data.storeName);
+      } else {
+        duplicateQuery
+          .eq("matched_email", accountEmail)
+          .eq("subject", subject.trim() || null)
+          .eq("total_amount", data.totalAmount ?? null);
+      }
+
+      const { data: duplicateImport } = await duplicateQuery.maybeSingle();
+      const { error: saveError } = duplicateImport?.id
+        ? await supabase.from("receipt_email_imports" as any).update(receiptPayload).eq("id", duplicateImport.id)
+        : await supabase.from("receipt_email_imports" as any).insert(receiptPayload);
 
       if (saveError) {
         toast.error("Parsed email, but could not link the receipt to your account");
@@ -190,6 +211,8 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
 
       if (items.length === 0) {
         toast.info("No items found. Make sure you pasted an order confirmation email.");
+      } else if (duplicateImport?.id) {
+        toast.success(`Updated existing linked receipt and found ${items.length} item${items.length > 1 ? "s" : ""}`);
       } else {
         toast.success(`Linked receipt to your account and found ${items.length} item${items.length > 1 ? "s" : ""}`);
       }
