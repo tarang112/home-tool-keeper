@@ -12,6 +12,32 @@ const hashIp = async (ip: string, userId: string) => {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 };
 
+const maskIp = (ip: string) => {
+  if (!ip) return null;
+  if (ip.includes(":")) return ip.replace(/:[^:]*:[^:]*$/, ":****:****");
+  return ip.replace(/\.\d+$/, ".0");
+};
+
+const getLocation = async (ip: string) => {
+  if (!ip || ip === "127.0.0.1" || ip.startsWith("10.") || ip.startsWith("192.168.")) return {};
+  try {
+    const response = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, { headers: { "User-Agent": "HomeStock visitor log" } });
+    if (!response.ok) return {};
+    const data = await response.json();
+    return {
+      country: typeof data.country_name === "string" ? data.country_name.slice(0, 80) : null,
+      region: typeof data.region === "string" ? data.region.slice(0, 80) : null,
+      city: typeof data.city === "string" ? data.city.slice(0, 80) : null,
+      timezone: typeof data.timezone === "string" ? data.timezone.slice(0, 80) : null,
+      latitude: typeof data.latitude === "number" ? data.latitude : null,
+      longitude: typeof data.longitude === "number" ? data.longitude : null,
+      location_provider: "ipapi.co",
+    };
+  } catch {
+    return {};
+  }
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -47,6 +73,7 @@ Deno.serve(async (req) => {
     const userAgent = req.headers.get("user-agent") ?? (typeof body.user_agent === "string" ? body.user_agent.slice(0, 500) : null);
     const ip = (req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip") ?? "").split(",")[0].trim();
 
+    const location = await getLocation(ip);
     const { error } = await supabase.from("visitor_logs").insert({
       user_id: userData.user.id,
       page,
@@ -55,6 +82,8 @@ Deno.serve(async (req) => {
       user_agent: userAgent,
       session_id: sessionId,
       ip_hash: await hashIp(ip, userData.user.id),
+      ip_address_masked: maskIp(ip),
+      ...location,
     });
 
     if (error) {
