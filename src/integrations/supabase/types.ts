@@ -734,45 +734,66 @@ export type Database = {
         Row: {
           created_at: string
           email_content: string
+          file_name: string | null
+          file_type: string | null
           id: string
           matched_email: string
           order_date: string | null
           order_number: string | null
           parsed_items: Json
           sender_email: string | null
+          shipping_amount: number | null
+          source_type: string
           status: string
           store_name: string | null
           subject: string | null
+          subtotal_amount: number | null
+          tax_amount: number | null
+          total_amount: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           email_content: string
+          file_name?: string | null
+          file_type?: string | null
           id?: string
           matched_email: string
           order_date?: string | null
           order_number?: string | null
           parsed_items?: Json
           sender_email?: string | null
+          shipping_amount?: number | null
+          source_type?: string
           status?: string
           store_name?: string | null
           subject?: string | null
+          subtotal_amount?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           email_content?: string
+          file_name?: string | null
+          file_type?: string | null
           id?: string
           matched_email?: string
           order_date?: string | null
           order_number?: string | null
           parsed_items?: Json
           sender_email?: string | null
+          shipping_amount?: number | null
+          source_type?: string
           status?: string
           store_name?: string | null
           subject?: string | null
+          subtotal_amount?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
           updated_at?: string
           user_id?: string
         }
