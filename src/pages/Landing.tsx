@@ -286,23 +286,33 @@ export default function Landing() {
             </div>
           </div>
         </div>
-        <div className="mt-10 overflow-hidden rounded-lg border bg-card">
-          <div className="hidden grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium md:grid">
-            <span>Feature</span><span>Starter</span><span>Household</span><span>Business</span>
+        <div className="mt-10 overflow-hidden rounded-lg border bg-card" role="table" aria-label="Pricing feature comparison by plan">
+          <div className="hidden grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium md:grid" role="row">
+            <span role="columnheader" id="pricing-feature-header">Feature</span>
+            {plans.map((plan) => (
+              <span key={plan.name} role="columnheader" id={`pricing-plan-${plan.name.toLowerCase()}`}>{plan.name}</span>
+            ))}
           </div>
-          <div className="divide-y">
-            {comparisonRows.map(([feature, starter, household, business]) => (
-              <div key={feature} className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.2fr_repeat(3,1fr)] md:py-3">
-                <span className="font-medium">{feature}</span>
+          <div className="divide-y" role="rowgroup">
+            {comparisonRows.map(([feature, starter, household, business], rowIndex) => {
+              const rowHeaderId = `pricing-feature-${rowIndex}`;
+              return (
+              <div key={feature} className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.2fr_repeat(3,1fr)] md:py-3" role="row">
+                <span id={rowHeaderId} role="rowheader" className="font-medium">{feature}</span>
                 <div className="grid grid-cols-3 gap-2 md:contents">
                   {[["Starter", starter], ["Household", household], ["Business", business]].map(([planName, value]) => (
-                    <span key={planName} className="rounded-md border bg-background p-2 text-muted-foreground md:border-0 md:bg-transparent md:p-0">
-                      <span className="mb-1 block text-xs font-medium text-foreground md:hidden">{planName}</span>{value}
+                    <span
+                      key={planName}
+                      role="cell"
+                      aria-labelledby={`${rowHeaderId} pricing-plan-${planName.toLowerCase()}`}
+                      className="rounded-md border bg-background p-2 text-muted-foreground md:border-0 md:bg-transparent md:p-0"
+                    >
+                      <span aria-hidden="true" className="mb-1 block text-xs font-medium text-foreground md:hidden">{planName}</span>{value}
                     </span>
                   ))}
                 </div>
               </div>
-            ))}
+            );})}
           </div>
         </div>
       </section>
