@@ -318,6 +318,15 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     updateExtractedItem(index, { unitPrice: Number((item.totalPrice / item.quantity).toFixed(2)) });
   };
 
+  const fixItemValues = (index: number) => {
+    const item = extractedItems[index];
+    if (!item) return;
+    const quantity = Math.abs(item.quantity || 0);
+    const totalPrice = Math.abs(item.totalPrice ?? 0);
+    const unitPrice = quantity > 0 ? Number((totalPrice / quantity).toFixed(2)) : Math.abs(item.unitPrice ?? 0);
+    updateExtractedItem(index, { quantity, totalPrice, unitPrice });
+  };
+
   const getItemWarnings = (item: ExtractedItem) => {
     const warnings: string[] = [];
     if (!item.quantity || item.quantity <= 0) warnings.push("Quantity is required");
