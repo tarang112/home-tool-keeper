@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Mail, Loader2, Check, Trash2, ClipboardPaste, X } from "lucide-react";
+import { useState } from "react";
+import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,13 @@ interface ExtractedItem {
   selected: boolean;
 }
 
+const MAX_UPLOAD_SIZE = 20 * 1024 * 1024;
+
+const extractEmlHeader = (content: string, header: string) => {
+  const match = content.match(new RegExp(`^${header}:\\s*(.+)$`, "im"));
+  return match?.[1]?.trim() || "";
+};
+
 interface EmailImportProps {
   onAdd: (item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">) => void;
   customLocations: string[];
@@ -41,11 +48,62 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [subject, setSubject] = useState("");
   const [forwardedToEmail, setForwardedToEmail] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [sourceType, setSourceType] = useState("pasted_email");
   const [parsing, setParsing] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
   const [storeName, setStoreName] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [orderDate, setOrderDate] = useState("");
+  const [subtotalAmount, setSubtotalAmount] = useState<number | null>(null);
+  const [taxAmount, setTaxAmount] = useState<number | null>(null);
+  const [shippingAmount, setShippingAmount] = useState<number | null>(null);
+  const [totalAmount, setTotalAmount] = useState<number | null>(null);
+
+  const handleFileUpload = async (file: File | null) => {
+    if (!file) return;
+    if (file.size > MAX_UPLOAD_SIZE) {
+      toast.error("File must be 20MB or smaller");
+      return;
+    }
+
+    setUploadedFile(file);
+    const lowerName = file.name.toLowerCase();
+    try {
+      if (file.type === "application/pdf" || lowerName.endsWith(".pdf")) {
+        const pdfjs = await import("pdfjs-dist");
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url).toString();
+        const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+        const pages: string[] = [];
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          const page = await pdf.getPage(pageNumber);
+          const text = await page.getTextContent();
+          pages.push(text.items.map((item: any) => item.str).join(" "));
+        }
+        setEmailContent(pages.join("\n\n"));
+        setSourceType("pdf_upload");
+        toast.success("PDF text extracted");
+        return;
+      }
+
+      if (file.type === "message/rfc822" || lowerName.endsWith(".eml")) {
+        const content = await file.text();
+        setEmailContent(content);
+        setSubject((current) => current || extractEmlHeader(content, "Subject"));
+        setSenderEmail((current) => current || extractEmlHeader(content, "From"));
+        setForwardedToEmail((current) => current || extractEmlHeader(content, "To"));
+        setSourceType("eml_upload");
+        toast.success("EML loaded");
+        return;
+      }
+
+      toast.error("Upload a PDF or EML file");
+      setUploadedFile(null);
+    } catch {
+      toast.error("Could not read that file");
+      setUploadedFile(null);
+    }
+  };
 
   const handlePaste = async () => {
     try {
@@ -99,6 +157,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       setStoreName(data.storeName || "");
       setOrderNumber(data.orderNumber || "");
       setOrderDate(data.orderDate || "");
+      setSubtotalAmount(data.subtotalAmount ?? null);
+      setTaxAmount(data.taxAmount ?? null);
+      setShippingAmount(data.shippingAmount ?? null);
+      setTotalAmount(data.totalAmount ?? null);
 
       const { error: saveError } = await supabase.from("receipt_email_imports" as any).insert({
         user_id: user?.id,
@@ -110,6 +172,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
         order_number: data.orderNumber || null,
         order_date: data.orderDate || null,
         parsed_items: items,
+        source_type: sourceType,
+        file_name: uploadedFile?.name || null,
+        file_type: uploadedFile?.type || null,
+        subtotal_amount: data.subtotalAmount ?? null,
+        tax_amount: data.taxAmount ?? null,
+        shipping_amount: data.shippingAmount ?? null,
+        total_amount: data.totalAmount ?? null,
         status: items.length > 0 ? "parsed" : "no_items_found",
       } as any);
 
@@ -200,10 +269,16 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setSubject("");
     setForwardedToEmail("");
     setSenderEmail("");
+    setUploadedFile(null);
+    setSourceType("pasted_email");
     setExtractedItems([]);
     setStoreName("");
     setOrderNumber("");
     setOrderDate("");
+    setSubtotalAmount(null);
+    setTaxAmount(null);
+    setShippingAmount(null);
+    setTotalAmount(null);
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
@@ -261,6 +336,19 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   onChange={(e) => setSubject(e.target.value)}
                 />
               </div>
+              <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+                <label className="text-sm font-medium" htmlFor="receipt-upload">Upload PDF/EML</label>
+                <Input
+                  id="receipt-upload"
+                  type="file"
+                  accept=".pdf,.eml,application/pdf,message/rfc822"
+                  onChange={(e) => void handleFileUpload(e.target.files?.[0] || null)}
+                />
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Upload className="h-3 w-3" />
+                  <span>{uploadedFile ? uploadedFile.name : "PDF receipts and .eml order emails up to 20MB"}</span>
+                </div>
+              </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-sm font-medium">Email Content</label>
@@ -274,9 +362,9 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   </Button>
                 </div>
                 <Textarea
-                  placeholder="Copy the entire order confirmation email and paste it here...&#10;&#10;Supports: Amazon, Home Depot, Lowe's, Walmart, Target, and any other retailer"
+                  placeholder="Copy the entire order confirmation email, or upload a PDF/EML above...&#10;&#10;Supports: Amazon, Home Depot, Lowe's, Walmart, Target, and any other retailer"
                   value={emailContent}
-                  onChange={(e) => setEmailContent(e.target.value)}
+                  onChange={(e) => { setEmailContent(e.target.value); setSourceType(uploadedFile ? sourceType : "pasted_email"); }}
                   className="min-h-[200px] text-sm"
                 />
               </div>
@@ -315,6 +403,14 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                     📅 {orderDate}
                   </Badge>
                 )}
+                {totalAmount != null && (
+                  <Badge variant="secondary" className="text-xs">
+                    Total ${totalAmount.toFixed(2)}
+                  </Badge>
+                )}
+                {subtotalAmount != null && <span className="text-xs">Subtotal ${subtotalAmount.toFixed(2)}</span>}
+                {taxAmount != null && <span className="text-xs">Tax ${taxAmount.toFixed(2)}</span>}
+                {shippingAmount != null && <span className="text-xs">Shipping ${shippingAmount.toFixed(2)}</span>}
               </div>
 
               <div className="flex items-center justify-between">
@@ -375,6 +471,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                     setStoreName("");
                     setOrderNumber("");
                     setOrderDate("");
+                    setSubtotalAmount(null);
+                    setTaxAmount(null);
+                    setShippingAmount(null);
+                    setTotalAmount(null);
                   }}
                 >
                   Parse Another

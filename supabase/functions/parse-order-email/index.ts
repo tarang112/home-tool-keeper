@@ -66,7 +66,7 @@ serve(async (req) => {
     const warrantyExpiry = new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0];
 
     const systemPrompt = `You are an AI assistant for HomeStock inventory app.
-Parse the order confirmation email and extract ALL purchased items.
+Parse the receipt, order confirmation, PDF text, or EML content and extract ALL purchased items and order totals.
 
 Email subject: ${subject || "Unknown"}
 Email from: ${from || "Unknown"}
@@ -106,7 +106,8 @@ Rules:
 - Use past defaults for known items.
 - Detect store/retailer name from the email.
 - Include order number if found.
-- Extract the price per unit (unitPrice) and total line price (totalPrice) for each item as numbers (e.g. 29.99 not "$29.99"). If quantity > 1, unitPrice = totalPrice / quantity.`;
+- Extract the price per unit (unitPrice) and total line price (totalPrice) for each item as numbers (e.g. 29.99 not "$29.99"). If quantity > 1, unitPrice = totalPrice / quantity.
+- Extract subtotalAmount, taxAmount, shippingAmount, and totalAmount as numbers when present. Use null if missing.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -142,6 +143,10 @@ Rules:
                     storeName: { type: "string", description: "Retailer name (e.g. Amazon, Home Depot, Lowe's)" },
                     orderNumber: { type: "string", description: "Order number if found" },
                     orderDate: { type: "string", description: "Order date if found (YYYY-MM-DD)" },
+                    subtotalAmount: { type: "number", description: "Order subtotal before tax/shipping" },
+                    taxAmount: { type: "number", description: "Tax amount" },
+                    shippingAmount: { type: "number", description: "Shipping/delivery amount" },
+                    totalAmount: { type: "number", description: "Final order total" },
                     items: {
                       type: "array",
                       items: {
