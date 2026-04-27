@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator } from "lucide-react";
+import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -58,6 +58,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [sourceType, setSourceType] = useState("pasted_email");
   const [parsing, setParsing] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
+  const [removedItems, setRemovedItems] = useState<Array<{ item: ExtractedItem; index: number }>>([]);
   const [storeName, setStoreName] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [orderDate, setOrderDate] = useState("");
@@ -259,7 +260,23 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   };
 
   const removeItem = (index: number) => {
+    const item = extractedItems[index];
+    if (!item) return;
+    setRemovedItems((prev) => [...prev, { item, index }]);
     setExtractedItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const undoRemoveItem = () => {
+    setRemovedItems((prev) => {
+      const last = prev[prev.length - 1];
+      if (!last) return prev;
+      setExtractedItems((items) => {
+        const next = [...items];
+        next.splice(Math.min(last.index, next.length), 0, last.item);
+        return next;
+      });
+      return prev.slice(0, -1);
+    });
   };
 
   const updateExtractedItem = (index: number, updates: Partial<ExtractedItem>) => {
@@ -337,6 +354,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setUploadedFiles([]);
     setSourceType("pasted_email");
     setExtractedItems([]);
+    setRemovedItems([]);
     setStoreName("");
     setOrderNumber("");
     setOrderDate("");
