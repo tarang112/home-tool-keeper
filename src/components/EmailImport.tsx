@@ -314,6 +314,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       toast.error("No items selected");
       return;
     }
+    if (selected.some((item) => getItemWarnings(item).length > 0)) {
+      toast.error("Fix quantity and price warnings before finalizing");
+      return;
+    }
 
     const orderInfo = [
       storeName && `Store: ${storeName}`,
