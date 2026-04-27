@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { InventoryItem } from "@/hooks/use-inventory";
+import { QUANTITY_UNITS, type InventoryItem } from "@/hooks/use-inventory";
 import { useAuth } from "@/hooks/use-auth";
 
 interface ExtractedItem {
@@ -291,6 +291,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       toast.error("Enter a category, location, or unit to apply");
       return;
     }
+    if (bulkUnitWarning) {
+      toast.error(bulkUnitWarning);
+      return;
+    }
     setBulkConfirmOpen(true);
   };
 
@@ -396,6 +400,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
+  const validBulkUnits = new Set(QUANTITY_UNITS.map((unit) => unit.value.toLowerCase()));
+  const bulkUnitValue = bulkUnit.trim();
+  const bulkUnitWarning = !bulkUnitValue
+    ? "Unit is missing"
+    : !validBulkUnits.has(bulkUnitValue.toLowerCase())
+      ? `Use a valid unit: ${QUANTITY_UNITS.map((unit) => unit.value).join(", ")}`
+      : "";
 
   return (
     <>
@@ -550,7 +561,21 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <div className="grid grid-cols-3 gap-2">
                   <Input value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} className="h-8" placeholder="Category" />
                   <Input value={bulkLocation} onChange={(event) => setBulkLocation(event.target.value)} className="h-8" placeholder="Location" />
-                  <Input value={bulkUnit} onChange={(event) => setBulkUnit(event.target.value)} className="h-8" placeholder="Unit" />
+                  <div className="space-y-1">
+                    <Input
+                      value={bulkUnit}
+                      onChange={(event) => setBulkUnit(event.target.value)}
+                      className="h-8 aria-[invalid=true]:border-destructive"
+                      placeholder="Unit"
+                      aria-invalid={Boolean(bulkUnitWarning)}
+                      aria-describedby="bulk-unit-warning"
+                    />
+                    {bulkUnitWarning && (
+                      <p id="bulk-unit-warning" className="text-xs text-destructive">
+                        {bulkUnitWarning}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" size="sm" className="h-8 flex-1" onClick={confirmBulkValues} disabled={selectedCount === 0}>
