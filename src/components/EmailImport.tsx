@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload } from "lucide-react";
+import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -309,6 +310,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
 
           {extractedItems.length === 0 ? (
             <div className="space-y-3">
+              <Alert className="border-primary/30 bg-primary/5">
+                <Info className="h-4 w-4" />
+                <AlertTitle>Google Mail connection coming later</AlertTitle>
+                <AlertDescription className="text-muted-foreground">
+                  For now, upload a PDF/EML or paste the full receipt email, then enter your registered email in Forwarded To to link it to this account.
+                </AlertDescription>
+              </Alert>
               <div>
                 <label className="text-sm font-medium mb-1 block">Forwarded To</label>
                 <Input
