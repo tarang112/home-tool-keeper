@@ -184,70 +184,66 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     }
     setParsing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("parse-order-email", {
-        body: {
-          emailContent: emailContent.trim(),
-          subject: subject.trim(),
-          from: senderEmail.trim(),
-          locations: customLocations,
-        },
-      });
+      const parseOne = async (content: string, receiptSubject: string, receiptSender: string, receiptSourceType: string, file?: File) => {
+        const { data, error } = await supabase.functions.invoke("parse-order-email", {
+          body: { emailContent: content.trim(), subject: receiptSubject, from: receiptSender, locations: customLocations },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
 
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
+        const items: ExtractedItem[] = (data.items || []).map((item: any) => ({
+          ...item,
+          subcategory: item.subcategory || "",
+          location: item.location || "",
+          expirationDate: item.expirationDate || null,
+          unitPrice: item.unitPrice ?? null,
+          totalPrice: item.totalPrice ?? null,
+          selected: true,
+          receiptSubject,
+          receiptStoreName: data.storeName || "",
+          receiptOrderNumber: data.orderNumber || "",
+          receiptOrderDate: data.orderDate || "",
+          receiptContent: content,
+        }));
+
+        const { error: saveError } = await saveReceiptImport({ data, items, content, receiptSubject, receiptSender, receiptSourceType, file });
+        if (saveError) throw saveError;
+        return { data, items };
+      };
+
+      const filesToParse = uploadedFiles.length > 0 ? uploadedFiles : [];
+      if (filesToParse.length > 1) {
+        const allItems: ExtractedItem[] = [];
+        for (const file of filesToParse) {
+          const readFile = await readReceiptFile(file);
+          if (!readFile) continue;
+          const parsed = await parseOne(readFile.content, readFile.subject || subject.trim(), readFile.sender || senderEmail.trim(), readFile.sourceType, file);
+          allItems.push(...parsed.items);
+        }
+        setExtractedItems(allItems);
+        setStoreName("Multiple receipts");
+        setOrderNumber("");
+        setOrderDate("");
+        setSubtotalAmount(null);
+        setTaxAmount(null);
+        setShippingAmount(null);
+        setTotalAmount(null);
+        toast.success(`Linked ${filesToParse.length} receipts and found ${allItems.length} item${allItems.length !== 1 ? "s" : ""}`);
         return;
       }
 
-      const items: ExtractedItem[] = (data.items || []).map((item: any) => ({
-        ...item,
-        subcategory: item.subcategory || "",
-        location: item.location || "",
-        expirationDate: item.expirationDate || null,
-        unitPrice: item.unitPrice ?? null,
-        totalPrice: item.totalPrice ?? null,
-        selected: true,
-      }));
+      const parsed = await parseOne(emailContent.trim(), subject.trim(), senderEmail.trim(), sourceType, uploadedFiles[0]);
+      setExtractedItems(parsed.items);
+      setStoreName(parsed.data.storeName || "");
+      setOrderNumber(parsed.data.orderNumber || "");
+      setOrderDate(parsed.data.orderDate || "");
+      setSubtotalAmount(parsed.data.subtotalAmount ?? null);
+      setTaxAmount(parsed.data.taxAmount ?? null);
+      setShippingAmount(parsed.data.shippingAmount ?? null);
+      setTotalAmount(parsed.data.totalAmount ?? null);
 
-      setExtractedItems(items);
-      setStoreName(data.storeName || "");
-      setOrderNumber(data.orderNumber || "");
-      setOrderDate(data.orderDate || "");
-      setSubtotalAmount(data.subtotalAmount ?? null);
-      setTaxAmount(data.taxAmount ?? null);
-      setShippingAmount(data.shippingAmount ?? null);
-      setTotalAmount(data.totalAmount ?? null);
-
-      const { error: saveError } = await supabase.from("receipt_email_imports" as any).insert({
-        user_id: user?.id,
-        matched_email: accountEmail,
-        sender_email: senderEmail.trim() || null,
-        subject: subject.trim() || null,
-        email_content: emailContent.trim(),
-        store_name: data.storeName || null,
-        order_number: data.orderNumber || null,
-        order_date: data.orderDate || null,
-        parsed_items: items,
-        source_type: sourceType,
-        file_name: uploadedFile?.name || null,
-        file_type: uploadedFile?.type || null,
-        subtotal_amount: data.subtotalAmount ?? null,
-        tax_amount: data.taxAmount ?? null,
-        shipping_amount: data.shippingAmount ?? null,
-        total_amount: data.totalAmount ?? null,
-        status: items.length > 0 ? "parsed" : "no_items_found",
-      } as any);
-
-      if (saveError) {
-        toast.error("Parsed email, but could not link the receipt to your account");
-        return;
-      }
-
-      if (items.length === 0) {
-        toast.info("No items found. Make sure you pasted an order confirmation email.");
-      } else {
-        toast.success(`Linked receipt to your account and found ${items.length} item${items.length > 1 ? "s" : ""}`);
-      }
+      if (parsed.items.length === 0) toast.info("No items found. Make sure you pasted an order confirmation email.");
+      else toast.success(`Linked receipt to your account and found ${parsed.items.length} item${parsed.items.length > 1 ? "s" : ""}`);
     } catch (err: any) {
       console.error("Email parse error:", err);
       toast.error("Failed to parse email. Please try again.");
