@@ -4,7 +4,6 @@ import { ArrowRight, Bell, Boxes, Check, ChevronLeft, ChevronRight, Mail, ScanBa
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -239,7 +238,7 @@ export default function Landing() {
           <div className="flex flex-col gap-2 sm:items-end">
             <div className="inline-flex rounded-lg border bg-card p-1" aria-label="Billing cycle">
               <Button type="button" variant={billingCycle === "monthly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("monthly")}>Monthly</Button>
-              <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly <Tooltip><TooltipTrigger asChild><span className="ml-1 cursor-help text-xs opacity-80 underline decoration-dotted underline-offset-2">Save 17%</span></TooltipTrigger><TooltipContent className="max-w-xs"><p>Yearly pricing gives 12 months for the cost of 10, so the savings are about 17% compared with paying monthly for a full year.</p></TooltipContent></Tooltip></Button>
+              <Button type="button" variant={billingCycle === "yearly" ? "default" : "ghost"} size="sm" onClick={() => setBillingCycle("yearly")}>Yearly <span className="ml-1 text-xs opacity-80">Save 17%</span></Button>
             </div>
             <p className="max-w-xs text-xs leading-5 text-muted-foreground sm:text-right">
               Yearly plans are billed upfront for the year. Added locations use the same billing cycle and are prorated for the remaining term.
@@ -289,27 +288,31 @@ export default function Landing() {
         </div>
         <div className="mt-10 overflow-hidden rounded-lg border bg-card" role="table" aria-label="Pricing feature comparison by plan">
           <div className="hidden grid-cols-[1.2fr_repeat(3,1fr)] border-b bg-muted/60 px-4 py-3 text-sm font-medium md:grid" role="row">
-            <span role="columnheader">Feature</span><span role="columnheader">Starter</span><span role="columnheader">Household</span><span role="columnheader">Business</span>
-          </div>
-          <div className="sticky top-0 z-10 grid grid-cols-3 gap-2 border-b bg-card/95 px-4 py-3 text-xs font-medium shadow-sm backdrop-blur md:hidden" aria-hidden="true">
-            <span className="rounded-md bg-muted px-2 py-1 text-center">Starter</span>
-            <span className="rounded-md bg-primary px-2 py-1 text-center text-primary-foreground">Household</span>
-            <span className="rounded-md bg-muted px-2 py-1 text-center">Business</span>
+            <span role="columnheader" id="pricing-feature-header">Feature</span>
+            {plans.map((plan) => (
+              <span key={plan.name} role="columnheader" id={`pricing-plan-${plan.name.toLowerCase()}`}>{plan.name}</span>
+            ))}
           </div>
           <div className="divide-y" role="rowgroup">
-            {comparisonRows.map(([feature, starter, household, business]) => (
+            {comparisonRows.map(([feature, starter, household, business], rowIndex) => {
+              const rowHeaderId = `pricing-feature-${rowIndex}`;
+              return (
               <div key={feature} className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.2fr_repeat(3,1fr)] md:py-3" role="row">
-                <span className="font-medium" role="rowheader">{feature}</span>
-                <div className="grid grid-cols-3 items-stretch gap-2 md:contents">
+                <span id={rowHeaderId} role="rowheader" className="font-medium">{feature}</span>
+                <div className="grid grid-cols-3 gap-2 md:contents">
                   {[["Starter", starter], ["Household", household], ["Business", business]].map(([planName, value]) => (
-                    <span key={planName} className="flex min-h-20 flex-col rounded-md border bg-background p-2 text-muted-foreground md:block md:min-h-0 md:border-0 md:bg-transparent md:p-0" role="cell" aria-label={`${feature}, ${planName}: ${value}`}>
-                      <span className="mb-1 block text-xs font-medium text-foreground md:hidden" aria-hidden="true">{planName}</span>
-                      <span className="break-words text-xs leading-5 md:text-sm md:leading-normal">{value}</span>
+                    <span
+                      key={planName}
+                      role="cell"
+                      aria-labelledby={`${rowHeaderId} pricing-plan-${planName.toLowerCase()}`}
+                      className="rounded-md border bg-background p-2 text-muted-foreground md:border-0 md:bg-transparent md:p-0"
+                    >
+                      <span aria-hidden="true" className="mb-1 block text-xs font-medium text-foreground md:hidden">{planName}</span>{value}
                     </span>
                   ))}
                 </div>
               </div>
-            ))}
+            );})}
           </div>
         </div>
       </section>
