@@ -649,9 +649,14 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                             </Button>
                           </div>
                           {item.selected && warnings.length > 0 && (
-                            <div className="col-span-2 flex items-start gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
-                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                              <span>{warnings.join(" · ")}</span>
+                            <div className="col-span-2 flex items-start justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                              <div className="flex items-start gap-1.5">
+                                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <span>{warnings.join(" · ")}</span>
+                              </div>
+                              <Button type="button" variant="outline" size="sm" className="h-7 shrink-0" onClick={() => fixItemValues(i)}>
+                                Fix
+                              </Button>
                             </div>
                           )}
                         </div>
