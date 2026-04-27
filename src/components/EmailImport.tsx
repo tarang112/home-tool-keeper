@@ -325,7 +325,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setSubject("");
     setForwardedToEmail("");
     setSenderEmail("");
-    setUploadedFile(null);
+    setUploadedFiles([]);
     setSourceType("pasted_email");
     setExtractedItems([]);
     setStoreName("");
@@ -404,12 +404,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <Input
                   id="receipt-upload"
                   type="file"
+                  multiple
                   accept=".pdf,.eml,application/pdf,message/rfc822"
-                  onChange={(e) => void handleFileUpload(e.target.files?.[0] || null)}
+                  onChange={(e) => void handleFileUpload(e.target.files)}
                 />
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Upload className="h-3 w-3" />
-                  <span>{uploadedFile ? uploadedFile.name : "PDF receipts and .eml order emails up to 20MB"}</span>
+                  <span>{uploadedFiles.length > 0 ? `${uploadedFiles.length} file${uploadedFiles.length > 1 ? "s" : ""} selected` : "PDF receipts and .eml order emails up to 20MB each"}</span>
                 </div>
               </div>
               <div>
@@ -427,7 +428,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 <Textarea
                   placeholder="Copy the entire order confirmation email, or upload a PDF/EML above...&#10;&#10;Supports: Amazon, Home Depot, Lowe's, Walmart, Target, and any other retailer"
                   value={emailContent}
-                  onChange={(e) => { setEmailContent(e.target.value); setSourceType(uploadedFile ? sourceType : "pasted_email"); }}
+                  onChange={(e) => { setEmailContent(e.target.value); setUploadedFiles([]); setSourceType("pasted_email"); }}
                   className="min-h-[200px] text-sm"
                 />
               </div>
