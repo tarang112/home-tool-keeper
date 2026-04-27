@@ -21,6 +21,7 @@ export default function VisitorDetails() {
   const sessionLogs = useMemo(() => logs.filter((log) => log.sessionId === decodedSessionId), [decodedSessionId, logs]);
   const first = sessionLogs[sessionLogs.length - 1];
   const latest = sessionLogs[0];
+  const formatLocation = (log: (typeof logs)[number]) => [log.city, log.region, log.country].filter(Boolean).join(", ") || "—";
 
   return (
     <div className="min-h-screen bg-background px-4 py-4">
@@ -39,7 +40,7 @@ export default function VisitorDetails() {
           </div>
 
           {first && latest && (
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-5">
               <div className="rounded-lg border bg-background p-3">
                 <p className="text-xs text-muted-foreground">First seen</p>
                 <p className="text-sm font-medium">{format(new Date(first.createdAt), "MMM d, yyyy h:mm a")}</p>
@@ -51,6 +52,14 @@ export default function VisitorDetails() {
               <div className="rounded-lg border bg-background p-3">
                 <p className="text-xs text-muted-foreground">Device</p>
                 <p className="flex items-center gap-2 text-sm font-medium"><DeviceIcon device={latest.device} /> {latest.device}</p>
+              </div>
+              <div className="rounded-lg border bg-background p-3">
+                <p className="text-xs text-muted-foreground">IP</p>
+                <p className="font-mono text-xs font-medium">{latest.ipAddressMasked || "—"}</p>
+              </div>
+              <div className="rounded-lg border bg-background p-3">
+                <p className="text-xs text-muted-foreground">Location</p>
+                <p className="truncate text-sm font-medium">{formatLocation(latest)}</p>
               </div>
             </div>
           )}
@@ -68,6 +77,8 @@ export default function VisitorDetails() {
                   <TableHead>Time</TableHead>
                   <TableHead>Page</TableHead>
                   <TableHead>Referrer</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Location</TableHead>
                   <TableHead>IP hash</TableHead>
                 </TableRow>
               </TableHeader>
@@ -77,6 +88,8 @@ export default function VisitorDetails() {
                     <TableCell className="whitespace-nowrap text-sm">{format(new Date(log.createdAt), "MMM d, yyyy h:mm a")}</TableCell>
                     <TableCell className="font-medium">{log.page}</TableCell>
                     <TableCell className="max-w-xs truncate text-muted-foreground">{log.referrer || "Direct"}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{log.ipAddressMasked || "—"}</TableCell>
+                    <TableCell className="max-w-xs truncate text-muted-foreground">{formatLocation(log)}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{log.ipHash ? `${log.ipHash.slice(0, 16)}…` : "—"}</TableCell>
                   </TableRow>
                 ))}
