@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +69,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [bulkCategory, setBulkCategory] = useState("");
   const [bulkLocation, setBulkLocation] = useState("");
   const [bulkUnit, setBulkUnit] = useState("");
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
 
   const readReceiptFile = async (file: File) => {
     if (!file) return;
