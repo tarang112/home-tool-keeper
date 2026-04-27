@@ -562,6 +562,17 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
 
               <div className="text-sm font-medium">Review extracted items</div>
 
+              <div className="rounded-md border bg-muted/30 p-2 space-y-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <Input value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} className="h-8" placeholder="Category" />
+                  <Input value={bulkLocation} onChange={(event) => setBulkLocation(event.target.value)} className="h-8" placeholder="Location" />
+                  <Input value={bulkUnit} onChange={(event) => setBulkUnit(event.target.value)} className="h-8" placeholder="Unit" />
+                </div>
+                <Button type="button" variant="outline" size="sm" className="h-8 w-full" onClick={applyBulkValues} disabled={selectedCount === 0}>
+                  Apply to selected
+                </Button>
+              </div>
+
               <ScrollArea className="flex-1 max-h-[40vh]">
                 <div className="space-y-1 pr-2">
                   {extractedItems.map((item, i) => {
