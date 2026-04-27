@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { InventoryItem } from "@/hooks/use-inventory";
+import { QUANTITY_UNITS, type InventoryItem } from "@/hooks/use-inventory";
 import { useAuth } from "@/hooks/use-auth";
 
 interface ExtractedItem {
@@ -291,6 +291,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       toast.error("Enter a category, location, or unit to apply");
       return;
     }
+    if (bulkUnitWarning) {
+      toast.error(bulkUnitWarning);
+      return;
+    }
     setBulkConfirmOpen(true);
   };
 
@@ -396,6 +400,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
+  const validBulkUnits = new Set(QUANTITY_UNITS.map((unit) => unit.value.toLowerCase()));
+  const bulkUnitValue = bulkUnit.trim();
+  const bulkUnitWarning = !bulkUnitValue
+    ? "Unit is missing"
+    : !validBulkUnits.has(bulkUnitValue.toLowerCase())
+      ? `Use a valid unit: ${QUANTITY_UNITS.map((unit) => unit.value).join(", ")}`
+      : "";
 
   return (
     <>
