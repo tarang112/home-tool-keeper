@@ -48,11 +48,62 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   const [subject, setSubject] = useState("");
   const [forwardedToEmail, setForwardedToEmail] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [sourceType, setSourceType] = useState("pasted_email");
   const [parsing, setParsing] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
   const [storeName, setStoreName] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [orderDate, setOrderDate] = useState("");
+  const [subtotalAmount, setSubtotalAmount] = useState<number | null>(null);
+  const [taxAmount, setTaxAmount] = useState<number | null>(null);
+  const [shippingAmount, setShippingAmount] = useState<number | null>(null);
+  const [totalAmount, setTotalAmount] = useState<number | null>(null);
+
+  const handleFileUpload = async (file: File | null) => {
+    if (!file) return;
+    if (file.size > MAX_UPLOAD_SIZE) {
+      toast.error("File must be 20MB or smaller");
+      return;
+    }
+
+    setUploadedFile(file);
+    const lowerName = file.name.toLowerCase();
+    try {
+      if (file.type === "application/pdf" || lowerName.endsWith(".pdf")) {
+        const pdfjs = await import("pdfjs-dist");
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url).toString();
+        const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+        const pages: string[] = [];
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          const page = await pdf.getPage(pageNumber);
+          const text = await page.getTextContent();
+          pages.push(text.items.map((item: any) => item.str).join(" "));
+        }
+        setEmailContent(pages.join("\n\n"));
+        setSourceType("pdf_upload");
+        toast.success("PDF text extracted");
+        return;
+      }
+
+      if (file.type === "message/rfc822" || lowerName.endsWith(".eml")) {
+        const content = await file.text();
+        setEmailContent(content);
+        setSubject((current) => current || extractEmlHeader(content, "Subject"));
+        setSenderEmail((current) => current || extractEmlHeader(content, "From"));
+        setForwardedToEmail((current) => current || extractEmlHeader(content, "To"));
+        setSourceType("eml_upload");
+        toast.success("EML loaded");
+        return;
+      }
+
+      toast.error("Upload a PDF or EML file");
+      setUploadedFile(null);
+    } catch {
+      toast.error("Could not read that file");
+      setUploadedFile(null);
+    }
+  };
 
   const handlePaste = async () => {
     try {
@@ -106,6 +157,10 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
       setStoreName(data.storeName || "");
       setOrderNumber(data.orderNumber || "");
       setOrderDate(data.orderDate || "");
+      setSubtotalAmount(data.subtotalAmount ?? null);
+      setTaxAmount(data.taxAmount ?? null);
+      setShippingAmount(data.shippingAmount ?? null);
+      setTotalAmount(data.totalAmount ?? null);
 
       const { error: saveError } = await supabase.from("receipt_email_imports" as any).insert({
         user_id: user?.id,
@@ -117,6 +172,13 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
         order_number: data.orderNumber || null,
         order_date: data.orderDate || null,
         parsed_items: items,
+        source_type: sourceType,
+        file_name: uploadedFile?.name || null,
+        file_type: uploadedFile?.type || null,
+        subtotal_amount: data.subtotalAmount ?? null,
+        tax_amount: data.taxAmount ?? null,
+        shipping_amount: data.shippingAmount ?? null,
+        total_amount: data.totalAmount ?? null,
         status: items.length > 0 ? "parsed" : "no_items_found",
       } as any);
 
@@ -207,10 +269,16 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setSubject("");
     setForwardedToEmail("");
     setSenderEmail("");
+    setUploadedFile(null);
+    setSourceType("pasted_email");
     setExtractedItems([]);
     setStoreName("");
     setOrderNumber("");
     setOrderDate("");
+    setSubtotalAmount(null);
+    setTaxAmount(null);
+    setShippingAmount(null);
+    setTotalAmount(null);
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
