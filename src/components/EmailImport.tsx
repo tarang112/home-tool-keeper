@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info } from "lucide-react";
+import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -266,6 +266,15 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     setExtractedItems((prev) => prev.map((item, i) => (i === index ? { ...item, ...updates } : item)));
   };
 
+  const calculateUnitPrice = (index: number) => {
+    const item = extractedItems[index];
+    if (!item?.totalPrice || !item.quantity || item.quantity <= 0) {
+      toast.error("Enter quantity and total price first");
+      return;
+    }
+    updateExtractedItem(index, { unitPrice: Number((item.totalPrice / item.quantity).toFixed(2)) });
+  };
+
   const toggleAll = () => {
     const allSelected = extractedItems.every((i) => i.selected);
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
@@ -523,7 +532,12 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                           <Input value={item.quantityUnit} onChange={(event) => updateExtractedItem(i, { quantityUnit: event.target.value })} className="h-8" placeholder="Unit" />
                           <Input value={item.location || ""} onChange={(event) => updateExtractedItem(i, { location: event.target.value })} className="h-8" placeholder="Location" />
                           <Input type="date" value={item.expirationDate || ""} onChange={(event) => updateExtractedItem(i, { expirationDate: event.target.value })} className="h-8" />
-                          <Input type="number" min="0" step="0.01" value={item.unitPrice ?? ""} onChange={(event) => updateExtractedItem(i, { unitPrice: event.target.value === "" ? undefined : Number(event.target.value) })} className="h-8" placeholder="Unit price" />
+                          <div className="col-span-2 flex gap-2">
+                            <Input type="number" min="0" step="0.01" value={item.unitPrice ?? ""} onChange={(event) => updateExtractedItem(i, { unitPrice: event.target.value === "" ? undefined : Number(event.target.value) })} className="h-8" placeholder="Unit price" />
+                            <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 gap-1" onClick={() => calculateUnitPrice(i)}>
+                              <Calculator className="h-3.5 w-3.5" /> Calc
+                            </Button>
+                          </div>
                         </div>
                       </div>
                       <Button
