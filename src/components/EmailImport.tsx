@@ -486,6 +486,8 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                 </span>
               </div>
 
+              <div className="text-sm font-medium">Review extracted items</div>
+
               <ScrollArea className="flex-1 max-h-[40vh]">
                 <div className="space-y-1 pr-2">
                   {extractedItems.map((item, i) => (
@@ -500,6 +502,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                         onCheckedChange={() => toggleItem(i)}
                       />
                       <div className="grid gap-2 min-w-0">
+                        <label className="text-[11px] font-medium text-muted-foreground">Name</label>
                         <Input
                           value={item.name}
                           onChange={(event) => updateExtractedItem(i, { name: event.target.value })}
@@ -507,14 +510,20 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                           placeholder="Item name"
                         />
                         <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-medium text-muted-foreground">Quantity</label>
+                            <Input type="number" min="0" step="0.01" value={item.quantity} onChange={(event) => updateExtractedItem(i, { quantity: Number(event.target.value) || 0 })} className="h-8" placeholder="Qty" />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-medium text-muted-foreground">Total price</label>
+                            <Input type="number" min="0" step="0.01" value={item.totalPrice ?? ""} onChange={(event) => updateExtractedItem(i, { totalPrice: event.target.value === "" ? undefined : Number(event.target.value) })} className="h-8" placeholder="Total" />
+                          </div>
                           <Input value={item.category} onChange={(event) => updateExtractedItem(i, { category: event.target.value })} className="h-8" placeholder="Category" />
                           <Input value={item.subcategory || ""} onChange={(event) => updateExtractedItem(i, { subcategory: event.target.value })} className="h-8" placeholder="Subcategory" />
-                          <Input type="number" min="0" step="0.01" value={item.quantity} onChange={(event) => updateExtractedItem(i, { quantity: Number(event.target.value) || 0 })} className="h-8" placeholder="Qty" />
                           <Input value={item.quantityUnit} onChange={(event) => updateExtractedItem(i, { quantityUnit: event.target.value })} className="h-8" placeholder="Unit" />
                           <Input value={item.location || ""} onChange={(event) => updateExtractedItem(i, { location: event.target.value })} className="h-8" placeholder="Location" />
                           <Input type="date" value={item.expirationDate || ""} onChange={(event) => updateExtractedItem(i, { expirationDate: event.target.value })} className="h-8" />
                           <Input type="number" min="0" step="0.01" value={item.unitPrice ?? ""} onChange={(event) => updateExtractedItem(i, { unitPrice: event.target.value === "" ? undefined : Number(event.target.value) })} className="h-8" placeholder="Unit price" />
-                          <Input type="number" min="0" step="0.01" value={item.totalPrice ?? ""} onChange={(event) => updateExtractedItem(i, { totalPrice: event.target.value === "" ? undefined : Number(event.target.value) })} className="h-8" placeholder="Total" />
                         </div>
                       </div>
                       <Button
@@ -553,7 +562,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
                   disabled={selectedCount === 0}
                 >
                   <Check className="h-4 w-4" />
-                  Add {selectedCount} Item{selectedCount !== 1 ? "s" : ""}
+                  Finalize {selectedCount} Item{selectedCount !== 1 ? "s" : ""}
                 </Button>
               </div>
             </div>
