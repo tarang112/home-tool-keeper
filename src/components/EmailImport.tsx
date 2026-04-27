@@ -228,12 +228,31 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
               <Mail className="h-5 w-5" /> Import from Email
             </DialogTitle>
             <DialogDescription>
-              Paste an order confirmation email to extract items
+              Paste a forwarded receipt or order email and link it to your account
             </DialogDescription>
           </DialogHeader>
 
           {extractedItems.length === 0 ? (
             <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Forwarded To</label>
+                <Input
+                  type="email"
+                  placeholder={user?.email ?? "your-account@example.com"}
+                  value={forwardedToEmail}
+                  onChange={(e) => setForwardedToEmail(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">Must match your registered account email.</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Original Sender (optional)</label>
+                <Input
+                  type="email"
+                  placeholder="store@example.com"
+                  value={senderEmail}
+                  onChange={(e) => setSenderEmail(e.target.value)}
+                />
+              </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Subject (optional)</label>
                 <Input
@@ -264,7 +283,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
               <Button
                 className="w-full gap-2"
                 onClick={handleParse}
-                disabled={parsing || !emailContent.trim()}
+                disabled={parsing || !emailContent.trim() || !forwardedToEmail.trim()}
               >
                 {parsing ? (
                   <>
