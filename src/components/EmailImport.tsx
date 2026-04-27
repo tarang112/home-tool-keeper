@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator, Undo2 } from "lucide-react";
+import { Mail, Loader2, Check, Trash2, ClipboardPaste, Upload, Info, Calculator, Undo2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -292,6 +292,17 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
     updateExtractedItem(index, { unitPrice: Number((item.totalPrice / item.quantity).toFixed(2)) });
   };
 
+  const getItemWarnings = (item: ExtractedItem) => {
+    const warnings: string[] = [];
+    if (!item.quantity || item.quantity <= 0) warnings.push("Quantity is required");
+    if (item.quantity < 0) warnings.push("Quantity cannot be negative");
+    if (item.unitPrice == null) warnings.push("Unit price is required");
+    if (item.totalPrice == null) warnings.push("Total price is required");
+    if ((item.unitPrice ?? 0) < 0) warnings.push("Unit price cannot be negative");
+    if ((item.totalPrice ?? 0) < 0) warnings.push("Total price cannot be negative");
+    return warnings;
+  };
+
   const toggleAll = () => {
     const allSelected = extractedItems.every((i) => i.selected);
     setExtractedItems((prev) => prev.map((item) => ({ ...item, selected: !allSelected })));
@@ -365,6 +376,7 @@ export function EmailImport({ onAdd, customLocations, externalOpen, onExternalOp
   };
 
   const selectedCount = extractedItems.filter((i) => i.selected).length;
+  const hasValidationWarnings = extractedItems.some((item) => item.selected && getItemWarnings(item).length > 0);
 
   return (
     <>
