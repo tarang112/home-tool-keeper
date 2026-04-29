@@ -255,6 +255,10 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     const pageRes = await fetchPublicUrl(url);
     if (!pageRes.ok) {
       console.error('URL fetch failed:', pageRes.status, pageRes.statusText);
+      const urlFallback = extractProductFromRetailUrl(url);
+      if (urlFallback?.name) {
+        return jsonResponse({ success: true, source: 'url-fallback', product: urlFallback });
+      }
       return jsonResponse({ success: false, error: 'Could not fetch URL' }, 400);
     }
     const html = await pageRes.text();
@@ -263,6 +267,11 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     const extracted = extractProductFromHtml(html, url);
     if (extracted && extracted.name) {
       return jsonResponse({ success: true, source: 'url', product: extracted });
+    }
+
+    const urlFallback = extractProductFromRetailUrl(url);
+    if (urlFallback?.name) {
+      return jsonResponse({ success: true, source: 'url-fallback', product: urlFallback });
     }
 
     // Fallback: gather page text and use AI to parse it
@@ -332,6 +341,42 @@ async function assertHostnameResolvesPublic(hostname: string): Promise<void> {
 function isPrivateAddress(address: string): boolean {
   return /^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(address)
     || /^(::1$|fc|fd|fe80:)/i.test(address);
+}
+
+function extractProductFromRetailUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const segments = parsed.pathname.split('/').filter(Boolean).map((segment) => decodeURIComponent(segment));
+    let slug = '';
+
+    if (parsed.hostname.includes('homedepot.com')) {
+      const productIndex = segments.findIndex((segment) => segment.toLowerCase() === 'p');
+      slug = productIndex >= 0 ? segments[productIndex + 1] || '' : '';
+    }
+
+    if (!slug) {
+      slug = segments.find((segment) => /[a-z]/i.test(segment) && /-/.test(segment) && !/^\d+$/.test(segment)) || '';
+    }
+
+    const name = slug
+      .replace(/-/g, ' ')
+      .replace(/\b(\d+)\s+(in|ft|oz|lb|gal|mm|cm|m)\b/gi, '$1 $2.')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!name) return null;
+    const catInfo = guessCategory([name]);
+    return {
+      name,
+      category: catInfo.category,
+      subcategory: catInfo.subcategory,
+      notes: `Imported from ${parsed.hostname}`,
+      image_url: '',
+      quantity: parseQuantity(name),
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function fetchPublicUrl(url: string): Promise<Response> {
