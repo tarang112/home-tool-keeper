@@ -134,7 +134,10 @@ export default function AuthPage() {
                   <button
                     type="button"
                     className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                    onClick={handlePasswordReset}
+                    onClick={() => {
+                      setIsResetMode(true);
+                      setLoginError("");
+                    }}
                     disabled={loading}
                   >
                     Forgot password?
@@ -177,6 +180,13 @@ export default function AuthPage() {
               type="button"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => {
+                if (isResetMode) {
+                  setIsResetMode(false);
+                  setResetEmailSent(false);
+                  setLoginError("");
+                  return;
+                }
+
                 setIsResetMode(false);
                 setResetEmailSent(false);
                 setLoginError("");
