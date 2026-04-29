@@ -53,13 +53,14 @@ export default function AuthPage() {
   };
 
   const handlePasswordReset = async () => {
-    if (!email.trim()) {
+    const resetEmail = email.trim();
+    if (!resetEmail) {
       toast.error("Enter your email first");
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
     setLoading(false);
@@ -69,6 +70,7 @@ export default function AuthPage() {
       return;
     }
 
+    sessionStorage.setItem("homestock_reset_email", resetEmail);
     setResetEmailSent(true);
     toast.success("Password reset link sent. Check your email.");
   };
