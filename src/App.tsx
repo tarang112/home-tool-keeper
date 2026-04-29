@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { VisitorTracker } from "@/components/VisitorTracker";
 import Landing from "./pages/Landing.tsx";
 import AdminLeads from "./pages/AdminLeads.tsx";
 import Index from "./pages/Index.tsx";
@@ -45,7 +44,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <VisitorTracker />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/admin/leads" element={<ProtectedRoute><AdminLeads /></ProtectedRoute>} />
