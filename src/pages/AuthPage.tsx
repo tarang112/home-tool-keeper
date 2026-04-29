@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getResetCooldownSeconds, getStoredResetEmail, markResetEmailRequested, storeResetEmail } from "@/lib/password-reset";
 
 const PLAN_PRICES = {
   starter: { monthly: 0, yearly: 0 },
@@ -24,7 +25,7 @@ export default function AuthPage() {
   const unitAmountCents = PLAN_PRICES[plan][billingCycle];
   const totalAmountCents = unitAmountCents * locationCount;
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => getStoredResetEmail());
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,6 +60,12 @@ export default function AuthPage() {
       return;
     }
 
+    const cooldownSeconds = getResetCooldownSeconds(resetEmail);
+    if (cooldownSeconds > 0) {
+      toast.error(`Please wait ${cooldownSeconds}s before requesting another reset email.`);
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
@@ -70,7 +77,8 @@ export default function AuthPage() {
       return;
     }
 
-    sessionStorage.setItem("homestock_reset_email", resetEmail);
+    storeResetEmail(resetEmail);
+    markResetEmailRequested(resetEmail);
     setResetEmailSent(true);
     toast.success("Password reset link sent. Check your email.");
   };

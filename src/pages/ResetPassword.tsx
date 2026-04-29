@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
+import { getResetCooldownSeconds, getStoredResetEmail, markResetEmailRequested, storeResetEmail } from "@/lib/password-reset";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function ResetPassword() {
   const [resetEmail, setResetEmail] = useState("");
 
   useEffect(() => {
-    setResetEmail(sessionStorage.getItem("homestock_reset_email") || "");
+    setResetEmail(getStoredResetEmail());
 
     const code = searchParams.get("code");
     if (!code) {
@@ -40,14 +41,21 @@ export default function ResetPassword() {
   }, [searchParams]);
 
   const handleResendReset = async () => {
-    if (!resetEmail.trim()) {
+    const email = resetEmail.trim();
+    if (!email) {
       toast.error("Enter your email on the sign-in page first.");
       navigate("/auth", { replace: true });
       return;
     }
 
+    const cooldownSeconds = getResetCooldownSeconds(email);
+    if (cooldownSeconds > 0) {
+      toast.error(`Please wait ${cooldownSeconds}s before requesting another reset email.`);
+      return;
+    }
+
     setResending(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
     setResending(false);
@@ -57,6 +65,8 @@ export default function ResetPassword() {
       return;
     }
 
+    storeResetEmail(email);
+    markResetEmailRequested(email);
     toast.success("Password reset email resent. Check your inbox.");
   };
 
