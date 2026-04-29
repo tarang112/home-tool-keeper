@@ -67,7 +67,10 @@ export default function ResetPassword() {
 
     storeResetEmail(email);
     markResetEmailRequested(email);
-    toast.success("Password reset email resent. Check your inbox.");
+    toast.success("Password reset email resent", {
+      description: "Use the newest link in your inbox. Older reset links may no longer work.",
+      duration: 7000,
+    });
   };
 
   const handleSubmit = async (event: React.FormEvent) => {

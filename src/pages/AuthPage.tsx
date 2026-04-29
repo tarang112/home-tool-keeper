@@ -80,7 +80,10 @@ export default function AuthPage() {
     storeResetEmail(resetEmail);
     markResetEmailRequested(resetEmail);
     setResetEmailSent(true);
-    toast.success("Password reset link sent. Check your email.");
+    toast.success("Password reset link sent", {
+      description: "Check your inbox, open the secure link, then return here to sign in with your new password.",
+      duration: 7000,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,7 +172,7 @@ export default function AuthPage() {
             </div>}
             {isResetMode && resetEmailSent && (
               <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-primary" role="status">
-                Password reset email sent. Open the secure link in your inbox to choose a new password.
+                Password reset email sent. Check your inbox, open the secure link, choose a new password, then come back here to sign in.
               </div>
             )}
             {!isSignUp && loginError && (
