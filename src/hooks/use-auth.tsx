@@ -40,7 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, nextSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === "INITIAL_SESSION") return;
+
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       setLoading(false);
@@ -51,14 +53,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     supabase.auth
-      .getSession()
-      .then(({ data: { session: currentSession } }) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-
-        if (currentSession?.user) {
-          void acceptPendingInvitesForUser(currentSession.user);
+      .getUser()
+      .then(({ data: { user: currentUser }, error }) => {
+        if (error || !currentUser) {
+          void supabase.auth.signOut({ scope: "local" });
+          setSession(null);
+          setUser(null);
+          return;
         }
+
+        return supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+          setSession(currentSession);
+          setUser(currentUser);
+
+          void acceptPendingInvitesForUser(currentUser);
+        });
       })
       .catch((error) => {
         console.error("Failed to restore auth session", error);
