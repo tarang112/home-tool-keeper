@@ -29,6 +29,8 @@ export default function AuthPage() {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const submitAuth = async () => {
     setLoginError("");
@@ -50,11 +52,6 @@ export default function AuthPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await submitAuth();
-  };
-
   const handlePasswordReset = async () => {
     if (!email.trim()) {
       toast.error("Enter your email first");
@@ -72,7 +69,18 @@ export default function AuthPage() {
       return;
     }
 
+    setResetEmailSent(true);
     toast.success("Password reset link sent. Check your email.");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isResetMode) {
+      await handlePasswordReset();
+      return;
+    }
+
+    await submitAuth();
   };
 
   return (
@@ -84,7 +92,7 @@ export default function AuthPage() {
           </div>
           <CardTitle className="font-heading text-2xl">HomeStock</CardTitle>
           <CardDescription>
-            {isSignUp ? "Create an account to track your inventory" : "Sign in to your inventory"}
+            {isResetMode ? "Reset access to your inventory" : isSignUp ? "Create an account to track your inventory" : "Sign in to your inventory"}
           </CardDescription>
           <div className="mt-3 rounded-lg border bg-muted/40 p-3 text-sm">
             <p className="font-medium capitalize">{plan} · {billingCycle}</p>
@@ -93,7 +101,7 @@ export default function AuthPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignUp && (
+            {isSignUp && !isResetMode && (
               <div className="space-y-2">
                 <Label htmlFor="displayName">Display Name</Label>
                 <Input
@@ -113,19 +121,23 @@ export default function AuthPage() {
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setLoginError("");
+                  setResetEmailSent(false);
                 }}
                 placeholder="you@example.com"
                 required
               />
             </div>
-            <div className="space-y-2">
+            {!isResetMode && <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <Label htmlFor="password">Password</Label>
                 {!isSignUp && (
                   <button
                     type="button"
                     className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                    onClick={handlePasswordReset}
+                    onClick={() => {
+                      setIsResetMode(true);
+                      setLoginError("");
+                    }}
                     disabled={loading}
                   >
                     Forgot password?
@@ -144,7 +156,12 @@ export default function AuthPage() {
                 required
                 minLength={6}
               />
-            </div>
+            </div>}
+            {isResetMode && resetEmailSent && (
+              <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-primary" role="status">
+                Password reset email sent. Open the secure link in your inbox to choose a new password.
+              </div>
+            )}
             {!isSignUp && loginError && (
               <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive" role="alert">
                 <p className="font-medium">Sign-in failed</p>
@@ -155,16 +172,28 @@ export default function AuthPage() {
               </div>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
+              {loading ? "Please wait..." : isResetMode ? "Send reset link" : isSignUp ? "Create Account" : "Sign In"}
             </Button>
           </form>
           <div className="mt-4 text-center">
             <button
               type="button"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                if (isResetMode) {
+                  setIsResetMode(false);
+                  setResetEmailSent(false);
+                  setLoginError("");
+                  return;
+                }
+
+                setIsResetMode(false);
+                setResetEmailSent(false);
+                setLoginError("");
+                setIsSignUp(!isSignUp);
+              }}
             >
-              {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+              {isResetMode ? "Back to sign in" : isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
             </button>
           </div>
         </CardContent>
