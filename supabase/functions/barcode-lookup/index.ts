@@ -343,6 +343,42 @@ function isPrivateAddress(address: string): boolean {
     || /^(::1$|fc|fd|fe80:)/i.test(address);
 }
 
+function extractProductFromRetailUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const segments = parsed.pathname.split('/').filter(Boolean).map((segment) => decodeURIComponent(segment));
+    let slug = '';
+
+    if (parsed.hostname.includes('homedepot.com')) {
+      const productIndex = segments.findIndex((segment) => segment.toLowerCase() === 'p');
+      slug = productIndex >= 0 ? segments[productIndex + 1] || '' : '';
+    }
+
+    if (!slug) {
+      slug = segments.find((segment) => /[a-z]/i.test(segment) && /-/.test(segment) && !/^\d+$/.test(segment)) || '';
+    }
+
+    const name = slug
+      .replace(/-/g, ' ')
+      .replace(/\b(\d+)\s+(in|ft|oz|lb|gal|mm|cm|m)\b/gi, '$1 $2.')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!name) return null;
+    const catInfo = guessCategory([name]);
+    return {
+      name,
+      category: catInfo.category,
+      subcategory: catInfo.subcategory,
+      notes: `Imported from ${parsed.hostname}`,
+      image_url: '',
+      quantity: parseQuantity(name),
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function fetchPublicUrl(url: string): Promise<Response> {
   let currentUrl = await validatePublicHttpUrl(url);
   for (let i = 0; i < 4; i++) {
