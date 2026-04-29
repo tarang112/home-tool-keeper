@@ -255,6 +255,10 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     const pageRes = await fetchPublicUrl(url);
     if (!pageRes.ok) {
       console.error('URL fetch failed:', pageRes.status, pageRes.statusText);
+      const urlFallback = extractProductFromRetailUrl(url);
+      if (urlFallback?.name) {
+        return jsonResponse({ success: true, source: 'url-fallback', product: urlFallback });
+      }
       return jsonResponse({ success: false, error: 'Could not fetch URL' }, 400);
     }
     const html = await pageRes.text();
@@ -263,6 +267,11 @@ async function handleUrlLookup(rawUrl: string): Promise<Response> {
     const extracted = extractProductFromHtml(html, url);
     if (extracted && extracted.name) {
       return jsonResponse({ success: true, source: 'url', product: extracted });
+    }
+
+    const urlFallback = extractProductFromRetailUrl(url);
+    if (urlFallback?.name) {
+      return jsonResponse({ success: true, source: 'url-fallback', product: urlFallback });
     }
 
     // Fallback: gather page text and use AI to parse it
