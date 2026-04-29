@@ -15,8 +15,12 @@ export default function ResetPassword() {
   const [invalid, setInvalid] = useState(false);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   useEffect(() => {
+    setResetEmail(sessionStorage.getItem("homestock_reset_email") || "");
+
     const code = searchParams.get("code");
     if (!code) {
       setInvalid(true);
@@ -28,6 +32,27 @@ export default function ResetPassword() {
       setReady(!error);
     });
   }, [searchParams]);
+
+  const handleResendReset = async () => {
+    if (!resetEmail.trim()) {
+      toast.error("Enter your email on the sign-in page first.");
+      navigate("/auth", { replace: true });
+      return;
+    }
+
+    setResending(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+    setResending(false);
+
+    if (error) {
+      toast.error(error.message || "Unable to resend reset email");
+      return;
+    }
+
+    toast.success("Password reset email resent. Check your inbox.");
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -68,9 +93,16 @@ export default function ResetPassword() {
               </Button>
             </form>
           ) : (
-            <Button className="w-full" variant={invalid ? "default" : "outline"} onClick={() => navigate("/auth", { replace: true })} disabled={!invalid}>
-              Back to Sign In
-            </Button>
+            <div className="space-y-3">
+              {invalid && resetEmail && (
+                <Button className="w-full" onClick={handleResendReset} disabled={resending}>
+                  {resending ? "Resending..." : "Resend reset email"}
+                </Button>
+              )}
+              <Button className="w-full" variant="outline" onClick={() => navigate("/auth", { replace: true })} disabled={!invalid}>
+                Back to Sign In
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
