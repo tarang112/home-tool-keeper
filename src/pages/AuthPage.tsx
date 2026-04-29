@@ -7,6 +7,7 @@ import { Package } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const PLAN_PRICES = {
   starter: { monthly: 0, yearly: 0 },
@@ -44,6 +45,26 @@ export default function AuthPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email.trim()) {
+      toast.error("Enter your email first");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message || "Unable to send reset email");
+      return;
+    }
+
+    toast.success("Password reset link sent. Check your email.");
   };
 
   return (
@@ -87,7 +108,19 @@ export default function AuthPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="password">Password</Label>
+                {!isSignUp && (
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                    onClick={handlePasswordReset}
+                    disabled={loading}
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
               <Input
                 id="password"
                 type="password"
