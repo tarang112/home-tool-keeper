@@ -28,9 +28,10 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitAuth = async () => {
+    setLoginError("");
     setLoading(true);
     try {
       if (isSignUp) {
@@ -41,10 +42,17 @@ export default function AuthPage() {
         toast.success("Welcome back!");
       }
     } catch (err: any) {
-      toast.error(err.message || "Authentication failed");
+      const message = err.message || "Authentication failed";
+      if (!isSignUp) setLoginError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitAuth();
   };
 
   const handlePasswordReset = async () => {
@@ -102,7 +110,10 @@ export default function AuthPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setLoginError("");
+                }}
                 placeholder="you@example.com"
                 required
               />
@@ -125,12 +136,24 @@ export default function AuthPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setLoginError("");
+                }}
                 placeholder="••••••••"
                 required
                 minLength={6}
               />
             </div>
+            {!isSignUp && loginError && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+                <p className="font-medium">Sign-in failed</p>
+                <p className="mt-1 text-destructive/90">{loginError}</p>
+                <Button type="button" variant="outline" size="sm" className="mt-3 w-full" onClick={submitAuth} disabled={loading}>
+                  Retry sign in
+                </Button>
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
             </Button>
