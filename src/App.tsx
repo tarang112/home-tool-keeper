@@ -15,8 +15,6 @@ import AcceptInvite from "./pages/AcceptInvite.tsx";
 import InstallApp from "./pages/InstallApp.tsx";
 import NotificationHistory from "./pages/NotificationHistory.tsx";
 import EmailPreview from "./pages/EmailPreview.tsx";
-import VisitorLog from "./pages/VisitorLog.tsx";
-import VisitorDetails from "./pages/VisitorDetails.tsx";
 import ReceiptImports from "./pages/ReceiptImports.tsx";
 import Unsubscribe from "./pages/Unsubscribe.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -55,8 +53,6 @@ const App = () => (
             <Route path="/notifications" element={<ProtectedRoute><NotificationHistory /></ProtectedRoute>} />
             <Route path="/email-preview" element={<ProtectedRoute><EmailPreview /></ProtectedRoute>} />
             <Route path="/receipts" element={<ProtectedRoute><ReceiptImports /></ProtectedRoute>} />
-            <Route path="/visitors" element={<ProtectedRoute><VisitorLog /></ProtectedRoute>} />
-            <Route path="/visitors/:sessionId" element={<ProtectedRoute><VisitorDetails /></ProtectedRoute>} />
             <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
