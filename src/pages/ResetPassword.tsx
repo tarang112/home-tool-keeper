@@ -13,7 +13,10 @@ export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const [ready, setReady] = useState(false);
   const [invalid, setInvalid] = useState(false);
+  const [linkIssue, setLinkIssue] = useState<"missing" | "expired" | "invalid" | null>(null);
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -24,11 +27,14 @@ export default function ResetPassword() {
     const code = searchParams.get("code");
     if (!code) {
       setInvalid(true);
+      setLinkIssue("missing");
       return;
     }
 
     supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+      const message = error?.message?.toLowerCase() || "";
       setInvalid(Boolean(error));
+      setLinkIssue(error ? (message.includes("expired") ? "expired" : "invalid") : null);
       setReady(!error);
     });
   }, [searchParams]);
@@ -56,6 +62,18 @@ export default function ResetPassword() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setPasswordError("");
+
+    if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
@@ -69,6 +87,15 @@ export default function ResetPassword() {
     navigate("/app", { replace: true });
   };
 
+  const linkTitle = linkIssue === "expired" ? "Reset link expired" : linkIssue === "missing" ? "Reset link missing" : invalid ? "Reset link invalid" : "Reset password";
+  const linkDescription = linkIssue === "expired"
+    ? "This reset link has expired. Request a new one to keep your account secure."
+    : linkIssue === "missing"
+      ? "This page was opened without a reset link. Start again from sign in."
+      : invalid
+        ? "This reset link is invalid or has already been used. Request a new one if you still need access."
+        : "Choose a new password for HomeStock.";
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-sm">
@@ -76,9 +103,9 @@ export default function ResetPassword() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             {!ready && !invalid ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : <LockKeyhole className="h-6 w-6 text-primary" />}
           </div>
-          <CardTitle>{invalid ? "Link expired" : "Reset password"}</CardTitle>
+          <CardTitle>{linkTitle}</CardTitle>
           <CardDescription>
-            {invalid ? "This secure reset link is invalid or has expired." : "Choose a new password for HomeStock."}
+            {linkDescription}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -86,8 +113,13 @@ export default function ResetPassword() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="password">New password</Label>
-                <Input id="password" type="password" minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} required />
+                <Input id="password" type="password" minLength={6} value={password} onChange={(event) => { setPassword(event.target.value); setPasswordError(""); }} required />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Input id="confirmPassword" type="password" minLength={6} value={confirmPassword} onChange={(event) => { setConfirmPassword(event.target.value); setPasswordError(""); }} required />
+              </div>
+              {passwordError && <p className="text-sm text-destructive" role="alert">{passwordError}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Saving..." : "Update Password"}
               </Button>
