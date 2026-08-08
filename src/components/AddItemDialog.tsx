@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { normalizeGroupedItemName } from "@/lib/item-matching";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CustomCategory, CustomLocation } from "@/hooks/use-custom-options";
+import { uploadItemImage } from "@/lib/image-upload";
+
 
 interface BatchEntry {
   id?: string; // existing entry ID (for edit mode)
