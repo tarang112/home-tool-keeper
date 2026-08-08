@@ -60,7 +60,7 @@ export function StatsBar({ items, onLowStockClick, onCategoryClick, activeFilter
               className={`min-h-20 rounded-md border p-3 text-left transition-all ${stat.onClick ? "cursor-pointer hover:ring-1 hover:ring-primary/30" : "cursor-default"} ${isActive ? "border-primary bg-primary/10 ring-2 ring-primary" : "border-border bg-background/60"}`}
             >
               <div className="flex items-center justify-between gap-2">
-                <stat.icon className={`h-4 w-4 shrink-0 ${stat.key === "outOfStock" ? "text-destructive" : "text-primary"}`} />
+                <stat.icon className={`h-4 w-4 shrink-0 ${stat.key === "lowStock" ? "text-destructive" : "text-primary"}`} />
                 <span className="font-heading text-2xl font-bold leading-none">{stat.value}</span>
               </div>
               <p className="mt-2 text-xs font-medium text-muted-foreground">{stat.label}</p>
