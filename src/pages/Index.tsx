@@ -562,7 +562,7 @@ const Index = () => {
                       }
                       <span className="text-sm">{icon}</span>
                       <h2 className="text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wide">{label}</h2>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">{catItems.length}</Badge>
+                      <Badge variant="outline" className="ml-auto px-1.5 py-0 text-xs">{catItems.length}</Badge>
                     </button>
                     {!collapsedCategories.has(catValue) && (
                       <div className="space-y-2 lg:columns-2 xl:columns-3 lg:gap-3 lg:space-y-0 [&>*]:mb-3 [&>*]:break-inside-avoid">
@@ -603,7 +603,7 @@ const Index = () => {
             {showDeleted ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
             <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
             <h2 className="text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wide">Recently Deleted</h2>
-            <span className="text-[10px] text-muted-foreground ml-1">(24h)</span>
+            <span className="ml-1 text-xs text-muted-foreground">(24h)</span>
           </button>
           {showDeleted && (
             <div className="mt-2 space-y-2">
@@ -614,7 +614,7 @@ const Index = () => {
                   <div key={item.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-md border bg-muted/30 opacity-70">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground">Qty: {item.quantity} · {item.location || "No location"}</p>
+                      <p className="text-xs text-muted-foreground">Qty: {item.quantity} · {item.location || "No location"}</p>
                     </div>
                     <Button
                       variant="outline"
