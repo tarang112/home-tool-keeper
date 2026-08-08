@@ -24,15 +24,18 @@ const ALL_CATEGORIES: MainCategory[] = [
 
 function proxyImg(url?: string, size = 200) {
   if (!url) return "";
+  if (url.startsWith("data:")) return url;
   if (url.includes("supabase.co/")) return url;
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=contain&bg=white`;
 }
 
 function fullImg(url?: string) {
   if (!url) return "";
+  if (url.startsWith("data:")) return url;
   if (url.includes("supabase.co/")) return url;
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=800&h=800&fit=contain&bg=white`;
 }
+
 
 function daysUntil(date: string) {
   return Math.ceil((new Date(date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));

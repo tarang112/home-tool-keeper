@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { normalizeGroupedItemName } from "@/lib/item-matching";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CustomCategory, CustomLocation } from "@/hooks/use-custom-options";
+import { uploadItemImage } from "@/lib/image-upload";
+
 
 interface BatchEntry {
   id?: string; // existing entry ID (for edit mode)
@@ -80,6 +82,10 @@ export function AddItemDialog({
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [locationImageUploading, setLocationImageUploading] = useState(false);
+  const [itemImageUploading, setItemImageUploading] = useState(false);
+  const imageUploading = locationImageUploading || itemImageUploading;
+
 
   // Auto-open barcode scanner when initialBarcodeScan is set
   useEffect(() => {
@@ -284,21 +290,34 @@ export function AddItemDialog({
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setLocationImage(reader.result as string);
-    reader.readAsDataURL(file);
+    setLocationImageUploading(true);
+    try {
+      setLocationImage(await uploadItemImage(file, "locations"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Photo upload failed");
+    } finally {
+      setLocationImageUploading(false);
+    }
   };
 
-  const handleItemImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleItemImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setItemImage(reader.result as string);
-    reader.readAsDataURL(file);
+    setItemImageUploading(true);
+    try {
+      setItemImage(await uploadItemImage(file, "items"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Photo upload failed");
+    } finally {
+      setItemImageUploading(false);
+    }
   };
+
 
   const handleCategoryChange = (val: string) => {
     if (val.startsWith("customsaved:")) {
@@ -336,8 +355,13 @@ export function AddItemDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (imageUploading) {
+      toast.error("Please wait for the photo upload to finish");
+      return;
+    }
     if (!name.trim() || saving) return;
     setSaving(true);
+
 
     try {
       const finalLocation = locationMode === "custom" ? customLocation.trim() : locationMode;
@@ -713,7 +737,7 @@ export function AddItemDialog({
 
           <div className="space-y-2">
             <Label>Location Photo</Label>
-            <input ref={fileInputRef} type="file" className="hidden" onChange={handleImageChange} aria-hidden="true" tabIndex={-1} />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} aria-hidden="true" tabIndex={-1} />
             {locationImage ? (
               <div className="relative overflow-hidden rounded-lg border">
                 <img src={locationImage} alt="Location" className="h-32 w-full object-cover" />
@@ -722,15 +746,19 @@ export function AddItemDialog({
                 </Button>
               </div>
             ) : (
-              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => fileInputRef.current?.click()}>
-                <Camera className="h-4 w-4" aria-hidden="true" /> Take or Choose Photo
+              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => fileInputRef.current?.click()} disabled={locationImageUploading}>
+                {locationImageUploading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Uploading…</>
+                ) : (
+                  <><Camera className="h-4 w-4" aria-hidden="true" /> Take or Choose Photo</>
+                )}
               </Button>
             )}
           </div>
 
           <div className="space-y-2">
             <Label>Item Photo</Label>
-            <input ref={itemFileInputRef} type="file" className="hidden" onChange={handleItemImageChange} aria-hidden="true" tabIndex={-1} />
+            <input ref={itemFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleItemImageChange} aria-hidden="true" tabIndex={-1} />
             {itemImage ? (
               <div className="relative overflow-hidden rounded-lg border">
                 <img src={itemImage} alt="Item" className="h-32 w-full object-cover" />
@@ -739,11 +767,16 @@ export function AddItemDialog({
                 </Button>
               </div>
             ) : (
-              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => itemFileInputRef.current?.click()}>
-                <Camera className="h-4 w-4" aria-hidden="true" /> Take or Upload Item Photo
+              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => itemFileInputRef.current?.click()} disabled={itemImageUploading}>
+                {itemImageUploading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Uploading…</>
+                ) : (
+                  <><Camera className="h-4 w-4" aria-hidden="true" /> Take or Upload Item Photo</>
+                )}
               </Button>
             )}
           </div>
+
 
           {productImage && (
             <div className="space-y-2">
@@ -769,16 +802,17 @@ export function AddItemDialog({
   const actions = (
     <>
       <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-      <Button type="submit" disabled={saving}>
-        {saving ? (
+      <Button type="submit" disabled={saving || imageUploading}>
+        {saving || imageUploading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-            Saving…
+            {imageUploading ? "Uploading photo…" : "Saving…"}
           </>
         ) : editItem ? "Save Changes" : "Add Item"}
       </Button>
     </>
   );
+
 
   return (
     <>
