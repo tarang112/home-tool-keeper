@@ -82,6 +82,10 @@ export function AddItemDialog({
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [locationImageUploading, setLocationImageUploading] = useState(false);
+  const [itemImageUploading, setItemImageUploading] = useState(false);
+  const imageUploading = locationImageUploading || itemImageUploading;
+
 
   // Auto-open barcode scanner when initialBarcodeScan is set
   useEffect(() => {
