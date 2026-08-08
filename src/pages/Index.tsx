@@ -288,21 +288,39 @@ const Index = () => {
             <Package className="h-6 w-6 text-primary" />
             <h1 className="font-heading font-bold text-xl">HomeStock</h1>
           </div>
-          <div className="flex items-center gap-0.5">
-            <Button asChild size="icon" variant="ghost" className="h-9 w-9" title="Receipt imports">
-              <Link to="/receipts"><ReceiptText className="h-4 w-4" /></Link>
-            </Button>
+          <div className="flex items-center gap-1">
             <NotificationBell />
-            <ThemeToggle />
-            <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
-              <Settings2 className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setProfileOpen(true)} title="Profile settings">
-              <UserCog className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="ghost" onClick={signOut} className="h-9 w-9">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-11 w-11 rounded-full" aria-label="Account menu">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">{accountInitials}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate text-xs font-normal text-muted-foreground">{user?.email || "Signed in"}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/receipts"><ReceiptText className="mr-2 h-4 w-4" aria-hidden="true" /> Receipt imports</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setOptionsOpen(true)}>
+                  <Settings2 className="mr-2 h-4 w-4" aria-hidden="true" /> Categories &amp; locations
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setProfileOpen(true)}>
+                  <UserCog className="mr-2 h-4 w-4" aria-hidden="true" /> Profile settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); toggleTheme(); }}>
+                  {theme === "dark"
+                    ? <><Sun className="mr-2 h-4 w-4" aria-hidden="true" /> Light mode</>
+                    : <><Moon className="mr-2 h-4 w-4" aria-hidden="true" /> Dark mode</>}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setSignOutOpen(true)}>
+                  <LogOut className="mr-2 h-4 w-4" aria-hidden="true" /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
