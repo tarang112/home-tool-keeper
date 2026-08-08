@@ -29,13 +29,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomActionBar } from "@/components/BottomActionBar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-const normalizeGroupedItemName = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+import { normalizeGroupedItemName } from "@/lib/item-matching";
 
 const getEarliestExpiry = (dates: Array<string | null | undefined>) => {
   const validDates = dates.filter(Boolean) as string[];
