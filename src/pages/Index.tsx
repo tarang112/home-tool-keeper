@@ -594,7 +594,8 @@ const Index = () => {
           );
         })()}
 
-        {/* Recently Deleted Section */}
+        {/* Recently Deleted Section — only once the account has items */}
+        {items.length > 0 && (
         <div className="mt-6 border-t pt-4">
           <button
             className="flex items-center gap-1.5 px-1 w-full text-left hover:opacity-80 transition-opacity"
