@@ -453,24 +453,28 @@ const Index = () => {
             selectedHouse?.propertyType === "business" && selectedHouse.businessType
               ? getBusinessCategories(selectedHouse.businessType).map((c) => ({ value: c.value, label: c.label, icon: c.icon }))
               : CATEGORIES;
+          const chipClass = (isActive: boolean) =>
+            `inline-flex shrink-0 select-none items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${isActive ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary text-secondary-foreground hover:bg-secondary/80"}`;
           return (
-            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
-              <Badge
-                variant={activeCategory === "all" ? "default" : "secondary"}
-                className="cursor-pointer shrink-0 select-none"
+            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide" role="group" aria-label="Filter by category">
+              <button
+                type="button"
+                aria-pressed={activeCategory === "all"}
+                className={chipClass(activeCategory === "all")}
                 onClick={() => setActiveCategory("all")}
               >
                 All
-              </Badge>
+              </button>
               {activeCategories.map((c) => (
-                <Badge
+                <button
                   key={c.value}
-                  variant={activeCategory === c.value ? "default" : "secondary"}
-                  className="cursor-pointer shrink-0 select-none"
+                  type="button"
+                  aria-pressed={activeCategory === c.value}
+                  className={chipClass(activeCategory === c.value)}
                   onClick={() => setActiveCategory(c.value)}
                 >
                   {c.icon} {c.label}
-                </Badge>
+                </button>
               ))}
             </div>
           );
