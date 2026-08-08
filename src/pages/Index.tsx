@@ -384,40 +384,68 @@ const Index = () => {
 
         <StatsBar
           items={items}
-          onLowStockClick={() => setSearch(prev => prev === "low" ? "" : "low")}
+          onLowStockClick={() => setStockFilter((prev) => (prev === "low" ? "all" : "low"))}
           onCategoryClick={(category) => setActiveCategory(category)}
-          activeFilter={search === "low" ? "lowStock" : undefined}
+          activeFilter={stockFilter === "low" ? "lowStock" : undefined}
         />
 
         {lowStockItems.length > 0 && (
-          <button onClick={() => setSearch("low")} className="flex w-full items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/15">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
+          <button onClick={() => setStockFilter("low")} className="flex w-full items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/15">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="font-medium">{lowStockItems.length} low-stock item{lowStockItems.length === 1 ? "" : "s"}</span>
             <span className="ml-auto text-xs">View</span>
           </button>
         )}
 
-        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
-              placeholder="Search items, locations, units, exp:7, low..."
+              placeholder="Search items, locations, units..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
+              aria-label="Search inventory"
             />
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("pdf")}>
-              <FileText className="h-4 w-4" /> PDF
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("excel")}>
-              <Table2 className="h-4 w-4" /> Excel
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("csv")}>
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Export inventory">
+                <Download className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Export as</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => exportRows("pdf")}><FileText className="mr-2 h-4 w-4" aria-hidden="true" /> PDF</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => exportRows("excel")}><Table2 className="mr-2 h-4 w-4" aria-hidden="true" /> Excel</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => exportRows("csv")}><Download className="mr-2 h-4 w-4" aria-hidden="true" /> CSV</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Stock state filter chips */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" role="group" aria-label="Filter by stock state">
+          {([
+            { value: "all", label: "All", count: filterCounts.all },
+            { value: "low", label: "Low stock", count: filterCounts.low },
+            { value: "out", label: "Out", count: filterCounts.out },
+            { value: "expiring", label: "Expiring", count: filterCounts.expiring },
+            { value: "lent", label: "Lent", count: filterCounts.lent },
+          ] as const).map((chip) => {
+            const isActive = stockFilter === chip.value;
+            return (
+              <button
+                key={chip.value}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setStockFilter(chip.value)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${isActive ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
+              >
+                {chip.label}
+                <span className={isActive ? "opacity-90" : "text-muted-foreground"}>{chip.count}</span>
+              </button>
+            );
+          })}
         </div>
 
         {(() => {
