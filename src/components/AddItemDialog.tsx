@@ -53,6 +53,7 @@ export function AddItemDialog({
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("hardware-tools");
   const [subcategory, setSubcategory] = useState("");
+  const [useCustomSubcategory, setUseCustomSubcategory] = useState(false);
   const [customCategory, setCustomCategory] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [locationMode, setLocationMode] = useState("Garage");
