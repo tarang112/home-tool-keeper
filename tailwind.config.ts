@@ -59,6 +59,10 @@ export default {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
         },
+        lent: {
+          DEFAULT: "hsl(var(--lent))",
+          foreground: "hsl(var(--lent-foreground))",
+        },
         "brand-teal": "hsl(var(--brand-teal))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

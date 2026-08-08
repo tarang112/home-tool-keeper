@@ -2,11 +2,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2, Clock, ChevronDown, ChevronUp, HandHelping, Undo2 } from "lucide-react";
+import { Minus, Plus, Pencil, Trash2, MapPin, ArrowRightLeft, Share2, Clock, HandHelping, Undo2, MoreHorizontal, AlertTriangle } from "lucide-react";
 import { CATEGORIES, MAIN_CATEGORIES, WARRANTY_CATEGORIES, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
 import { BUSINESS_TYPES } from "@/config/business-categories";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WarrantyReminders } from "@/components/WarrantyReminders";
 
@@ -25,6 +32,10 @@ function fullImg(url?: string) {
   if (!url) return "";
   if (url.includes("supabase.co/")) return url;
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=800&h=800&fit=contain&bg=white`;
+}
+
+function daysUntil(date: string) {
+  return Math.ceil((new Date(date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
 interface ItemCardBatchEntry {
@@ -63,6 +74,8 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
   const [zoomedImg, setZoomedImg] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [lendOpen, setLendOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
   const [lendName, setLendName] = useState(item.lentTo || "");
   const [lendNotes, setLendNotes] = useState(item.lentNotes || "");
   const hasAnyImage = hasPrimaryImg || hasLocationImg;
@@ -71,145 +84,182 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
   const isLent = !!item.lentTo;
   const LENDABLE_CATEGORIES = ["hardware-tools", "building-materials", "electrical", "plumbing", "outdoor", "automotive"];
 
-  // Determine left border color based on item status
-  const borderColor = isLent
-    ? "border-l-orange-500"
-    : item.quantity === 0
-      ? "border-l-destructive"
-      : item.expirationDate && Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 7
-        ? "border-l-amber-500"
-        : "border-l-emerald-500";
-
-  // Expiry/Lent tags for bottom-right — always show expiry if present
   const isWarrantyItem = WARRANTY_CATEGORIES.includes(item.category);
-  const expiryTag = useMemo(() => {
+
+  // Primary status — drives both the labelled pill and the (exception-only) border tint
+  const status = useMemo(() => {
+    if (item.quantity === 0) {
+      return { label: "Out of stock", tone: "destructive" as const, icon: AlertTriangle };
+    }
+    if (isLent) {
+      return { label: `Lent to ${item.lentTo}`, tone: "lent" as const, icon: HandHelping };
+    }
     if (item.expirationDate) {
-      const exp = new Date(item.expirationDate);
-      const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      const prefix = isWarrantyItem ? "Warranty" : "Exp";
-      if (diffDays < 0) return { label: isWarrantyItem ? "Warranty Expired" : "Expired", color: "text-destructive" };
-      if (diffDays <= 7) return { label: `${prefix} ${exp.toLocaleDateString()}`, color: "text-destructive" };
-      if (diffDays <= 90) return { label: `${prefix} ${exp.toLocaleDateString()}`, color: "text-amber-500" };
-      return { label: `${prefix} ${exp.toLocaleDateString()}`, color: "text-muted-foreground" };
+      const diff = daysUntil(item.expirationDate);
+      const prefix = isWarrantyItem ? "Warranty" : "Expires";
+      if (diff < 0) return { label: isWarrantyItem ? "Warranty expired" : "Expired", tone: "destructive" as const, icon: Clock };
+      if (diff <= 7) return { label: `${prefix} ${new Date(item.expirationDate).toLocaleDateString()}`, tone: "destructive" as const, icon: Clock };
+      if (diff <= 90) return { label: `${prefix} ${new Date(item.expirationDate).toLocaleDateString()}`, tone: "warning" as const, icon: Clock };
+    }
+    if (item.quantity <= 1) {
+      return { label: "Low stock", tone: "warning" as const, icon: AlertTriangle };
     }
     return null;
-  }, [item.expirationDate, isWarrantyItem]);
+  }, [item.quantity, item.expirationDate, item.lentTo, isLent, isWarrantyItem]);
+
+  const toneClasses: Record<string, string> = {
+    destructive: "bg-destructive text-destructive-foreground",
+    warning: "bg-warning text-warning-foreground",
+    lent: "bg-lent text-lent-foreground",
+  };
+  const borderClasses: Record<string, string> = {
+    destructive: "border-l-[3px] border-l-destructive",
+    warning: "border-l-[3px] border-l-warning",
+    lent: "border-l-[3px] border-l-lent",
+  };
+
+  const expiryBadgeClass = (diffDays: number) =>
+    diffDays <= 7 ? "bg-destructive text-destructive-foreground"
+      : diffDays <= 90 ? "bg-warning text-warning-foreground"
+      : "bg-muted text-muted-foreground";
+
+  const StatusIcon = status?.icon;
 
   return (
-    <Card className={`animate-slide-up border-l-[3px] ${borderColor}`}>
-      <CardContent className="px-3 py-2.5 space-y-1">
-        {/* Row 1: icon + name + chevron + −/qty/+ */}
+    <Card className={`animate-slide-up ${status ? borderClasses[status.tone] : ""}`}>
+      <CardContent className="space-y-2 px-3 py-3">
+        {/* Row 1: image + tap-to-expand name/status + stepper */}
         <div className="flex items-center gap-2">
-          <div
-            className="shrink-0 cursor-pointer"
-            onClick={() => { if (hasPrimaryImg) setZoomedImg(fullImg(primaryImage)); }}
-          >
-            {hasPrimaryImg ? (
+          {hasPrimaryImg ? (
+            <button
+              type="button"
+              className="shrink-0 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => setZoomedImg(fullImg(primaryImage))}
+              aria-label={`View full-size image of ${item.name}`}
+            >
               <img
-                src={proxyImg(primaryImage, 64)}
+                src={proxyImg(primaryImage, 96)}
                 alt={item.name}
                 referrerPolicy="no-referrer"
-                className="h-7 w-7 rounded object-cover bg-muted"
+                className="h-10 w-10 rounded object-cover bg-muted"
               />
-            ) : (
-              <span className="text-base">{categoryIcon}</span>
+            </button>
+          ) : (
+            <span className="shrink-0 text-xl" aria-hidden="true">{categoryIcon}</span>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className="flex min-w-0 flex-1 flex-col items-start gap-1 rounded py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <h3 className="w-full truncate font-heading text-[15px] font-bold leading-tight">
+              {item.name}
+            </h3>
+            {status && StatusIcon && (
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${toneClasses[status.tone]}`}>
+                <StatusIcon className="h-3 w-3" aria-hidden="true" />
+                {status.label}
+              </span>
             )}
-          </div>
-          <h3 className="font-heading font-bold text-[15px] leading-tight truncate flex-1 min-w-0">
-            {item.name}
-          </h3>
-          <button onClick={() => setExpanded((v) => !v)} className="shrink-0 p-0.5 hover:opacity-70">
-            {expanded
-              ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
-              : <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            }
           </button>
-          <div className="flex items-center gap-1 shrink-0">
-            <Button variant="outline" size="icon" className="h-6 w-6 rounded-full" onClick={() => onAdjust(item.id, -1)} disabled={item.quantity <= 0}>
-              <Minus className="h-3 w-3" />
+
+          {/* Quantity stepper pill */}
+          <div className="flex shrink-0 items-center rounded-full border bg-background">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={() => onAdjust(item.id, -1)}
+              disabled={item.quantity <= 0}
+              aria-label={`Decrease quantity of ${item.name}`}
+            >
+              <Minus className="h-4 w-4" aria-hidden="true" />
             </Button>
-            <span className={`font-heading font-bold text-sm text-center min-w-[2.5ch] ${item.quantity === 0 ? "text-destructive" : ""}`}>
+            <span
+              aria-live="polite"
+              className={`min-w-[3ch] px-1 text-center font-heading text-sm font-bold ${item.quantity === 0 ? "text-destructive" : ""}`}
+            >
               {item.quantity}{item.quantityUnit && item.quantityUnit !== "pcs" ? ` ${item.quantityUnit}` : ""}
             </span>
-            <Button variant="outline" size="icon" className="h-6 w-6 rounded-full" onClick={() => onAdjust(item.id, 1)}>
-              <Plus className="h-3 w-3" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={() => onAdjust(item.id, 1)}
+              aria-label={`Increase quantity of ${item.name}`}
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>
 
-        {/* Row 2: category + location + actions */}
+        {/* Row 2: category + location + expiry badges + actions */}
         <div className="flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 font-medium">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <Badge variant="secondary" className="px-1.5 py-0.5 text-xs font-medium">
               {categoryLabel}{subLabel ? ` › ${subLabel}` : ""}
             </Badge>
             {item.location && (
-              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                <MapPin className="h-2.5 w-2.5" />
+              <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3" aria-hidden="true" />
                 {item.location}
               </span>
             )}
-            {/* Expiry badges inline next to location */}
-            {batchExpiries.length > 0 && batchExpiries.map((entry) => {
+            {batchExpiries.map((entry) => {
+              const diffDays = daysUntil(entry.expirationDate!);
               const exp = new Date(entry.expirationDate!);
-              const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-              const expiryColor = diffDays < 0 ? "bg-destructive text-destructive-foreground"
-                : diffDays <= 7 ? "bg-destructive text-destructive-foreground"
-                : diffDays <= 90 ? "bg-amber-500 text-white"
-                : "bg-muted text-muted-foreground";
-              const expiryLabel = diffDays < 0 ? "Expired" : exp.toLocaleDateString();
               return (
-                <Badge key={entry.id} className={`text-[9px] px-1.5 py-0.5 gap-0.5 ${expiryColor}`}>
-                  <Clock className="h-2 w-2" />
-                  {expiryLabel}
+                <Badge key={entry.id} className={`gap-0.5 px-1.5 py-0.5 text-xs ${expiryBadgeClass(diffDays)}`}>
+                  <Clock className="h-3 w-3" aria-hidden="true" />
+                  {diffDays < 0 ? "Expired" : exp.toLocaleDateString()}
                 </Badge>
               );
             })}
-            {batchExpiries.length === 0 && expiryTag && (
-              <Badge
-                variant={expiryTag.color === "text-destructive" ? "destructive" : expiryTag.color === "text-amber-500" ? "default" : "outline"}
-                className={`text-[9px] px-1.5 py-0.5 gap-0.5 ${expiryTag.color === "text-amber-500" ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
-              >
-                <Clock className="h-2 w-2" />
-                {expiryTag.label.replace("Exp ", "")}
-              </Badge>
-            )}
-            {isLent && (
-              <Badge variant="default" className="text-[10px] px-1.5 py-0.5 gap-0.5 bg-orange-500 hover:bg-orange-600 text-white">
-                <HandHelping className="h-2.5 w-2.5" />
-                {item.lentTo}
-              </Badge>
-            )}
           </div>
-          <div className="flex items-center gap-0.5 shrink-0">
-            {onMove && (
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onMove(item)} title="Move">
-                <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            )}
-            {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
-              isLent ? (
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-orange-500" onClick={() => onLend(item.id, null, null)} title="Return">
-                  <Undo2 className="h-3.5 w-3.5" />
-                </Button>
-              ) : (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }} title="Lend">
-                  <HandHelping className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
-              )
-            )}
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(item)} title="Edit">
-              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="flex shrink-0 items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => onEdit(item)} aria-label={`Edit ${item.name}`}>
+              <Pencil className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(item.id)} title="Delete">
-              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10" aria-label={`More actions for ${item.name}`}>
+                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {onMove && (
+                  <DropdownMenuItem onSelect={() => onMove(item)}>
+                    <ArrowRightLeft className="mr-2 h-4 w-4" aria-hidden="true" /> Move
+                  </DropdownMenuItem>
+                )}
+                {onLend && LENDABLE_CATEGORIES.includes(item.category) && (
+                  isLent ? (
+                    <DropdownMenuItem onSelect={() => onLend(item.id, null, null)}>
+                      <Undo2 className="mr-2 h-4 w-4" aria-hidden="true" /> Mark returned
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onSelect={() => { setLendName(""); setLendNotes(""); setLendOpen(true); }}>
+                      <HandHelping className="mr-2 h-4 w-4" aria-hidden="true" /> Lend
+                    </DropdownMenuItem>
+                  )
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => { setEntryToDelete(null); setDeleteOpen(true); }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         {/* Per-entry controls - visible only when expanded */}
         {expanded && batchEntries.length > 1 && (
-          <div className="space-y-0.5 pt-1 border-t">
+          <div className="space-y-1 border-t pt-2">
             {batchEntries
               .sort((a, b) => {
                 if (!a.expirationDate && !b.expirationDate) return 0;
@@ -219,46 +269,54 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
               })
               .map((entry) => {
                 const exp = entry.expirationDate ? new Date(entry.expirationDate) : null;
-                const diffDays = exp ? Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
-                const expiryColor = diffDays !== null
-                  ? diffDays < 0 ? "bg-destructive text-destructive-foreground"
-                    : diffDays <= 7 ? "bg-destructive text-destructive-foreground"
-                    : diffDays <= 90 ? "bg-amber-500 text-white"
-                    : "bg-muted text-muted-foreground"
-                  : "bg-muted text-muted-foreground";
-                const expiryLabel = exp
-                  ? diffDays! < 0 ? "Expired" : exp.toLocaleDateString()
-                  : "no expiry";
+                const diffDays = entry.expirationDate ? daysUntil(entry.expirationDate) : null;
+                const badgeClass = diffDays !== null ? expiryBadgeClass(diffDays) : "bg-muted text-muted-foreground";
+                const expiryLabel = exp ? (diffDays! < 0 ? "Expired" : exp.toLocaleDateString()) : "no expiry";
                 const entryItem = allItems?.find((i) => i.id === entry.id);
                 return (
-                  <div key={entry.id} className="flex items-center justify-between gap-1 pl-6">
-                    <Badge className={`text-[9px] px-1.5 py-0 gap-0.5 ${expiryColor}`}>
-                      <Clock className="h-2 w-2" />
+                  <div key={entry.id} className="flex items-center justify-between gap-1 pl-2">
+                    <Badge className={`gap-0.5 px-1.5 py-0.5 text-xs ${badgeClass}`}>
+                      <Clock className="h-3 w-3" aria-hidden="true" />
                       {expiryLabel}
                     </Badge>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <Button variant="outline" size="icon" className="h-5 w-5 rounded-full" onClick={() => onAdjust(entry.id, -1)} disabled={entry.quantity <= 0}>
-                        <Minus className="h-2.5 w-2.5" />
-                      </Button>
-                      <span className="text-[10px] font-bold min-w-[2ch] text-center">
-                        {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? entry.quantityUnit : ""}
-                      </span>
-                      <Button variant="outline" size="icon" className="h-5 w-5 rounded-full" onClick={() => onAdjust(entry.id, 1)}>
-                        <Plus className="h-2.5 w-2.5" />
-                      </Button>
-                      {onMove && entryItem && (
-                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onMove(entryItem)} title="Move">
-                          <ArrowRightLeft className="h-2.5 w-2.5 text-muted-foreground" />
+                    <div className="flex shrink-0 items-center gap-1">
+                      <div className="flex items-center rounded-full border bg-background">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => onAdjust(entry.id, -1)} disabled={entry.quantity <= 0} aria-label="Decrease batch quantity">
+                          <Minus className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>
-                      )}
+                        <span className="min-w-[2ch] px-1 text-center text-xs font-bold">
+                          {entry.quantity}{entry.quantityUnit && entry.quantityUnit !== "pcs" ? entry.quantityUnit : ""}
+                        </span>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => onAdjust(entry.id, 1)} aria-label="Increase batch quantity">
+                          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        </Button>
+                      </div>
                       {entryItem && (
-                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onEdit(entryItem)} title="Edit">
-                          <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+                        <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => onEdit(entryItem)} aria-label="Edit batch entry">
+                          <Pencil className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onDelete(entry.id)} title="Delete">
-                        <Trash2 className="h-2.5 w-2.5 text-destructive" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="More actions for batch entry">
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          {onMove && entryItem && (
+                            <DropdownMenuItem onSelect={() => onMove(entryItem)}>
+                              <ArrowRightLeft className="mr-2 h-4 w-4" aria-hidden="true" /> Move
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => { setEntryToDelete(entry.id); setDeleteOpen(true); }}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 );
@@ -268,13 +326,13 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
 
         {/* Expanded details */}
         {expanded && (
-          <div className="mt-1.5 pt-1.5 border-t space-y-1.5 animate-fade-in">
+          <div className="mt-1.5 animate-fade-in space-y-1.5 border-t pt-1.5">
             {item.category === "electronics" && item.expirationDate && (
               <WarrantyReminders itemId={item.id} expirationDate={item.expirationDate} />
             )}
             {item.location && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3" aria-hidden="true" />
                 {item.location}
                 {item.locationDetail && ` · ${item.locationDetail}`}
               </span>
@@ -282,7 +340,7 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
             {(item.unitPrice != null || item.totalPrice != null) && (
               <div className="flex items-center gap-2 text-xs">
                 {item.totalPrice != null && (
-                  <Badge variant="secondary" className="text-xs gap-0.5">
+                  <Badge variant="secondary" className="gap-0.5 text-xs">
                     💰 ${item.totalPrice.toFixed(2)}
                   </Badge>
                 )}
@@ -292,13 +350,13 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
               </div>
             )}
             {item.sharedFromHouse && (
-              <Badge variant="outline" className="text-xs gap-1">
-                <Share2 className="h-3 w-3" />
+              <Badge variant="outline" className="gap-1 text-xs">
+                <Share2 className="h-3 w-3" aria-hidden="true" />
                 Shared from {item.sharedFromHouse}
               </Badge>
             )}
             {item.barcode && (
-              <p className="text-xs text-muted-foreground font-mono">Barcode: {item.barcode}</p>
+              <p className="font-mono text-xs text-muted-foreground">Barcode: {item.barcode}</p>
             )}
             {item.notes && (() => {
               const lines = item.notes.split("\n");
@@ -319,56 +377,77 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                     );
                   })}
                   {otherLines.filter(Boolean).length > 0 && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">{otherLines.filter(Boolean).join(" · ")}</p>
+                    <p className="line-clamp-2 text-xs text-muted-foreground">{otherLines.filter(Boolean).join(" · ")}</p>
                   )}
                 </div>
               );
             })()}
             {/* Images */}
             {hasAnyImage && (
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-wrap gap-2">
                 {hasPrimaryImg && (
-                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(fullImg(primaryImage))}>
-                    <p className="text-[10px] text-muted-foreground mb-1">{hasItemImg ? "Item" : "Product"}</p>
+                  <button type="button" className="shrink-0 text-left" onClick={() => setZoomedImg(fullImg(primaryImage))} aria-label={`View full-size ${hasItemImg ? "item" : "product"} image`}>
+                    <p className="mb-1 text-xs text-muted-foreground">{hasItemImg ? "Item" : "Product"}</p>
                     <img
                       src={proxyImg(primaryImage)}
                       alt={item.name}
                       referrerPolicy="no-referrer"
-                      className="h-20 max-w-[120px] object-contain rounded-md bg-white border"
+                      className="h-20 max-w-[120px] rounded-md border bg-card object-contain"
                       onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
-                  </div>
+                  </button>
                 )}
                 {hasLocationImg && (
-                  <div className="shrink-0 cursor-pointer" onClick={() => setZoomedImg(item.locationImage || "")}>
-                    <p className="text-[10px] text-muted-foreground mb-1">Location</p>
+                  <button type="button" className="shrink-0 text-left" onClick={() => setZoomedImg(item.locationImage || "")} aria-label="View full-size location image">
+                    <p className="mb-1 text-xs text-muted-foreground">Location</p>
                     <img
                       src={item.locationImage}
-                      alt="Location"
-                      className="h-20 max-w-[120px] object-contain rounded-md border bg-white"
+                      alt={`Location of ${item.name}`}
+                      className="h-20 max-w-[120px] rounded-md border bg-card object-contain"
                     />
-                  </div>
+                  </button>
                 )}
               </div>
             )}
           </div>
         )}
 
+        {/* Delete confirmation */}
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete "{item.name}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {entryToDelete ? "This batch entry" : "This item"} will move to Recently Deleted, where you can restore it for 24 hours.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => { onDelete(entryToDelete || item.id); setEntryToDelete(null); }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Lend dialog */}
         <Dialog open={lendOpen} onOpenChange={setLendOpen}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <HandHelping className="h-4 w-4" /> Lend "{item.name}"
+                <HandHelping className="h-4 w-4" aria-hidden="true" /> Lend "{item.name}"
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Lent to</label>
+                <label htmlFor={`lend-name-${item.id}`} className="mb-1 block text-xs font-medium text-muted-foreground">Lent to</label>
                 {houseMembers && houseMembers.length > 0 ? (
                   <div className="space-y-2">
                     <Select value={lendName} onValueChange={setLendName}>
-                      <SelectTrigger className="h-8 text-sm">
+                      <SelectTrigger className="h-9 text-sm" aria-label="Select house member">
                         <SelectValue placeholder="Select member..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -380,29 +459,32 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
                       </SelectContent>
                     </Select>
                     <Input
+                      id={`lend-name-${item.id}`}
                       placeholder="Or type a name..."
                       value={lendName}
                       onChange={(e) => setLendName(e.target.value)}
-                      className="h-8 text-sm"
+                      className="h-9 text-sm"
                     />
                   </div>
                 ) : (
                   <Input
+                    id={`lend-name-${item.id}`}
                     placeholder="Enter name..."
                     value={lendName}
                     onChange={(e) => setLendName(e.target.value)}
-                    className="h-8 text-sm"
+                    className="h-9 text-sm"
                     autoFocus
                   />
                 )}
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Notes (optional)</label>
+                <label htmlFor={`lend-notes-${item.id}`} className="mb-1 block text-xs font-medium text-muted-foreground">Notes (optional)</label>
                 <Input
+                  id={`lend-notes-${item.id}`}
                   placeholder="e.g. Return by Friday"
                   value={lendNotes}
                   onChange={(e) => setLendNotes(e.target.value)}
-                  className="h-8 text-sm"
+                  className="h-9 text-sm"
                 />
               </div>
             </div>
@@ -422,20 +504,22 @@ export function ItemCard({ item, onAdjust, onEdit, onDelete, onMove, onLend, all
           </DialogContent>
         </Dialog>
 
-        {/* Full-size image overlay */}
-        {zoomedImg && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in cursor-pointer"
-            onClick={() => setZoomedImg(null)}
-          >
-            <img
-              src={zoomedImg}
-              alt="Full size"
-              referrerPolicy="no-referrer"
-              className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-lg bg-white animate-scale-in"
-            />
-          </div>
-        )}
+        {/* Full-size image dialog */}
+        <Dialog open={!!zoomedImg} onOpenChange={(o) => { if (!o) setZoomedImg(null); }}>
+          <DialogContent className="max-w-[95vw] p-2 sm:max-w-2xl">
+            <DialogHeader className="sr-only">
+              <DialogTitle>{item.name} image</DialogTitle>
+            </DialogHeader>
+            {zoomedImg && (
+              <img
+                src={zoomedImg}
+                alt={`Full size image of ${item.name}`}
+                referrerPolicy="no-referrer"
+                className="max-h-[80vh] w-full rounded-md object-contain"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
