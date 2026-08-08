@@ -355,8 +355,13 @@ export function AddItemDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (imageUploading) {
+      toast.error("Please wait for the photo upload to finish");
+      return;
+    }
     if (!name.trim() || saving) return;
     setSaving(true);
+
 
     try {
       const finalLocation = locationMode === "custom" ? customLocation.trim() : locationMode;
