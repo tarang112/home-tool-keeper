@@ -105,6 +105,7 @@ export function AddItemDialog({
       setName(editItem.name);
       setCategory(editItem.category);
       setSubcategory(editItem.subcategory || "");
+      setUseCustomSubcategory(false);
       setCustomCategory(editItem.customCategory || "");
       setQuantity(String(editItem.quantity));
       setQuantityUnit(editItem.quantityUnit || "pcs");
@@ -140,6 +141,7 @@ export function AddItemDialog({
       setName("");
       setCategory("hardware-tools");
       setSubcategory("");
+      setUseCustomSubcategory(false);
       setCustomCategory("");
       setQuantity("1");
       setQuantityUnit("pcs");
@@ -206,6 +208,7 @@ export function AddItemDialog({
         setCategory(mapped);
         if (p.subcategory && mainMatch.subcategories.some(s => s.value === p.subcategory)) {
           setSubcategory(p.subcategory);
+          setUseCustomSubcategory(false);
           const defaultExpiry = getDefaultExpiryForSubcategory(p.subcategory);
           if (defaultExpiry && !expirationDate) {
             setExpirationDate(defaultExpiry);
@@ -284,14 +287,17 @@ export function AddItemDialog({
       setCategory("custom");
       setCustomCategory(val.slice(12));
       setSubcategory("");
+      setUseCustomSubcategory(false);
     } else if (val === "custom") {
       setCategory("custom");
       setCustomCategory("");
       setSubcategory("");
+      setUseCustomSubcategory(false);
     } else {
       setCategory(val);
       setCustomCategory("");
       setSubcategory("");
+      setUseCustomSubcategory(false);
       // Auto-set location for top-level categories
       if (val === "produce" || val === "herbs") setLocationMode("Refrigerator");
     }
