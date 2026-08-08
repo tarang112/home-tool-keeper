@@ -139,6 +139,52 @@ const Index = () => {
   }, [showDeleted, fetchDeletedItems]);
 
   const lowStockItems = useMemo(() => items.filter((item) => item.quantity <= 1), [items]);
+  const [expiringDays, setExpiringDays] = useState(7);
+
+  const daysUntil = useCallback((date?: string | null) => {
+    if (!date) return null;
+    return Math.ceil((new Date(date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  }, []);
+
+  const matchesStockFilter = useCallback((item: InventoryItem, filter: typeof stockFilter) => {
+    if (filter === "low") return item.quantity <= 1;
+    if (filter === "out") return item.quantity === 0;
+    if (filter === "lent") return !!item.lentTo;
+    if (filter === "expiring") {
+      const diff = daysUntil(item.expirationDate);
+      return diff !== null && diff >= 0 && diff <= expiringDays;
+    }
+    return true;
+  }, [daysUntil, expiringDays]);
+
+  const filterCounts = useMemo(() => ({
+    all: items.length,
+    low: items.filter((i) => matchesStockFilter(i, "low")).length,
+    out: items.filter((i) => matchesStockFilter(i, "out")).length,
+    expiring: items.filter((i) => matchesStockFilter(i, "expiring")).length,
+    lent: items.filter((i) => matchesStockFilter(i, "lent")).length,
+  }), [items, matchesStockFilter]);
+
+  // Legacy typed shortcuts (qty:0, low, exp:7) now drive the filter chips instead of the search string.
+  useEffect(() => {
+    const typed = search.trim().toLowerCase();
+    if (!typed) return;
+    const expiringMatch = typed.match(/^exp(?:iring)?:?(\d+)?$/);
+    if (typed === "qty:0" || typed === "out") {
+      setStockFilter("out");
+      setSearch("");
+    } else if (typed === "low" || typed === "low-stock") {
+      setStockFilter("low");
+      setSearch("");
+    } else if (typed === "lent") {
+      setStockFilter("lent");
+      setSearch("");
+    } else if (expiringMatch) {
+      setExpiringDays(Number(expiringMatch[1] || 7));
+      setStockFilter("expiring");
+      setSearch("");
+    }
+  }, [search]);
 
   const toggleCategory = useCallback((cat: string) => {
     setCollapsedCategories(prev => {
@@ -148,23 +194,12 @@ const Index = () => {
       return next;
     });
   }, []);
+
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    const isOutOfStockFilter = normalizedSearch === "qty:0";
-    const isLowStockFilter = normalizedSearch === "low" || normalizedSearch === "low-stock";
-    const expiringMatch = normalizedSearch.match(/^exp(?:iring)?:?(\d+)?$/);
     return items.filter((item) => {
-      if (isOutOfStockFilter) {
-        return item.quantity === 0 && (activeCategory === "all" || item.category === activeCategory);
-      }
-      if (isLowStockFilter && item.quantity > 1) return false;
-      if (expiringMatch) {
-        if (!item.expirationDate) return false;
-        const days = Number(expiringMatch[1] || 7);
-        const diff = Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        if (diff < 0 || diff > days) return false;
-      }
-      const matchesSearch = !normalizedSearch || isLowStockFilter || !!expiringMatch || item.name.toLowerCase().includes(normalizedSearch) ||
+      if (!matchesStockFilter(item, stockFilter)) return false;
+      const matchesSearch = !normalizedSearch || item.name.toLowerCase().includes(normalizedSearch) ||
         item.location.toLowerCase().includes(normalizedSearch) ||
         item.notes.toLowerCase().includes(normalizedSearch) ||
         item.quantityUnit.toLowerCase().includes(normalizedSearch) ||
@@ -173,7 +208,7 @@ const Index = () => {
       const matchesCategory = activeCategory === "all" || item.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [items, search, activeCategory]);
+  }, [items, search, activeCategory, stockFilter, matchesStockFilter]);
 
   const exportRowsRef = useRef<((format: "csv" | "excel" | "pdf") => void) | null>(null);
 
