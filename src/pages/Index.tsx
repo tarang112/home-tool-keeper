@@ -83,7 +83,15 @@ const Index = () => {
   } = useCustomOptions(isAllBusiness || selectedHouse?.propertyType === "business" ? "business" : "personal");
   const { saveDefaults } = useItemDefaults();
 
+  const { theme, toggle: toggleTheme } = useTheme();
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const accountInitials = (user?.user_metadata?.display_name || user?.email || "U")
+    .trim()
+    .slice(0, 2)
+    .toUpperCase();
+
   const [search, setSearch] = useState("");
+  const [stockFilter, setStockFilter] = useState<"all" | "low" | "out" | "expiring" | "lent">("all");
   const [activeCategory, setActiveCategory] = useState<ItemCategory | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
