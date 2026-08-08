@@ -44,7 +44,7 @@ export function StatsBar({ items, onLowStockClick, onCategoryClick, activeFilter
   const stats = [
     { key: "items", value: String(totalItems), label: "Total items", icon: Package, onClick: undefined as (() => void) | undefined },
     { key: "quantity", value: String(totalQuantity), label: "Units tracked", icon: Boxes, onClick: undefined },
-    { key: "outOfStock", value: String(lowStock), label: "Low stock", icon: AlertTriangle, onClick: onOutOfStockClick },
+    { key: "lowStock", value: String(lowStock), label: "Low stock", icon: AlertTriangle, onClick: onLowStockClick },
     { key: "categories", value: String(categorySummary.length), label: "Categories", icon: Layers3, onClick: undefined },
   ];
 
