@@ -284,21 +284,34 @@ export function AddItemDialog({
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setLocationImage(reader.result as string);
-    reader.readAsDataURL(file);
+    setLocationImageUploading(true);
+    try {
+      setLocationImage(await uploadItemImage(file, "locations"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Photo upload failed");
+    } finally {
+      setLocationImageUploading(false);
+    }
   };
 
-  const handleItemImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleItemImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setItemImage(reader.result as string);
-    reader.readAsDataURL(file);
+    setItemImageUploading(true);
+    try {
+      setItemImage(await uploadItemImage(file, "items"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Photo upload failed");
+    } finally {
+      setItemImageUploading(false);
+    }
   };
+
 
   const handleCategoryChange = (val: string) => {
     if (val.startsWith("customsaved:")) {
