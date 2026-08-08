@@ -202,6 +202,8 @@ const Index = () => {
     URL.revokeObjectURL(url);
   }, [filtered]);
 
+  exportRowsRef.current = exportRows;
+
   const handleEdit = (item: InventoryItem) => {
     setEditItem(item);
     setDialogOpen(true);
