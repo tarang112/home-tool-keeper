@@ -177,11 +177,16 @@ const Index = () => {
     if (format === "pdf") {
       const html = `<!doctype html><html><head><title>Inventory Export</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}th{background:#f4f4f5}h1{font-size:20px}</style></head><body><h1>HomeStock Inventory</h1><table><thead><tr>${Object.keys(rows[0] || { Name: "", Category: "", Quantity: "", Unit: "", Location: "", Expiration: "", Notes: "" }).map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${Object.values(row).map((value) => `<td>${String(value).replace(/</g, "&lt;")}</td>`).join("")}</tr>`).join("")}</tbody></table></body></html>`;
       const win = window.open("", "_blank");
-      if (win) {
-        win.document.write(html);
-        win.document.close();
-        win.print();
+      if (!win) {
+        toast.error("Popup blocked", {
+          description: "Allow popups for this site to export as PDF, or use the CSV export instead.",
+          action: { label: "Download CSV", onClick: () => exportRowsRef.current?.("csv") },
+        });
+        return;
       }
+      win.document.write(html);
+      win.document.close();
+      win.print();
       return;
     }
 
