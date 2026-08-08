@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare, Trash2, RotateCcw, Download, FileText, Table2, AlertTriangle, ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,13 +29,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomActionBar } from "@/components/BottomActionBar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-const normalizeGroupedItemName = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+import { normalizeGroupedItemName } from "@/lib/item-matching";
 
 const getEarliestExpiry = (dates: Array<string | null | undefined>) => {
   const validDates = dates.filter(Boolean) as string[];
@@ -169,6 +163,8 @@ const Index = () => {
     });
   }, [items, search, activeCategory]);
 
+  const exportRowsRef = useRef<((format: "csv" | "excel" | "pdf") => void) | null>(null);
+
   const exportRows = useCallback((format: "csv" | "excel" | "pdf") => {
     const rows = filtered.map((item) => ({
       Name: item.name,
@@ -183,11 +179,16 @@ const Index = () => {
     if (format === "pdf") {
       const html = `<!doctype html><html><head><title>Inventory Export</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}th{background:#f4f4f5}h1{font-size:20px}</style></head><body><h1>HomeStock Inventory</h1><table><thead><tr>${Object.keys(rows[0] || { Name: "", Category: "", Quantity: "", Unit: "", Location: "", Expiration: "", Notes: "" }).map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${Object.values(row).map((value) => `<td>${String(value).replace(/</g, "&lt;")}</td>`).join("")}</tr>`).join("")}</tbody></table></body></html>`;
       const win = window.open("", "_blank");
-      if (win) {
-        win.document.write(html);
-        win.document.close();
-        win.print();
+      if (!win) {
+        toast.error("Popup blocked", {
+          description: "Allow popups for this site to export as PDF, or use the CSV export instead.",
+          action: { label: "Download CSV", onClick: () => exportRowsRef.current?.("csv") },
+        });
+        return;
       }
+      win.document.write(html);
+      win.document.close();
+      win.print();
       return;
     }
 
@@ -200,6 +201,8 @@ const Index = () => {
     a.click();
     URL.revokeObjectURL(url);
   }, [filtered]);
+
+  exportRowsRef.current = exportRows;
 
   const handleEdit = (item: InventoryItem) => {
     setEditItem(item);
@@ -316,9 +319,9 @@ const Index = () => {
 
         <StatsBar
           items={items}
-          onOutOfStockClick={() => setSearch(prev => prev === "qty:0" ? "" : "qty:0")}
+          onLowStockClick={() => setSearch(prev => prev === "low" ? "" : "low")}
           onCategoryClick={(category) => setActiveCategory(category)}
-          activeFilter={search === "qty:0" ? "outOfStock" : undefined}
+          activeFilter={search === "low" ? "lowStock" : undefined}
         />
 
         {lowStockItems.length > 0 && (

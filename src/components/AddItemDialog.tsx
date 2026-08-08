@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { normalizeGroupedItemName } from "@/lib/item-matching";
 import type { CustomCategory, CustomLocation } from "@/hooks/use-custom-options";
 
 interface BatchEntry {
@@ -52,6 +53,7 @@ export function AddItemDialog({
   const [name, setName] = useState("");
   const [category, setCategory] = useState<ItemCategory>("hardware-tools");
   const [subcategory, setSubcategory] = useState("");
+  const [useCustomSubcategory, setUseCustomSubcategory] = useState(false);
   const [customCategory, setCustomCategory] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [locationMode, setLocationMode] = useState("Garage");
@@ -103,6 +105,7 @@ export function AddItemDialog({
       setName(editItem.name);
       setCategory(editItem.category);
       setSubcategory(editItem.subcategory || "");
+      setUseCustomSubcategory(false);
       setCustomCategory(editItem.customCategory || "");
       setQuantity(String(editItem.quantity));
       setQuantityUnit(editItem.quantityUnit || "pcs");
@@ -124,7 +127,7 @@ export function AddItemDialog({
       setProductUrl("");
       // Find sibling batch entries (same name, category, location)
       const siblings = allItems.filter(
-        (i) => i.name === editItem.name && i.category === editItem.category && i.location === editItem.location && i.id !== editItem.id
+        (i) => normalizeGroupedItemName(i.name) === normalizeGroupedItemName(editItem.name) && i.category === editItem.category && i.location === editItem.location && i.id !== editItem.id
       );
       if (siblings.length > 0) {
         setBatchEntries([
@@ -138,6 +141,7 @@ export function AddItemDialog({
       setName("");
       setCategory("hardware-tools");
       setSubcategory("");
+      setUseCustomSubcategory(false);
       setCustomCategory("");
       setQuantity("1");
       setQuantityUnit("pcs");
@@ -204,6 +208,7 @@ export function AddItemDialog({
         setCategory(mapped);
         if (p.subcategory && mainMatch.subcategories.some(s => s.value === p.subcategory)) {
           setSubcategory(p.subcategory);
+          setUseCustomSubcategory(false);
           const defaultExpiry = getDefaultExpiryForSubcategory(p.subcategory);
           if (defaultExpiry && !expirationDate) {
             setExpirationDate(defaultExpiry);
@@ -282,14 +287,17 @@ export function AddItemDialog({
       setCategory("custom");
       setCustomCategory(val.slice(12));
       setSubcategory("");
+      setUseCustomSubcategory(false);
     } else if (val === "custom") {
       setCategory("custom");
       setCustomCategory("");
       setSubcategory("");
+      setUseCustomSubcategory(false);
     } else {
       setCategory(val);
       setCustomCategory("");
       setSubcategory("");
+      setUseCustomSubcategory(false);
       // Auto-set location for top-level categories
       if (val === "produce" || val === "herbs") setLocationMode("Refrigerator");
     }
@@ -471,15 +479,16 @@ export function AddItemDialog({
                   <>
                     <Select
                       value={
-                        subcategory && !subcategories.some((s) => s.value === subcategory)
+                        useCustomSubcategory || (subcategory && !subcategories.some((s) => s.value === subcategory))
                           ? "__custom__"
                           : (subcategory || "none")
                       }
                       onValueChange={(v) => {
                         if (v === "__custom__") {
-                          setSubcategory(" "); // sentinel to show input; user will type
+                          setUseCustomSubcategory(true);
                           return;
                         }
+                        setUseCustomSubcategory(false);
                         handleSubcategoryChange(v === "none" ? "" : v);
                       }}
                     >
@@ -492,9 +501,9 @@ export function AddItemDialog({
                         <SelectItem value="__custom__">✏️ Other (custom)…</SelectItem>
                       </SelectContent>
                     </Select>
-                    {subcategory && !subcategories.some((s) => s.value === subcategory) && (
+                    {(useCustomSubcategory || (subcategory && !subcategories.some((s) => s.value === subcategory))) && (
                       <Input
-                        value={subcategory.trim()}
+                        value={subcategory}
                         onChange={(e) => setSubcategory(e.target.value)}
                         placeholder="Enter custom subcategory..."
                         className="mt-2"

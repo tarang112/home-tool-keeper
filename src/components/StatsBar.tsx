@@ -4,12 +4,12 @@ import { CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
 
 interface StatsBarProps {
   items: InventoryItem[];
-  onOutOfStockClick?: () => void;
+  onLowStockClick?: () => void;
   onCategoryClick?: (category: string) => void;
-  activeFilter?: "outOfStock" | "location";
+  activeFilter?: "lowStock" | "location";
 }
 
-export function StatsBar({ items, onOutOfStockClick, onCategoryClick, activeFilter }: StatsBarProps) {
+export function StatsBar({ items, onLowStockClick, onCategoryClick, activeFilter }: StatsBarProps) {
   const totalItems = items.length;
   const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
   const lowStock = items.filter((i) => i.quantity <= 1).length;
@@ -44,7 +44,7 @@ export function StatsBar({ items, onOutOfStockClick, onCategoryClick, activeFilt
   const stats = [
     { key: "items", value: String(totalItems), label: "Total items", icon: Package, onClick: undefined as (() => void) | undefined },
     { key: "quantity", value: String(totalQuantity), label: "Units tracked", icon: Boxes, onClick: undefined },
-    { key: "outOfStock", value: String(lowStock), label: "Low stock", icon: AlertTriangle, onClick: onOutOfStockClick },
+    { key: "lowStock", value: String(lowStock), label: "Low stock", icon: AlertTriangle, onClick: onLowStockClick },
     { key: "categories", value: String(categorySummary.length), label: "Categories", icon: Layers3, onClick: undefined },
   ];
 
@@ -60,7 +60,7 @@ export function StatsBar({ items, onOutOfStockClick, onCategoryClick, activeFilt
               className={`min-h-20 rounded-md border p-3 text-left transition-all ${stat.onClick ? "cursor-pointer hover:ring-1 hover:ring-primary/30" : "cursor-default"} ${isActive ? "border-primary bg-primary/10 ring-2 ring-primary" : "border-border bg-background/60"}`}
             >
               <div className="flex items-center justify-between gap-2">
-                <stat.icon className={`h-4 w-4 shrink-0 ${stat.key === "outOfStock" ? "text-destructive" : "text-primary"}`} />
+                <stat.icon className={`h-4 w-4 shrink-0 ${stat.key === "lowStock" ? "text-destructive" : "text-primary"}`} />
                 <span className="font-heading text-2xl font-bold leading-none">{stat.value}</span>
               </div>
               <p className="mt-2 text-xs font-medium text-muted-foreground">{stat.label}</p>
