@@ -732,7 +732,7 @@ export function AddItemDialog({
 
           <div className="space-y-2">
             <Label>Location Photo</Label>
-            <input ref={fileInputRef} type="file" className="hidden" onChange={handleImageChange} aria-hidden="true" tabIndex={-1} />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} aria-hidden="true" tabIndex={-1} />
             {locationImage ? (
               <div className="relative overflow-hidden rounded-lg border">
                 <img src={locationImage} alt="Location" className="h-32 w-full object-cover" />
@@ -741,15 +741,19 @@ export function AddItemDialog({
                 </Button>
               </div>
             ) : (
-              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => fileInputRef.current?.click()}>
-                <Camera className="h-4 w-4" aria-hidden="true" /> Take or Choose Photo
+              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => fileInputRef.current?.click()} disabled={locationImageUploading}>
+                {locationImageUploading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Uploading…</>
+                ) : (
+                  <><Camera className="h-4 w-4" aria-hidden="true" /> Take or Choose Photo</>
+                )}
               </Button>
             )}
           </div>
 
           <div className="space-y-2">
             <Label>Item Photo</Label>
-            <input ref={itemFileInputRef} type="file" className="hidden" onChange={handleItemImageChange} aria-hidden="true" tabIndex={-1} />
+            <input ref={itemFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleItemImageChange} aria-hidden="true" tabIndex={-1} />
             {itemImage ? (
               <div className="relative overflow-hidden rounded-lg border">
                 <img src={itemImage} alt="Item" className="h-32 w-full object-cover" />
@@ -758,11 +762,16 @@ export function AddItemDialog({
                 </Button>
               </div>
             ) : (
-              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => itemFileInputRef.current?.click()}>
-                <Camera className="h-4 w-4" aria-hidden="true" /> Take or Upload Item Photo
+              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => itemFileInputRef.current?.click()} disabled={itemImageUploading}>
+                {itemImageUploading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Uploading…</>
+                ) : (
+                  <><Camera className="h-4 w-4" aria-hidden="true" /> Take or Upload Item Photo</>
+                )}
               </Button>
             )}
           </div>
+
 
           {productImage && (
             <div className="space-y-2">
