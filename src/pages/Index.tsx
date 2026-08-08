@@ -727,6 +727,19 @@ const Index = () => {
         externalOpen={voiceOpen}
         onExternalOpenChange={setVoiceOpen}
       />
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out of HomeStock?</AlertDialogTitle>
+            <AlertDialogDescription>You'll need to sign in again to view or update your inventory.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => signOut()}>Sign out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <InstallBanner />
       <BottomActionBar
         onAdd={() => setDialogOpen(true)}
