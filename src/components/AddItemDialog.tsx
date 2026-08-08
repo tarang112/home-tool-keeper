@@ -788,16 +788,17 @@ export function AddItemDialog({
   const actions = (
     <>
       <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-      <Button type="submit" disabled={saving}>
-        {saving ? (
+      <Button type="submit" disabled={saving || imageUploading}>
+        {saving || imageUploading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-            Saving…
+            {imageUploading ? "Uploading photo…" : "Saving…"}
           </>
         ) : editItem ? "Save Changes" : "Add Item"}
       </Button>
     </>
   );
+
 
   return (
     <>
