@@ -4,12 +4,12 @@ import { CATEGORIES, type InventoryItem } from "@/hooks/use-inventory";
 
 interface StatsBarProps {
   items: InventoryItem[];
-  onOutOfStockClick?: () => void;
+  onLowStockClick?: () => void;
   onCategoryClick?: (category: string) => void;
-  activeFilter?: "outOfStock" | "location";
+  activeFilter?: "lowStock" | "location";
 }
 
-export function StatsBar({ items, onOutOfStockClick, onCategoryClick, activeFilter }: StatsBarProps) {
+export function StatsBar({ items, onLowStockClick, onCategoryClick, activeFilter }: StatsBarProps) {
   const totalItems = items.length;
   const totalQuantity = items.reduce((sum, i) => sum + i.quantity, 0);
   const lowStock = items.filter((i) => i.quantity <= 1).length;
