@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { normalizeGroupedItemName } from "@/lib/item-matching";
 import type { CustomCategory, CustomLocation } from "@/hooks/use-custom-options";
 
 interface BatchEntry {
