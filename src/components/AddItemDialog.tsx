@@ -473,15 +473,16 @@ export function AddItemDialog({
                   <>
                     <Select
                       value={
-                        subcategory && !subcategories.some((s) => s.value === subcategory)
+                        useCustomSubcategory || (subcategory && !subcategories.some((s) => s.value === subcategory))
                           ? "__custom__"
                           : (subcategory || "none")
                       }
                       onValueChange={(v) => {
                         if (v === "__custom__") {
-                          setSubcategory(" "); // sentinel to show input; user will type
+                          setUseCustomSubcategory(true);
                           return;
                         }
+                        setUseCustomSubcategory(false);
                         handleSubcategoryChange(v === "none" ? "" : v);
                       }}
                     >
@@ -494,9 +495,9 @@ export function AddItemDialog({
                         <SelectItem value="__custom__">✏️ Other (custom)…</SelectItem>
                       </SelectContent>
                     </Select>
-                    {subcategory && !subcategories.some((s) => s.value === subcategory) && (
+                    {(useCustomSubcategory || (subcategory && !subcategories.some((s) => s.value === subcategory))) && (
                       <Input
-                        value={subcategory.trim()}
+                        value={subcategory}
                         onChange={(e) => setSubcategory(e.target.value)}
                         placeholder="Enter custom subcategory..."
                         className="mt-2"
