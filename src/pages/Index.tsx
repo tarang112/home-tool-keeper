@@ -1,9 +1,13 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare, Trash2, RotateCcw, Download, FileText, Table2, AlertTriangle, ReceiptText } from "lucide-react";
+import { Plus, Search, Package, LogOut, Settings2, UserCog, ChevronDown, ChevronRight, ScanLine, Mail, PlusCircle, ScanBarcode, RefreshCw, PlusSquare, Trash2, RotateCcw, Download, FileText, Table2, AlertTriangle, ReceiptText, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useTheme } from "@/hooks/use-theme";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useInventory, CATEGORIES, MAIN_CATEGORIES, type ItemCategory, type InventoryItem, type MainCategory } from "@/hooks/use-inventory";
 import { useHouses } from "@/hooks/use-houses";
@@ -25,7 +29,6 @@ import { useItemDefaults } from "@/hooks/use-item-defaults";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessCategories } from "@/config/business-categories";
 import { InstallBanner } from "@/components/InstallBanner";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomActionBar } from "@/components/BottomActionBar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -79,7 +82,15 @@ const Index = () => {
   } = useCustomOptions(isAllBusiness || selectedHouse?.propertyType === "business" ? "business" : "personal");
   const { saveDefaults } = useItemDefaults();
 
+  const { theme, toggle: toggleTheme } = useTheme();
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const accountInitials = (user?.user_metadata?.display_name || user?.email || "U")
+    .trim()
+    .slice(0, 2)
+    .toUpperCase();
+
   const [search, setSearch] = useState("");
+  const [stockFilter, setStockFilter] = useState<"all" | "low" | "out" | "expiring" | "lent">("all");
   const [activeCategory, setActiveCategory] = useState<ItemCategory | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
@@ -127,6 +138,52 @@ const Index = () => {
   }, [showDeleted, fetchDeletedItems]);
 
   const lowStockItems = useMemo(() => items.filter((item) => item.quantity <= 1), [items]);
+  const [expiringDays, setExpiringDays] = useState(7);
+
+  const daysUntil = useCallback((date?: string | null) => {
+    if (!date) return null;
+    return Math.ceil((new Date(date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  }, []);
+
+  const matchesStockFilter = useCallback((item: InventoryItem, filter: typeof stockFilter) => {
+    if (filter === "low") return item.quantity <= 1;
+    if (filter === "out") return item.quantity === 0;
+    if (filter === "lent") return !!item.lentTo;
+    if (filter === "expiring") {
+      const diff = daysUntil(item.expirationDate);
+      return diff !== null && diff >= 0 && diff <= expiringDays;
+    }
+    return true;
+  }, [daysUntil, expiringDays]);
+
+  const filterCounts = useMemo(() => ({
+    all: items.length,
+    low: items.filter((i) => matchesStockFilter(i, "low")).length,
+    out: items.filter((i) => matchesStockFilter(i, "out")).length,
+    expiring: items.filter((i) => matchesStockFilter(i, "expiring")).length,
+    lent: items.filter((i) => matchesStockFilter(i, "lent")).length,
+  }), [items, matchesStockFilter]);
+
+  // Legacy typed shortcuts (qty:0, low, exp:7) now drive the filter chips instead of the search string.
+  useEffect(() => {
+    const typed = search.trim().toLowerCase();
+    if (!typed) return;
+    const expiringMatch = typed.match(/^exp(?:iring)?:?(\d+)?$/);
+    if (typed === "qty:0" || typed === "out") {
+      setStockFilter("out");
+      setSearch("");
+    } else if (typed === "low" || typed === "low-stock") {
+      setStockFilter("low");
+      setSearch("");
+    } else if (typed === "lent") {
+      setStockFilter("lent");
+      setSearch("");
+    } else if (expiringMatch) {
+      setExpiringDays(Number(expiringMatch[1] || 7));
+      setStockFilter("expiring");
+      setSearch("");
+    }
+  }, [search]);
 
   const toggleCategory = useCallback((cat: string) => {
     setCollapsedCategories(prev => {
@@ -136,23 +193,12 @@ const Index = () => {
       return next;
     });
   }, []);
+
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    const isOutOfStockFilter = normalizedSearch === "qty:0";
-    const isLowStockFilter = normalizedSearch === "low" || normalizedSearch === "low-stock";
-    const expiringMatch = normalizedSearch.match(/^exp(?:iring)?:?(\d+)?$/);
     return items.filter((item) => {
-      if (isOutOfStockFilter) {
-        return item.quantity === 0 && (activeCategory === "all" || item.category === activeCategory);
-      }
-      if (isLowStockFilter && item.quantity > 1) return false;
-      if (expiringMatch) {
-        if (!item.expirationDate) return false;
-        const days = Number(expiringMatch[1] || 7);
-        const diff = Math.ceil((new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        if (diff < 0 || diff > days) return false;
-      }
-      const matchesSearch = !normalizedSearch || isLowStockFilter || !!expiringMatch || item.name.toLowerCase().includes(normalizedSearch) ||
+      if (!matchesStockFilter(item, stockFilter)) return false;
+      const matchesSearch = !normalizedSearch || item.name.toLowerCase().includes(normalizedSearch) ||
         item.location.toLowerCase().includes(normalizedSearch) ||
         item.notes.toLowerCase().includes(normalizedSearch) ||
         item.quantityUnit.toLowerCase().includes(normalizedSearch) ||
@@ -161,7 +207,7 @@ const Index = () => {
       const matchesCategory = activeCategory === "all" || item.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [items, search, activeCategory]);
+  }, [items, search, activeCategory, stockFilter, matchesStockFilter]);
 
   const exportRowsRef = useRef<((format: "csv" | "excel" | "pdf") => void) | null>(null);
 
@@ -288,21 +334,39 @@ const Index = () => {
             <Package className="h-6 w-6 text-primary" />
             <h1 className="font-heading font-bold text-xl">HomeStock</h1>
           </div>
-          <div className="flex items-center gap-0.5">
-            <Button asChild size="icon" variant="ghost" className="h-9 w-9" title="Receipt imports">
-              <Link to="/receipts"><ReceiptText className="h-4 w-4" /></Link>
-            </Button>
+          <div className="flex items-center gap-1">
             <NotificationBell />
-            <ThemeToggle />
-            <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setOptionsOpen(true)} title="Manage categories & locations">
-              <Settings2 className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => setProfileOpen(true)} title="Profile settings">
-              <UserCog className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="ghost" onClick={signOut} className="h-9 w-9">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-11 w-11 rounded-full" aria-label="Account menu">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">{accountInitials}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate text-xs font-normal text-muted-foreground">{user?.email || "Signed in"}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/receipts"><ReceiptText className="mr-2 h-4 w-4" aria-hidden="true" /> Receipt imports</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setOptionsOpen(true)}>
+                  <Settings2 className="mr-2 h-4 w-4" aria-hidden="true" /> Categories &amp; locations
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setProfileOpen(true)}>
+                  <UserCog className="mr-2 h-4 w-4" aria-hidden="true" /> Profile settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); toggleTheme(); }}>
+                  {theme === "dark"
+                    ? <><Sun className="mr-2 h-4 w-4" aria-hidden="true" /> Light mode</>
+                    : <><Moon className="mr-2 h-4 w-4" aria-hidden="true" /> Dark mode</>}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setSignOutOpen(true)}>
+                  <LogOut className="mr-2 h-4 w-4" aria-hidden="true" /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -319,40 +383,68 @@ const Index = () => {
 
         <StatsBar
           items={items}
-          onLowStockClick={() => setSearch(prev => prev === "low" ? "" : "low")}
+          onLowStockClick={() => setStockFilter((prev) => (prev === "low" ? "all" : "low"))}
           onCategoryClick={(category) => setActiveCategory(category)}
-          activeFilter={search === "low" ? "lowStock" : undefined}
+          activeFilter={stockFilter === "low" ? "lowStock" : undefined}
         />
 
         {lowStockItems.length > 0 && (
-          <button onClick={() => setSearch("low")} className="flex w-full items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/15">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
+          <button onClick={() => setStockFilter("low")} className="flex w-full items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/15">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="font-medium">{lowStockItems.length} low-stock item{lowStockItems.length === 1 ? "" : "s"}</span>
             <span className="ml-auto text-xs">View</span>
           </button>
         )}
 
-        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
-              placeholder="Search items, locations, units, exp:7, low..."
+              placeholder="Search items, locations, units..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
+              aria-label="Search inventory"
             />
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("pdf")}>
-              <FileText className="h-4 w-4" /> PDF
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("excel")}>
-              <Table2 className="h-4 w-4" /> Excel
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => exportRows("csv")}>
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Export inventory">
+                <Download className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Export as</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => exportRows("pdf")}><FileText className="mr-2 h-4 w-4" aria-hidden="true" /> PDF</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => exportRows("excel")}><Table2 className="mr-2 h-4 w-4" aria-hidden="true" /> Excel</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => exportRows("csv")}><Download className="mr-2 h-4 w-4" aria-hidden="true" /> CSV</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Stock state filter chips */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" role="group" aria-label="Filter by stock state">
+          {([
+            { value: "all", label: "All", count: filterCounts.all },
+            { value: "low", label: "Low stock", count: filterCounts.low },
+            { value: "out", label: "Out", count: filterCounts.out },
+            { value: "expiring", label: "Expiring", count: filterCounts.expiring },
+            { value: "lent", label: "Lent", count: filterCounts.lent },
+          ] as const).map((chip) => {
+            const isActive = stockFilter === chip.value;
+            return (
+              <button
+                key={chip.value}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setStockFilter(chip.value)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${isActive ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
+              >
+                {chip.label}
+                <span className={isActive ? "opacity-90" : "text-muted-foreground"}>{chip.count}</span>
+              </button>
+            );
+          })}
         </div>
 
         {(() => {
@@ -360,24 +452,28 @@ const Index = () => {
             selectedHouse?.propertyType === "business" && selectedHouse.businessType
               ? getBusinessCategories(selectedHouse.businessType).map((c) => ({ value: c.value, label: c.label, icon: c.icon }))
               : CATEGORIES;
+          const chipClass = (isActive: boolean) =>
+            `inline-flex shrink-0 select-none items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${isActive ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary text-secondary-foreground hover:bg-secondary/80"}`;
           return (
-            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
-              <Badge
-                variant={activeCategory === "all" ? "default" : "secondary"}
-                className="cursor-pointer shrink-0 select-none"
+            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide" role="group" aria-label="Filter by category">
+              <button
+                type="button"
+                aria-pressed={activeCategory === "all"}
+                className={chipClass(activeCategory === "all")}
                 onClick={() => setActiveCategory("all")}
               >
                 All
-              </Badge>
+              </button>
               {activeCategories.map((c) => (
-                <Badge
+                <button
                   key={c.value}
-                  variant={activeCategory === c.value ? "default" : "secondary"}
-                  className="cursor-pointer shrink-0 select-none"
+                  type="button"
+                  aria-pressed={activeCategory === c.value}
+                  className={chipClass(activeCategory === c.value)}
                   onClick={() => setActiveCategory(c.value)}
                 >
                   {c.icon} {c.label}
-                </Badge>
+                </button>
               ))}
             </div>
           );
@@ -465,7 +561,7 @@ const Index = () => {
                       }
                       <span className="text-sm">{icon}</span>
                       <h2 className="text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wide">{label}</h2>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto">{catItems.length}</Badge>
+                      <Badge variant="outline" className="ml-auto px-1.5 py-0 text-xs">{catItems.length}</Badge>
                     </button>
                     {!collapsedCategories.has(catValue) && (
                       <div className="space-y-2 lg:columns-2 xl:columns-3 lg:gap-3 lg:space-y-0 [&>*]:mb-3 [&>*]:break-inside-avoid">
@@ -497,7 +593,8 @@ const Index = () => {
           );
         })()}
 
-        {/* Recently Deleted Section */}
+        {/* Recently Deleted Section — only once the account has items */}
+        {items.length > 0 && (
         <div className="mt-6 border-t pt-4">
           <button
             className="flex items-center gap-1.5 px-1 w-full text-left hover:opacity-80 transition-opacity"
@@ -506,7 +603,7 @@ const Index = () => {
             {showDeleted ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
             <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
             <h2 className="text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wide">Recently Deleted</h2>
-            <span className="text-[10px] text-muted-foreground ml-1">(24h)</span>
+            <span className="ml-1 text-xs text-muted-foreground">(24h)</span>
           </button>
           {showDeleted && (
             <div className="mt-2 space-y-2">
@@ -517,7 +614,7 @@ const Index = () => {
                   <div key={item.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-md border bg-muted/30 opacity-70">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground">Qty: {item.quantity} · {item.location || "No location"}</p>
+                      <p className="text-xs text-muted-foreground">Qty: {item.quantity} · {item.location || "No location"}</p>
                     </div>
                     <Button
                       variant="outline"
@@ -537,6 +634,7 @@ const Index = () => {
             </div>
           )}
         </div>
+        )}
       </main>
 
       <AddItemDialog
@@ -628,6 +726,19 @@ const Index = () => {
         externalOpen={voiceOpen}
         onExternalOpenChange={setVoiceOpen}
       />
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out of HomeStock?</AlertDialogTitle>
+            <AlertDialogDescription>You'll need to sign in again to view or update your inventory.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => signOut()}>Sign out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <InstallBanner />
       <BottomActionBar
         onAdd={() => setDialogOpen(true)}
