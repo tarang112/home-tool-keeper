@@ -124,7 +124,7 @@ export function AddItemDialog({
       setProductUrl("");
       // Find sibling batch entries (same name, category, location)
       const siblings = allItems.filter(
-        (i) => i.name === editItem.name && i.category === editItem.category && i.location === editItem.location && i.id !== editItem.id
+        (i) => normalizeGroupedItemName(i.name) === normalizeGroupedItemName(editItem.name) && i.category === editItem.category && i.location === editItem.location && i.id !== editItem.id
       );
       if (siblings.length > 0) {
         setBatchEntries([
