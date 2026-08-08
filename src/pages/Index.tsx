@@ -163,6 +163,8 @@ const Index = () => {
     });
   }, [items, search, activeCategory]);
 
+  const exportRowsRef = useRef<((format: "csv" | "excel" | "pdf") => void) | null>(null);
+
   const exportRows = useCallback((format: "csv" | "excel" | "pdf") => {
     const rows = filtered.map((item) => ({
       Name: item.name,
