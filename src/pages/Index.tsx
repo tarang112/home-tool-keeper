@@ -319,9 +319,9 @@ const Index = () => {
 
         <StatsBar
           items={items}
-          onOutOfStockClick={() => setSearch(prev => prev === "qty:0" ? "" : "qty:0")}
+          onLowStockClick={() => setSearch(prev => prev === "low" ? "" : "low")}
           onCategoryClick={(category) => setActiveCategory(category)}
-          activeFilter={search === "qty:0" ? "outOfStock" : undefined}
+          activeFilter={search === "low" ? "lowStock" : undefined}
         />
 
         {lowStockItems.length > 0 && (
