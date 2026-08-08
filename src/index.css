@@ -73,8 +73,16 @@
     --muted: 30 8% 18%;
     --muted-foreground: 40 10% 55%;
 
-    --accent: 160 35% 45%;
-    --accent-foreground: 30 10% 8%;
+    --accent: 30 8% 18%;
+    --accent-foreground: 40 15% 85%;
+
+    --brand-teal: 160 35% 45%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 30 10% 8%;
+
+    --success: 160 35% 45%;
+    --success-foreground: 30 10% 8%;
 
     --destructive: 0 62% 40%;
     --destructive-foreground: 40 15% 90%;
